@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Eamon — The Main Hall</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0612;
+    overflow: hidden;
+    font-family: 'Crimson Text', Georgia, serif;
+    color: #e8dcc8;
+  }
+
+  .game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ===== BACKGROUND (Earle-style painted scene) ===== */
+  .scene-bg {
+    position: absolute;
+    inset: 0;
+    /* Gradient simulating the Great Hall atmosphere since we can't embed the generated image */
+    background: 
+      /* Stained glass window light rays */
+      linear-gradient(115deg, rgba(218,165,32,0.15) 0%, transparent 30%),
+      linear-gradient(125deg, rgba(218,165,32,0.08) 0%, transparent 40%),
+      /* Hearth glow from right */
+      radial-gradient(ellipse at 80% 70%, rgba(180,80,20,0.25) 0%, transparent 40%),
+      /* Portal glow from center-back */
+      radial-gradient(ellipse at 50% 30%, rgba(60,90,180,0.2) 0%, transparent 35%),
+      /* Base hall atmosphere */
+      radial-gradient(ellipse at 50% 40%, #1a1228 0%, #0d0818 100%);
+  }
+
+  /* Simulated architectural elements */
+  .scene-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      /* Stone floor reflection */
+      linear-gradient(0deg, rgba(40,30,20,0.9) 0%, rgba(40,30,20,0.4) 15%, transparent 35%),
+      /* Ceiling shadow */
+      linear-gradient(180deg, rgba(10,6,18,0.7) 0%, transparent 20%);
+  }
+
+  .scene-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Dust mote / atmosphere overlay */
+    background: radial-gradient(ellipse at 25% 35%, rgba(218,180,100,0.06) 0%, transparent 50%);
+    animation: dustDrift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes dustDrift {
+    0% { transform: translate(0, 0); opacity: 0.6; }
+    100% { transform: translate(20px, -10px); opacity: 1; }
+  }
+
+  /* ===== ARCHITECTURAL OVERLAY (simulated pillars/arches) ===== */
+  .arch-left, .arch-right {
+    position: absolute;
+    top: 0;
+    width: 120px;
+    height: 100%;
+    z-index: 2;
+  }
+  .arch-left {
+    left: 0;
+    background: linear-gradient(90deg, #0f0a1a 0%, #0f0a1acc 40%, transparent 100%);
+    border-right: 2px solid rgba(160,130,80,0.15);
+  }
+  .arch-right {
+    right: 0;
+    background: linear-gradient(-90deg, #0f0a1a 0%, #0f0a1acc 40%, transparent 100%);
+    border-left: 2px solid rgba(160,130,80,0.15);
+  }
+
+  /* Gothic arch top frame */
+  .arch-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, #0a0612 0%, transparent 100%);
+    z-index: 2;
+  }
+
+  /* ===== PORTAL GLOW (Adventure Gate) ===== */
+  .portal {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 200px;
+    border-radius: 70px 70px 0 0;
+    background: radial-gradient(ellipse, rgba(80,120,220,0.4) 0%, rgba(40,60,140,0.2) 40%, transparent 70%);
+    box-shadow: 
+      0 0 60px rgba(80,120,220,0.15),
+      0 0 120px rgba(60,80,180,0.08),
+      inset 0 0 40px rgba(100,140,240,0.1);
+    z-index: 1;
+    animation: portalPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes portalPulse {
+    0%, 100% { opacity: 0.7; filter: brightness(1); }
+    50% { opacity: 1; filter: brightness(1.2); }
+  }
+
+  /* ===== HEARTH FIRE ===== */
+  .hearth {
+    position: absolute;
+    bottom: 30%;
+    right: 15%;
+    width: 100px;
+    height: 80px;
+    z-index: 1;
+  }
+  .hearth::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(220,120,30,0.5) 0%, rgba(180,60,10,0.2) 40%, transparent 70%);
+    animation: firePulse 2s ease-in-out infinite alternate;
+  }
+  .hearth::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 50px;
+    background: radial-gradient(ellipse, rgba(255,180,50,0.6) 0%, rgba(220,100,20,0.3) 50%, transparent 70%);
+    animation: fireFlicker 0.8s ease-in-out infinite alternate;
+    filter: blur(2px);
+  }
+
+  @keyframes firePulse {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  @keyframes fireFlicker {
+    0% { transform: translateX(-50%) scaleY(1) scaleX(1); }
+    33% { transform: translateX(-48%) scaleY(1.1) scaleX(0.95); }
+    66% { transform: translateX(-52%) scaleY(0.95) scaleX(1.05); }
+    100% { transform: translateX(-50%) scaleY(1.05) scaleX(0.98); }
+  }
+
+  /* ===== WINDOW LIGHT RAYS ===== */
+  .light-ray {
+    position: absolute;
+    top: 5%;
+    left: 15%;
+    width: 200px;
+    height: 500px;
+    background: linear-gradient(160deg, rgba(218,180,100,0.08) 0%, rgba(218,165,32,0.03) 50%, transparent 100%);
+    transform: skewX(-15deg);
+    z-index: 1;
+    animation: rayShimmer 8s ease-in-out infinite alternate;
+  }
+  .light-ray:nth-child(2) {
+    left: 22%;
+    width: 150px;
+    opacity: 0.6;
+    animation-delay: -3s;
+  }
+
+  @keyframes rayShimmer {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  /* ===== FLOATING PARTICLES (Dust motes) ===== */
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(218,180,100,0.4);
+    border-radius: 50%;
+    z-index: 3;
+    animation: floatUp linear infinite;
+  }
+  .particle:nth-child(1) { left: 20%; top: 60%; animation-duration: 15s; animation-delay: 0s; width: 2px; height: 2px; }
+  .particle:nth-child(2) { left: 25%; top: 70%; animation-duration: 18s; animation-delay: -3s; }
+  .particle:nth-child(3) { left: 18%; top: 50%; animation-duration: 20s; animation-delay: -7s; width: 2px; height: 2px; opacity: 0.5; }
+  .particle:nth-child(4) { left: 30%; top: 65%; animation-duration: 14s; animation-delay: -2s; }
+  .particle:nth-child(5) { left: 22%; top: 55%; animation-duration: 22s; animation-delay: -10s; width: 4px; height: 4px; opacity: 0.3; }
+  .particle:nth-child(6) { left: 75%; top: 60%; animation-duration: 16s; animation-delay: -5s; background: rgba(220,120,50,0.3); }
+  .particle:nth-child(7) { left: 78%; top: 70%; animation-duration: 12s; animation-delay: -1s; background: rgba(255,150,50,0.3); }
+  .particle:nth-child(8) { left: 80%; top: 55%; animation-duration: 19s; animation-delay: -8s; background: rgba(220,100,30,0.2); width: 2px; height: 2px; }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(-300px) translateX(30px); opacity: 0; }
+  }
+
+  /* ===== CHARACTER SILHOUETTE (Sleeping Beauty style) ===== */
+  .character {
+    position: absolute;
+    bottom: 22%;
+    left: 38%;
+    z-index: 4;
+    animation: idleBreathe 3s ease-in-out infinite;
+  }
+  .character svg {
+    width: 80px;
+    height: 180px;
+    filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.5));
+  }
+
+  @keyframes idleBreathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* ===== INTERACTIVE ZONE INDICATORS ===== */
+  .zone-indicator {
+    position: absolute;
+    z-index: 5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .zone-indicator:hover .zone-label {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+  .zone-indicator:hover .zone-glow {
+    opacity: 0.6;
+  }
+
+  .zone-glow {
+    width: 60px;
+    height: 30px;
+    background: radial-gradient(ellipse, rgba(218,180,100,0.4) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin: 0 auto;
+  }
+
+  .zone-label {
+    font-family: 'Uncial Antiqua', serif;
+    font-size: 13px;
+    color: #dab468;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.8), 0 0 20px rgba(218,180,100,0.2);
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+
+  /* Zone positions */
+  .zone-weapons { top: 48%; left: 15%; }
+  .zone-magic { top: 42%; left: 32%; }
+  .zone-bank { top: 45%; right: 28%; }
+  .zone-pawn { top: 50%; right: 14%; }
+  .zone-portal { top: 32%; left: 50%; transform: translateX(-50%); }
+  .zone-heroes { top: 38%; left: 50%; transform: translateX(-50%) translateY(80px); }
+
+  /* ===== MAIN TEXT PANEL (Bottom) ===== */
+  .text-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: linear-gradient(180deg, transparent 0%, rgba(10,6,18,0.85) 15%, rgba(10,6,18,0.95) 100%);
+    padding: 40px 60px 30px;
+  }
+
+  /* Celtic knotwork border (simplified) */
+  .text-panel::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(160,130,80,0.3) 10%, 
+      rgba(160,130,80,0.5) 20%, 
+      rgba(218,180,100,0.6) 50%, 
+      rgba(160,130,80,0.5) 80%, 
+      rgba(160,130,80,0.3) 90%, 
+      transparent 100%
+    );
+  }
+  .text-panel::after {
+    content: '◆';
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(218,180,100,0.5);
+    font-size: 14px;
+  }
+
+  .narration {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.7;
+    color: #ddd0ba;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  .narration .highlight {
+    color: #dab468;
+    font-style: italic;
+  }
+
+  /* Typewriter cursor */
+  .narration::after {
+    content: '▌';
+    color: rgba(218,180,100,0.6);
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ===== ACTION CHOICES ===== */
+  .choices {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .choice-btn {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 15px;
+    color: #c8b896;
+    background: rgba(40,30,20,0.6);
+    border: 1px solid rgba(160,130,80,0.3);
+    padding: 8px 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .choice-btn:hover {
+    color: #dab468;
+    background: rgba(60,45,25,0.8);
+    border-color: rgba(218,180,100,0.5);
+    box-shadow: 0 0 15px rgba(218,180,100,0.1);
+  }
+  .choice-btn .key {
+    color: rgba(218,180,100,0.5);
+    font-size: 12px;
+    margin-right: 6px;
+  }
+
+  /* ===== TOP HUD ===== */
+  .hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background: linear-gradient(180deg, rgba(10,6,18,0.7) 0%, transparent 100%);
+  }
+
+  .hud-left, .hud-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .player-name {
+    font-family: 'Uncial Antiqua', serif;
+    font-size: 18px;
+    color: #dab468;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+
+  .stat {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 13px;
+    color: #a89878;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stat-value {
+    color: #ddd0ba;
+    font-weight: 600;
+  }
+  .stat-icon {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  .gold-display {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 14px;
+    color: #dab468;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .gold-coin {
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 40% 40%, #f0d060, #b08830);
+    border-radius: 50%;
+    border: 1px solid #8a6820;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6a4810;
+    font-weight: bold;
+  }
+
+  /* ===== LOCATION TITLE ===== */
+  .location-title {
+    position: absolute;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+    animation: titleFadeIn 2s ease-out;
+  }
+  .location-title h1 {
+    font-family: 'Uncial Antiqua', serif;
+    font-size: 28px;
+    color: #dab468;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7), 0 0 30px rgba(218,180,100,0.15);
+    letter-spacing: 3px;
+  }
+  .location-title .subtitle {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 13px;
+    color: rgba(200,184,150,0.6);
+    font-style: italic;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  @keyframes titleFadeIn {
+    0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* ===== CHARACTER PORTRAIT (for dialogue) ===== */
+  .portrait-frame {
+    position: absolute;
+    bottom: 180px;
+    left: 40px;
+    width: 100px;
+    height: 120px;
+    z-index: 10;
+    border: 2px solid rgba(160,130,80,0.4);
+    background: rgba(20,15,10,0.8);
+    overflow: hidden;
+  }
+  /* Celtic corner ornaments */
+  .portrait-frame::before {
+    content: '⟡';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    color: rgba(218,180,100,0.4);
+    font-size: 10px;
+  }
+  .portrait-frame::after {
+    content: '⟡';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    color: rgba(218,180,100,0.4);
+    font-size: 10px;
+  }
+
+  .portrait-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1228, #2a1f38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .portrait-placeholder svg {
+    width: 50px;
+    height: 70px;
+    opacity: 0.5;
+  }
+
+  .portrait-name {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    right: 0;
+    font-family: 'Uncial Antiqua', serif;
+    font-size: 11px;
+    color: #a89878;
+    text-align: center;
+  }
+
+  /* ===== COMMAND INPUT ===== */
+  .command-area {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .command-prompt {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 14px;
+    color: rgba(218,180,100,0.6);
+  }
+  .command-input {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 15px;
+    color: #ddd0ba;
+    background: rgba(30,22,15,0.6);
+    border: 1px solid rgba(160,130,80,0.25);
+    padding: 5px 16px;
+    width: 300px;
+    outline: none;
+    caret-color: #dab468;
+  }
+  .command-input::placeholder {
+    color: rgba(200,180,150,0.3);
+    font-style: italic;
+  }
+  .command-input:focus {
+    border-color: rgba(218,180,100,0.4);
+    box-shadow: 0 0 10px rgba(218,180,100,0.05);
+  }
+
+  /* ===== INVENTORY SIDEBAR (collapsed) ===== */
+  .inventory-tab {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: rgba(20,15,10,0.8);
+    border: 1px solid rgba(160,130,80,0.3);
+    border-right: none;
+    padding: 12px 8px;
+    cursor: pointer;
+    writing-mode: vertical-lr;
+    font-family: 'Uncial Antiqua', serif;
+    font-size: 12px;
+    color: rgba(218,180,100,0.5);
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+  }
+  .inventory-tab:hover {
+    color: #dab468;
+    background: rgba(40,30,20,0.9);
+    padding-right: 14px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .text-panel { padding: 30px 20px 20px; }
+    .narration { font-size: 16px; }
+    .location-title h1 { font-size: 22px; }
+    .hud { padding: 10px 15px; }
+    .portrait-frame { display: none; }
+    .arch-left, .arch-right { width: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  
+  <!-- Scene Background (in production: parallax painted layers) -->
+  <div class="scene-bg"></div>
+  
+  <!-- Atmospheric elements -->
+  <div class="light-ray"></div>
+  <div class="light-ray"></div>
+  <div class="portal"></div>
+  <div class="hearth"></div>
+  
+  <!-- Floating dust particles -->
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  
+  <!-- Architectural framing -->
+  <div class="arch-left"></div>
+  <div class="arch-right"></div>
+  <div class="arch-top"></div>
+  
+  <!-- Character (placeholder silhouette) -->
+  <div class="character">
+    <svg viewBox="0 0 80 180" fill="none">
+      <!-- Sleeping Beauty proportions: tall, angular, elegant -->
+      <defs>
+        <linearGradient id="charGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#4a3d2e"/>
+          <stop offset="100%" stop-color="#2a2118"/>
+        </linearGradient>
+        <linearGradient id="charLight" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(218,165,32,0.15)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+      </defs>
+      <!-- Body - tall elegant proportions -->
+      <path d="M40 12 C32 12, 28 18, 28 24 C28 30, 32 34, 40 34 C48 34, 52 30, 52 24 C52 18, 48 12, 40 12Z" fill="url(#charGrad)" stroke="rgba(100,80,50,0.5)" stroke-width="0.5"/>
+      <!-- Torso with armor suggestion -->
+      <path d="M30 34 L24 60 L24 100 L30 105 L40 108 L50 105 L56 100 L56 60 L50 34Z" fill="url(#charGrad)" stroke="rgba(100,80,50,0.4)" stroke-width="0.5"/>
+      <!-- Light side highlight -->
+      <path d="M30 34 L24 60 L24 100 L30 105 L40 108 L40 34Z" fill="url(#charLight)"/>
+      <!-- Cape -->
+      <path d="M28 36 L18 100 L22 115 L30 108 L28 50Z" fill="rgba(50,30,20,0.8)" stroke="rgba(80,60,40,0.3)" stroke-width="0.5"/>
+      <!-- Legs -->
+      <path d="M30 105 L28 155 L34 158 L38 108Z" fill="url(#charGrad)" stroke="rgba(100,80,50,0.3)" stroke-width="0.5"/>
+      <path d="M42 108 L46 158 L52 155 L50 105Z" fill="url(#charGrad)" stroke="rgba(100,80,50,0.3)" stroke-width="0.5"/>
+      <!-- Boots -->
+      <path d="M26 155 L34 158 L36 165 L24 165Z" fill="#1a1410"/>
+      <path d="M44 155 L52 158 L54 165 L42 165Z" fill="#1a1410"/>
+      <!-- Sword hilt at hip -->
+      <path d="M54 70 L60 68 L62 72 L56 74Z" fill="rgba(160,130,80,0.6)"/>
+      <line x1="60" y1="68" x2="64" y2="56" stroke="rgba(160,130,80,0.5)" stroke-width="1.5"/>
+      <!-- Celtic knot detail on chest (small) -->
+      <circle cx="40" cy="55" r="5" fill="none" stroke="rgba(160,130,80,0.3)" stroke-width="0.5"/>
+      <circle cx="40" cy="55" r="3" fill="none" stroke="rgba(160,130,80,0.25)" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <!-- Interactive zone indicators -->
+  <div class="zone-indicator zone-weapons">
+    <div class="zone-glow"></div>
+    <div class="zone-label">Marcos Cavielli's<br>Weapons</div>
+  </div>
+  <div class="zone-indicator zone-magic">
+    <div class="zone-glow"></div>
+    <div class="zone-label">Hokas Tokas<br>Magic Shoppe</div>
+  </div>
+  <div class="zone-indicator zone-bank">
+    <div class="zone-glow"></div>
+    <div class="zone-label">Shylock McFenney's<br>Bank</div>
+  </div>
+  <div class="zone-indicator zone-pawn">
+    <div class="zone-glow"></div>
+    <div class="zone-label">Sam Slicker's<br>Pawn Shop</div>
+  </div>
+  <div class="zone-indicator zone-portal">
+    <div class="zone-glow" style="background: radial-gradient(ellipse, rgba(80,120,220,0.4) 0%, transparent 70%);"></div>
+    <div class="zone-label" style="color: #7090d0;">The Adventure Gate</div>
+  </div>
+  <div class="zone-indicator zone-heroes">
+    <div class="zone-glow"></div>
+    <div class="zone-label">Hall of Heroes</div>
+  </div>
+
+  <!-- HUD - Top Bar -->
+  <div class="hud">
+    <div class="hud-left">
+      <span class="player-name">Sir Aldric</span>
+      <span class="stat"><span class="stat-icon">⚔</span> HD <span class="stat-value">18</span></span>
+      <span class="stat"><span class="stat-icon">◈</span> AG <span class="stat-value">16</span></span>
+      <span class="stat"><span class="stat-icon">♦</span> CH <span class="stat-value">14</span></span>
+    </div>
+    <div class="hud-right">
+      <span class="gold-display"><span class="gold-coin">G</span> <span class="stat-value">230</span></span>
+    </div>
+  </div>
+
+  <!-- Location Title -->
+  <div class="location-title">
+    <h1>The Main Hall</h1>
+    <div class="subtitle">Free Adventurers Guild of Eamon</div>
+  </div>
+
+  <!-- Character Portrait (for NPC dialogue) -->
+  <div class="portrait-frame">
+    <div class="portrait-placeholder">
+      <svg viewBox="0 0 50 70" fill="none">
+        <circle cx="25" cy="20" r="12" fill="rgba(100,80,60,0.4)"/>
+        <path d="M10 65 L15 35 L25 30 L35 35 L40 65Z" fill="rgba(100,80,60,0.3)"/>
+      </svg>
+    </div>
+    <div class="portrait-name">The Burly Irishman</div>
+  </div>
+
+  <!-- Inventory Tab (collapsed) -->
+  <div class="inventory-tab">INVENTORY</div>
+
+  <!-- Main Text Panel -->
+  <div class="text-panel">
+    <div class="narration">
+      The great hearth crackles and spits, throwing dancing shadows across ancient stone. 
+      Adventurers huddle over tankards at scarred wooden tables, their voices a low rumble beneath the vaulted ceiling. 
+      The <span class="highlight">Adventure Gate</span> pulses with a cold blue light at the far end of the hall, 
+      promising glory — or oblivion — to any fool brave enough to step through.
+    </div>
+    <div class="choices">
+      <button class="choice-btn"><span class="key">[1]</span> Visit the Weapon Shop</button>
+      <button class="choice-btn"><span class="key">[2]</span> Browse Hokas Tokas' Wares</button>
+      <button class="choice-btn"><span class="key">[3]</span> Approach the Adventure Gate</button>
+      <button class="choice-btn"><span class="key">[4]</span> Explore the Hall of Heroes</button>
+    </div>
+  </div>
+
+  <!-- Command Input -->
+  <div class="command-area">
+    <span class="command-prompt">❯</span>
+    <input type="text" class="command-input" placeholder="Enter command...">
+  </div>
+
+</div>
+</body>
+</html>
