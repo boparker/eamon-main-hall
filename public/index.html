@@ -595,16 +595,16 @@
     if (!text || isStreaming) return;
     input.value = '';
 
-    // Capture player's name from their first message if DM asked
+    // Capture player's name from their first message
     if (!character.name) {
-      // Assume first typed input is the name (DM intro asks for it)
-      character.name = text.split(' ')[0];
-      // Roll stats
+      character.name = text.split(' ').slice(0, 2).join(' '); // allow first + last
       character.hd = 14 + Math.floor(Math.random() * 8);
       character.ag = 10 + Math.floor(Math.random() * 10);
       character.ch = 10 + Math.floor(Math.random() * 10);
       character.gold = 180 + Math.floor(Math.random() * 60);
       updateHUD();
+      // Transition placeholder to action prompt after name is given
+      document.getElementById('player-input').placeholder = 'What do you do?';
     }
 
     addPlayerLine(text);
@@ -634,16 +634,19 @@
     if (gameStarted) return;
     gameStarted = true;
 
-    // Fade title out, game in
+    // Show game screen IMMEDIATELY so text lands on a visible surface
+    document.getElementById('game-screen').classList.add('active');
+    // Then fade the title out over it
     document.getElementById('title-screen').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('title-screen').style.display = 'none';
-      document.getElementById('game-screen').classList.add('active');
       document.getElementById('player-input').focus();
     }, 1200);
 
-    // Start AI DM opening narration
+    // Fire DM intro right away
     await streamMessage('/api/start', { sessionId: SESSION_ID });
+    // After DM speaks, update placeholder to guide next action
+    document.getElementById('player-input').placeholder = 'Enter your name...';
   });
 
   document.getElementById('send-btn').addEventListener('click', sendMessage);
