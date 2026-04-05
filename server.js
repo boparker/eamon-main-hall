@@ -12,7 +12,7 @@ app.use(express.static(join(__dirname, 'public')));
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ── System prompt: the AI Dungeon Master ──────────────────────────────────────
-const DM_SYSTEM = `You are the Dungeon Master for a dark, immersive text RPG called Modern Eamon.
+const DM_SYSTEM = `You are the Dungeon Master for a dark, immersive text RPG called Eamon: The Second Age.
 You run adventures in the tradition of old D&D — but with full narrative freedom.
 
 TONE: Cinematic, atmospheric, literary. Think Cormac McCarthy meets Tolkien. 
