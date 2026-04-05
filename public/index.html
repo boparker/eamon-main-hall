@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap">
   <style>
-    /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -17,6 +16,7 @@
       --border: rgba(255,255,255,0.07);
       --gold: #c8a84b;
       --gold-dim: rgba(200,168,75,0.4);
+      --gold-glow: rgba(200,168,75,0.15);
       --text: #d4cfc4;
       --text-dim: rgba(212,207,196,0.45);
       --red: #8a2020;
@@ -34,36 +34,20 @@
 
     /* ── Title Screen ── */
     #title-screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      background: var(--bg);
-      gap: 32px;
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 100; background: var(--bg); gap: 32px;
       transition: opacity 1.2s ease;
     }
-
-    #title-screen.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #title-screen.fade-out { opacity: 0; pointer-events: none; }
 
     .title-sigil {
-      width: 72px;
-      height: 72px;
-      border: 1px solid var(--gold-dim);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      color: var(--gold-dim);
+      width: 72px; height: 72px;
+      border: 1px solid var(--gold-dim); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; color: var(--gold-dim);
       animation: breathe 4s ease-in-out infinite;
     }
-
     @keyframes breathe {
       0%, 100% { box-shadow: 0 0 20px rgba(200,168,75,0.1); }
       50% { box-shadow: 0 0 40px rgba(200,168,75,0.25), 0 0 80px rgba(200,168,75,0.08); }
@@ -72,91 +56,53 @@
     .title-main {
       font-family: var(--font-head);
       font-size: clamp(2.8rem, 8vw, 5rem);
-      font-weight: 400;
-      color: var(--gold);
-      letter-spacing: 0.12em;
-      text-align: center;
-      line-height: 1;
+      font-weight: 400; color: var(--gold);
+      letter-spacing: 0.12em; text-align: center; line-height: 1;
     }
-
     .title-sub {
-      font-style: italic;
-      color: var(--text-dim);
-      font-size: 1rem;
-      letter-spacing: 0.15em;
-      text-align: center;
+      font-style: italic; color: var(--text-dim);
+      font-size: 1rem; letter-spacing: 0.15em; text-align: center;
     }
-
     .enter-btn {
-      margin-top: 16px;
-      padding: 14px 56px;
-      font-family: var(--font-head);
-      font-size: 1rem;
-      letter-spacing: 0.15em;
-      color: var(--gold);
-      background: transparent;
-      border: 1px solid var(--gold-dim);
-      border-radius: 2px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      margin-top: 16px; padding: 14px 56px;
+      font-family: var(--font-head); font-size: 1rem; letter-spacing: 0.15em;
+      color: var(--gold); background: transparent;
+      border: 1px solid var(--gold-dim); border-radius: 2px;
+      cursor: pointer; transition: all 0.3s ease;
     }
-
     .enter-btn:hover {
-      background: rgba(200,168,75,0.06);
-      border-color: var(--gold);
+      background: rgba(200,168,75,0.06); border-color: var(--gold);
       box-shadow: 0 0 30px rgba(200,168,75,0.12);
     }
 
-    /* ── Main Game Screen ── */
+    /* ── Game Screen ── */
     #game-screen {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
       transition: opacity 1.2s ease;
     }
+    #game-screen.active { opacity: 1; pointer-events: all; }
 
-    #game-screen.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    /* ── Background ── */
     #scene-bg {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: url('bg.jpg') center top / cover no-repeat, var(--bg);
       z-index: 0;
     }
-
     #scene-bg::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(5,4,4,0.35) 0%,
-        rgba(5,4,4,0.2) 30%,
-        rgba(5,4,4,0.7) 65%,
-        rgba(5,4,4,0.97) 100%
-      );
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom,
+        rgba(5,4,4,0.35) 0%, rgba(5,4,4,0.2) 30%,
+        rgba(5,4,4,0.7) 65%, rgba(5,4,4,0.97) 100%);
     }
 
-    /* ── Vignette film grain ── */
     #grain {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
       opacity: 0.025;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-      background-repeat: repeat;
-      background-size: 128px;
+      background-repeat: repeat; background-size: 128px;
       animation: grainShift 0.5s steps(1) infinite;
     }
-
     @keyframes grainShift {
       0% { background-position: 0 0; }
       20% { background-position: -30px 10px; }
@@ -168,238 +114,174 @@
 
     /* ── HUD ── */
     #hud {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 12px 28px;
       background: rgba(5,4,4,0.75);
       border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(8px);
-      flex-shrink: 0;
+      backdrop-filter: blur(8px); flex-shrink: 0;
     }
+    #hud-name { font-family: var(--font-head); font-size: 1.1rem; color: var(--gold); letter-spacing: 0.06em; }
+    #hud-stats { display: flex; gap: 24px; }
+    .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .hud-stat-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
+    .hud-stat-val { font-size: 1rem; color: var(--text); font-weight: 600; }
+    .hud-controls { display: flex; gap: 8px; }
 
-    #hud-name {
-      font-family: var(--font-head);
-      font-size: 1.1rem;
-      color: var(--gold);
-      letter-spacing: 0.06em;
+    .hud-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 50%; width: 32px; height: 32px;
+      cursor: pointer; color: var(--text-dim); font-size: 0.85rem;
+      transition: all 0.2s; display: flex; align-items: center; justify-content: center;
     }
+    .hud-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .hud-btn.active { border-color: var(--gold); color: var(--gold); }
 
-    #hud-stats {
-      display: flex;
-      gap: 24px;
-    }
-
-    .hud-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .hud-stat-label {
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: var(--text-dim);
-      text-transform: uppercase;
-    }
-
-    .hud-stat-val {
-      font-size: 1rem;
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    #hud-voice-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      color: var(--text-dim);
-      font-size: 0.85rem;
-      transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #hud-voice-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
-    #hud-voice-btn.active { border-color: var(--gold); color: var(--gold); }
-
-    #hud-music-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      color: var(--text-dim);
-      font-size: 0.85rem;
-      transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #hud-music-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
-    #hud-music-btn.active { border-color: var(--gold); color: var(--gold); }
-
-    /* ── Narrative Area ── */
+    /* ── Narrative ── */
     #narrative-area {
-      position: relative;
-      z-index: 5;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 0 clamp(20px, 5vw, 80px) 0;
-      overflow: hidden;
+      position: relative; z-index: 5; flex: 1;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 0 clamp(20px, 5vw, 80px) 0; overflow: hidden;
     }
-
     #narrative-scroll {
-      max-height: 38vh;
-      overflow-y: auto;
-      scrollbar-width: none;
+      max-height: 45vh; overflow-y: auto; scrollbar-width: none;
     }
     #narrative-scroll::-webkit-scrollbar { display: none; }
 
     .narrative-line {
-      font-size: clamp(1rem, 2.2vw, 1.25rem);
-      line-height: 1.75;
-      color: var(--text);
-      margin-bottom: 8px;
-      max-width: 800px;
+      font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+      line-height: 1.8; color: var(--text);
+      margin-bottom: 12px; max-width: 750px;
     }
-
     .narrative-line.player-line {
-      color: var(--text-dim);
-      font-style: italic;
-      font-size: 0.95em;
-      margin-bottom: 16px;
+      color: var(--gold); font-style: italic;
+      font-size: 0.95em; margin-bottom: 16px;
+      opacity: 0.8;
     }
+    .narrative-line.player-line::before { content: '› '; color: var(--gold-dim); }
 
-    .narrative-line.player-line::before {
-      content: '> ';
-      color: var(--gold-dim);
-    }
-
-    /* streaming cursor */
     .cursor {
-      display: inline-block;
-      width: 2px;
-      height: 1.1em;
-      background: var(--gold);
-      margin-left: 2px;
-      vertical-align: text-bottom;
+      display: inline-block; width: 2px; height: 1.1em;
+      background: var(--gold); margin-left: 2px; vertical-align: text-bottom;
       animation: blink 0.7s step-end infinite;
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    /* fade-in new lines */
     @keyframes lineIn {
       from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .line-enter { animation: lineIn 0.4s ease-out forwards; }
 
-    /* ── Input Zone ── */
-    #input-zone {
-      position: relative;
-      z-index: 10;
-      padding: 20px clamp(20px, 5vw, 80px) 28px;
-      border-top: 1px solid var(--border);
-      background: rgba(5,4,4,0.82);
-      backdrop-filter: blur(12px);
-    }
-
-    #input-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      max-width: 800px;
-    }
-
-    #prompt-arrow {
-      color: var(--gold-dim);
-      font-family: var(--font-head);
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    #player-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      font-family: var(--font-body);
-      font-size: clamp(1rem, 2vw, 1.15rem);
-      color: var(--text);
-      caret-color: var(--gold);
-      letter-spacing: 0.01em;
-    }
-
-    #player-input::placeholder {
-      color: var(--text-dim);
-      font-style: italic;
-    }
-
-    #send-btn {
-      flex-shrink: 0;
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 6px 18px;
-      font-family: var(--font-head);
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    #send-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
-    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    #input-hint {
-      margin-top: 10px;
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      letter-spacing: 0.08em;
-      font-style: italic;
-    }
-
-    /* ── Thinking indicator ── */
+    /* ── Thinking ── */
     #thinking {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 0 12px;
-      color: var(--text-dim);
-      font-style: italic;
-      font-size: 0.9rem;
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 0 12px; color: var(--text-dim);
+      font-style: italic; font-size: 0.9rem;
     }
-
     .think-dot {
-      width: 4px; height: 4px;
-      border-radius: 50%;
+      width: 4px; height: 4px; border-radius: 50%;
       background: var(--gold-dim);
       animation: thinkPulse 1.4s ease-in-out infinite;
     }
     .think-dot:nth-child(2) { animation-delay: 0.2s; }
     .think-dot:nth-child(3) { animation-delay: 0.4s; }
-
     @keyframes thinkPulse {
       0%,80%,100% { transform: scale(0.6); opacity: 0.3; }
       40% { transform: scale(1.2); opacity: 1; }
     }
 
+    /* ── Input Zone ── */
+    #input-zone {
+      position: relative; z-index: 10;
+      padding: 0 clamp(20px, 5vw, 80px) 28px;
+    }
+
+    #input-label {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-left: 2px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    #input-label.visible { opacity: 1; }
+
+    #input-box {
+      display: flex; align-items: center; gap: 12px;
+      max-width: 750px;
+      padding: 16px 20px;
+      background: rgba(12,10,8,0.85);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    #input-box.glow {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 20px var(--gold-glow), 0 0 60px rgba(200,168,75,0.05);
+    }
+    #input-box:focus-within {
+      border-color: var(--gold);
+      box-shadow: 0 0 24px var(--gold-glow);
+    }
+
+    #prompt-arrow {
+      color: var(--gold); font-family: var(--font-head);
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+
+    #player-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--font-body);
+      font-size: clamp(1.05rem, 2vw, 1.2rem);
+      color: var(--text); caret-color: var(--gold);
+      letter-spacing: 0.01em;
+    }
+    #player-input::placeholder { color: var(--text-dim); font-style: italic; }
+
+    #send-btn {
+      flex-shrink: 0; background: none;
+      border: 1px solid var(--border); border-radius: 2px;
+      padding: 8px 20px; font-family: var(--font-head);
+      font-size: 0.8rem; letter-spacing: 0.1em;
+      color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+    }
+    #send-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Pulse animation for input when waiting for player */
+    @keyframes inputPulse {
+      0%, 100% { box-shadow: 0 0 20px var(--gold-glow); }
+      50% { box-shadow: 0 0 35px rgba(200,168,75,0.2), 0 0 70px rgba(200,168,75,0.06); }
+    }
+    #input-box.pulse {
+      border-color: var(--gold-dim);
+      animation: inputPulse 2.5s ease-in-out infinite;
+    }
+
+    /* ── Stats reveal animation ── */
+    @keyframes statPop {
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .stat-reveal { animation: statPop 0.4s ease-out forwards; }
+
     /* ── Responsive ── */
     @media (max-width: 640px) {
-      #hud-stats { gap: 16px; }
+      #hud-stats { gap: 14px; }
       .hud-stat-val { font-size: 0.9rem; }
+      #input-box { padding: 12px 16px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ════ TITLE SCREEN ════ -->
+<!-- ═ TITLE ═ -->
 <div id="title-screen">
   <div class="title-sigil">⚔</div>
   <h1 class="title-main">EAMON</h1>
@@ -407,301 +289,313 @@
   <button class="enter-btn" id="enter-btn">ENTER THE HALL</button>
 </div>
 
-<!-- ════ GAME SCREEN ════ -->
+<!-- ═ GAME ═ -->
 <div id="game-screen">
   <div id="scene-bg"></div>
   <div id="grain"></div>
 
-  <!-- HUD -->
   <div id="hud">
     <div id="hud-name">—</div>
     <div id="hud-stats">
-      <div class="hud-stat">
-        <span class="hud-stat-label">HD</span>
-        <span class="hud-stat-val" id="stat-hd">—</span>
-      </div>
-      <div class="hud-stat">
-        <span class="hud-stat-label">AG</span>
-        <span class="hud-stat-val" id="stat-ag">—</span>
-      </div>
-      <div class="hud-stat">
-        <span class="hud-stat-label">CH</span>
-        <span class="hud-stat-val" id="stat-ch">—</span>
-      </div>
-      <div class="hud-stat">
-        <span class="hud-stat-label">GOLD</span>
-        <span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">—</span>
-      </div>
+      <div class="hud-stat"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">—</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">—</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">—</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">—</span></div>
     </div>
-    <button id="hud-music-btn" class="active" title="Toggle music">🎵</button>
-    <button id="hud-voice-btn" title="Toggle voice narration">🔊</button>
+    <div class="hud-controls">
+      <button class="hud-btn active" id="hud-music-btn" title="Toggle music">🎵</button>
+      <button class="hud-btn active" id="hud-voice-btn" title="Toggle voice">🔊</button>
+    </div>
   </div>
 
-  <!-- Narrative -->
   <div id="narrative-area">
     <div id="narrative-scroll"></div>
     <div id="thinking">
-      <div class="think-dot"></div>
-      <div class="think-dot"></div>
-      <div class="think-dot"></div>
+      <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
     </div>
   </div>
 
-  <!-- Input -->
   <div id="input-zone">
-    <div id="input-wrap">
+    <div id="input-label"></div>
+    <div id="input-box">
       <span id="prompt-arrow">›</span>
-      <input type="text" id="player-input" placeholder="What do you do?" autocomplete="off" spellcheck="false">
-      <button id="send-btn">SEND</button>
+      <input type="text" id="player-input" placeholder="" autocomplete="off" spellcheck="false" disabled>
+      <button id="send-btn" disabled>SEND</button>
     </div>
-    <div id="input-hint">Type anything. The world responds.</div>
   </div>
 </div>
 
 <script>
-  // ── Session ──────────────────────────────────────────────────────────────────
-  const SESSION_ID = 'eamon-' + Math.random().toString(36).slice(2, 10);
-  let voiceEnabled = true;
-  let isStreaming = false;
-  let speechSynth = window.speechSynthesis;
-  let currentUtterance = null;
-  let character = { name: null, hd: 20, ag: 14, ch: 12, gold: 200 };
-  let gameStarted = false;
+const SESSION_ID = 'eamon-' + Math.random().toString(36).slice(2, 10);
+let voiceEnabled = true;
+let musicEnabled = true;
+let isStreaming = false;
+let speechSynth = window.speechSynthesis;
+let gamePhase = 'intro'; // intro → named → classed → playing
+let character = { name: null, hd: null, ag: null, ch: null, gold: null };
 
-  // ── Music ────────────────────────────────────────────────────────────────────
-  let musicEnabled = true;
-  const bgMusic = new Audio('lead-drip-psalm.mp3');
-  bgMusic.loop = true;
-  bgMusic.volume = 0;
+// ── Music ──
+const bgMusic = new Audio('lead-drip-psalm.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0;
 
-  function startMusic() {
-    if (!musicEnabled) return;
-    bgMusic.play().catch(() => {});
-    // Fade in over 3 seconds
-    let vol = 0;
-    const fadeIn = setInterval(() => {
-      vol = Math.min(vol + 0.01, 0.35);
-      bgMusic.volume = vol;
-      if (vol >= 0.35) clearInterval(fadeIn);
-    }, 60);
+function startMusic() {
+  if (!musicEnabled) return;
+  bgMusic.play().catch(() => {});
+  let vol = 0;
+  const fade = setInterval(() => {
+    vol = Math.min(vol + 0.008, 0.3);
+    bgMusic.volume = vol;
+    if (vol >= 0.3) clearInterval(fade);
+  }, 50);
+}
+
+document.getElementById('hud-music-btn').addEventListener('click', () => {
+  musicEnabled = !musicEnabled;
+  const btn = document.getElementById('hud-music-btn');
+  btn.classList.toggle('active', musicEnabled);
+  btn.textContent = musicEnabled ? '🎵' : '🔇';
+  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; }
+  else { bgMusic.pause(); }
+});
+
+// ── Voice (sentence-by-sentence as tokens stream) ──
+let voiceQueue = [];
+let speakingNow = false;
+let sentenceBuffer = '';
+
+function queueSpeech(text) {
+  if (!voiceEnabled || !speechSynth) return;
+  const clean = text.replace(/[*_#`]/g, '').trim();
+  if (!clean) return;
+  voiceQueue.push(clean);
+  if (!speakingNow) speakNext();
+}
+
+function speakNext() {
+  if (voiceQueue.length === 0) { speakingNow = false; return; }
+  speakingNow = true;
+  const text = voiceQueue.shift();
+  const utt = new SpeechSynthesisUtterance(text);
+  const voices = speechSynth.getVoices();
+  const preferred = voices.find(v =>
+    v.name.includes('Daniel') || v.name.includes('Eddy') ||
+    v.name.includes('Google UK English Male') ||
+    (v.lang === 'en-GB' && v.name.toLowerCase().includes('male'))
+  ) || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utt.voice = preferred;
+  utt.rate = 0.9;
+  utt.pitch = 0.82;
+  utt.volume = 0.95;
+  utt.onend = speakNext;
+  utt.onerror = speakNext;
+  speechSynth.speak(utt);
+}
+
+document.getElementById('hud-voice-btn').addEventListener('click', () => {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById('hud-voice-btn');
+  btn.classList.toggle('active', voiceEnabled);
+  btn.textContent = voiceEnabled ? '🔊' : '🔇';
+  if (!voiceEnabled) { speechSynth.cancel(); voiceQueue = []; speakingNow = false; sentenceBuffer = ''; }
+});
+
+speechSynth.getVoices();
+speechSynth.onvoiceschanged = () => speechSynth.getVoices();
+
+// ── Narrative ──
+const scroll = document.getElementById('narrative-scroll');
+
+function addPlayerLine(text) {
+  const div = document.createElement('div');
+  div.className = 'narrative-line player-line line-enter';
+  div.textContent = text;
+  scroll.appendChild(div);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+let activeStreamLine = null;
+let streamBuffer = '';
+
+function startStreamLine() {
+  streamBuffer = '';
+  sentenceBuffer = '';
+  activeStreamLine = document.createElement('div');
+  activeStreamLine.className = 'narrative-line line-enter';
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  cursor.id = 'stream-cursor';
+  activeStreamLine.appendChild(cursor);
+  scroll.appendChild(activeStreamLine);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function appendStreamToken(token) {
+  streamBuffer += token;
+  sentenceBuffer += token;
+  const cursor = document.getElementById('stream-cursor');
+  if (cursor) cursor.before(document.createTextNode(token));
+  scroll.scrollTop = scroll.scrollHeight;
+
+  // Speak sentence-by-sentence as they complete
+  const sentenceEnd = sentenceBuffer.match(/[.!?]["']?\s/);
+  if (sentenceEnd) {
+    const idx = sentenceEnd.index + sentenceEnd[0].length;
+    const sentence = sentenceBuffer.slice(0, idx);
+    sentenceBuffer = sentenceBuffer.slice(idx);
+    queueSpeech(sentence);
   }
+}
 
-  document.getElementById('hud-music-btn').addEventListener('click', () => {
-    musicEnabled = !musicEnabled;
-    const btn = document.getElementById('hud-music-btn');
-    btn.classList.toggle('active', musicEnabled);
-    btn.textContent = musicEnabled ? '🎵' : '🔇';
-    if (musicEnabled) {
-      bgMusic.play().catch(() => {});
-      bgMusic.volume = 0.35;
-    } else {
-      bgMusic.pause();
-    }
-  });
-
-  // ── Voice ────────────────────────────────────────────────────────────────────
-  function speak(text) {
-    if (!voiceEnabled || !speechSynth) return;
-    speechSynth.cancel();
-    const clean = text.replace(/[*_#`]/g, '').trim();
-    if (!clean) return;
-    const utt = new SpeechSynthesisUtterance(clean);
-    // Pick a deeper, slower voice if available
-    const voices = speechSynth.getVoices();
-    const preferred = voices.find(v =>
-      v.name.includes('Daniel') ||
-      v.name.includes('Alex') ||
-      v.name.includes('Google UK English Male') ||
-      v.name.includes('Eddy') ||
-      (v.lang === 'en-GB' && v.name.includes('Male'))
-    ) || voices.find(v => v.lang.startsWith('en'));
-    if (preferred) utt.voice = preferred;
-    utt.rate = 0.88;
-    utt.pitch = 0.85;
-    utt.volume = 0.9;
-    currentUtterance = utt;
-    speechSynth.speak(utt);
+function finishStreamLine() {
+  const cursor = document.getElementById('stream-cursor');
+  if (cursor) cursor.remove();
+  activeStreamLine = null;
+  // Speak any remaining text
+  if (sentenceBuffer.trim()) {
+    queueSpeech(sentenceBuffer);
+    sentenceBuffer = '';
   }
+}
 
-  document.getElementById('hud-voice-btn').addEventListener('click', () => {
-    voiceEnabled = !voiceEnabled;
-    const btn = document.getElementById('hud-voice-btn');
-    btn.classList.toggle('active', voiceEnabled);
-    btn.textContent = voiceEnabled ? '🔊' : '🔇';
-    if (!voiceEnabled) speechSynth.cancel();
-  });
+// ── Input state management ──
+const inputEl = document.getElementById('player-input');
+const inputBox = document.getElementById('input-box');
+const inputLabel = document.getElementById('input-label');
+const sendBtn = document.getElementById('send-btn');
 
-  // Ensure voices are loaded
-  speechSynth.getVoices();
-  speechSynth.onvoiceschanged = () => speechSynth.getVoices();
-
-  // ── Narrative rendering ──────────────────────────────────────────────────────
-  const scroll = document.getElementById('narrative-scroll');
-
-  function addPlayerLine(text) {
-    const div = document.createElement('div');
-    div.className = 'narrative-line player-line line-enter';
-    div.textContent = text;
-    scroll.appendChild(div);
-    scroll.scrollTop = scroll.scrollHeight;
+function setInputState(placeholder, label, enabled) {
+  inputEl.placeholder = placeholder;
+  inputLabel.textContent = label;
+  inputLabel.classList.toggle('visible', !!label);
+  inputEl.disabled = !enabled;
+  sendBtn.disabled = !enabled;
+  if (enabled) {
+    inputBox.classList.add('glow', 'pulse');
+    setTimeout(() => inputEl.focus(), 100);
+  } else {
+    inputBox.classList.remove('glow', 'pulse');
   }
+}
 
-  let activeStreamLine = null;
-  let streamBuffer = '';
+// ── Stream API ──
+async function streamMessage(endpoint, body) {
+  if (isStreaming) return;
+  isStreaming = true;
+  setInputState('', '', false);
+  document.getElementById('thinking').style.display = 'flex';
 
-  function startStreamLine() {
-    streamBuffer = '';
-    activeStreamLine = document.createElement('div');
-    activeStreamLine.className = 'narrative-line line-enter';
-    const cursor = document.createElement('span');
-    cursor.className = 'cursor';
-    cursor.id = 'stream-cursor';
-    activeStreamLine.appendChild(cursor);
-    scroll.appendChild(activeStreamLine);
-    scroll.scrollTop = scroll.scrollHeight;
-  }
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  function appendStreamToken(token) {
-    streamBuffer += token;
-    const cursor = document.getElementById('stream-cursor');
-    if (cursor) {
-      cursor.before(document.createTextNode(token));
-    }
-    scroll.scrollTop = scroll.scrollHeight;
-  }
+    document.getElementById('thinking').style.display = 'none';
+    startStreamLine();
 
-  function finishStreamLine() {
-    const cursor = document.getElementById('stream-cursor');
-    if (cursor) cursor.remove();
-    activeStreamLine = null;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
 
-    // Speak the full buffered text
-    speak(streamBuffer);
-
-    // Parse character name from opening response
-    if (!character.name) {
-      extractCharacterSetup(streamBuffer);
-    }
-  }
-
-  // ── Naïve name extraction — DM asks "What is your name?" type questions ─────
-  function extractCharacterSetup(text) {
-    // Will be populated when player responds with their name
-  }
-
-  // ── Stream API call ──────────────────────────────────────────────────────────
-  async function streamMessage(endpoint, body) {
-    if (isStreaming) return;
-    isStreaming = true;
-    setInputEnabled(false);
-    showThinking(true);
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      showThinking(false);
-      startStreamLine();
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const evt = JSON.parse(line.slice(6));
-            if (evt.type === 'token') appendStreamToken(evt.text);
-            if (evt.type === 'done') finishStreamLine();
-          } catch (_) {}
-        }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const evt = JSON.parse(line.slice(6));
+          if (evt.type === 'token') appendStreamToken(evt.text);
+          if (evt.type === 'done') {
+            finishStreamLine();
+            // Handle phase updates from server
+            if (evt.phaseUpdate && evt.phaseUpdate.character) {
+              character = { ...character, ...evt.phaseUpdate.character };
+              updateHUD(true);
+            }
+          }
+        } catch (_) {}
       }
-    } catch (err) {
-      showThinking(false);
-      addPlayerLine('[Connection error — ' + err.message + ']');
-    } finally {
-      isStreaming = false;
-      setInputEnabled(true);
-      document.getElementById('player-input').focus();
+    }
+  } catch (err) {
+    document.getElementById('thinking').style.display = 'none';
+    addPlayerLine('[Connection error — try refreshing]');
+  } finally {
+    isStreaming = false;
+    // Set input based on current phase
+    updateInputForPhase();
+  }
+}
+
+function updateInputForPhase() {
+  switch (gamePhase) {
+    case 'intro':
+      setInputState('Type your name here...', 'SPEAK YOUR NAME', true);
+      break;
+    case 'named':
+      setInputState('Warrior, Rogue, or Mystic...', 'CHOOSE YOUR PATH', true);
+      break;
+    case 'classed':
+    case 'playing':
+      setInputState('What do you do?', '', true);
+      break;
+  }
+}
+
+// ── Send ──
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || isStreaming) return;
+  inputEl.value = '';
+
+  // Track phase on client side
+  if (gamePhase === 'intro') {
+    character.name = text.split(' ').slice(0, 3).join(' ');
+    document.getElementById('hud-name').textContent = character.name;
+    gamePhase = 'named';
+  } else if (gamePhase === 'named') {
+    gamePhase = 'classed';
+  }
+
+  if (gamePhase === 'classed') gamePhase = 'playing';
+
+  addPlayerLine(text);
+  await streamMessage('/api/chat', { sessionId: SESSION_ID, message: text });
+}
+
+// ── HUD ──
+function updateHUD(animate) {
+  document.getElementById('hud-name').textContent = character.name || '—';
+  const stats = { 'stat-hd': character.hd, 'stat-ag': character.ag, 'stat-ch': character.ch, 'stat-gold': character.gold };
+  for (const [id, val] of Object.entries(stats)) {
+    const el = document.getElementById(id);
+    if (val != null) {
+      el.textContent = val;
+      if (animate) {
+        el.classList.remove('stat-reveal');
+        void el.offsetWidth; // force reflow
+        el.classList.add('stat-reveal');
+      }
     }
   }
+}
 
-  // ── Send player message ──────────────────────────────────────────────────────
-  async function sendMessage() {
-    const input = document.getElementById('player-input');
-    const text = input.value.trim();
-    if (!text || isStreaming) return;
-    input.value = '';
+// ── Boot ──
+document.getElementById('enter-btn').addEventListener('click', async () => {
+  document.getElementById('game-screen').classList.add('active');
+  startMusic();
+  document.getElementById('title-screen').classList.add('fade-out');
+  setTimeout(() => document.getElementById('title-screen').style.display = 'none', 1200);
 
-    // Capture player's name from their first message
-    if (!character.name) {
-      character.name = text.split(' ').slice(0, 2).join(' '); // allow first + last
-      character.hd = 14 + Math.floor(Math.random() * 8);
-      character.ag = 10 + Math.floor(Math.random() * 10);
-      character.ch = 10 + Math.floor(Math.random() * 10);
-      character.gold = 180 + Math.floor(Math.random() * 60);
-      updateHUD();
-      // Transition placeholder to action prompt after name is given
-      document.getElementById('player-input').placeholder = 'What do you do?';
-    }
+  await streamMessage('/api/start', { sessionId: SESSION_ID });
+});
 
-    addPlayerLine(text);
-    await streamMessage('/api/chat', { sessionId: SESSION_ID, message: text });
-  }
-
-  // ── UI Helpers ───────────────────────────────────────────────────────────────
-  function showThinking(show) {
-    document.getElementById('thinking').style.display = show ? 'flex' : 'none';
-  }
-
-  function setInputEnabled(enabled) {
-    document.getElementById('player-input').disabled = !enabled;
-    document.getElementById('send-btn').disabled = !enabled;
-  }
-
-  function updateHUD() {
-    document.getElementById('hud-name').textContent = character.name || '—';
-    document.getElementById('stat-hd').textContent = character.hd || '—';
-    document.getElementById('stat-ag').textContent = character.ag || '—';
-    document.getElementById('stat-ch').textContent = character.ch || '—';
-    document.getElementById('stat-gold').textContent = character.gold || '—';
-  }
-
-  // ── Boot ─────────────────────────────────────────────────────────────────────
-  document.getElementById('enter-btn').addEventListener('click', async () => {
-    if (gameStarted) return;
-    gameStarted = true;
-
-    // Show game screen IMMEDIATELY so text lands on a visible surface
-    document.getElementById('game-screen').classList.add('active');
-    // Start ambient music (needs user gesture)
-    startMusic();
-    // Then fade the title out over it
-    document.getElementById('title-screen').classList.add('fade-out');
-    setTimeout(() => {
-      document.getElementById('title-screen').style.display = 'none';
-      document.getElementById('player-input').focus();
-    }, 1200);
-
-    // Fire DM intro right away
-    await streamMessage('/api/start', { sessionId: SESSION_ID });
-    // After DM speaks, update placeholder to guide next action
-    document.getElementById('player-input').placeholder = 'Enter your name...';
-  });
-
-  document.getElementById('send-btn').addEventListener('click', sendMessage);
-  document.getElementById('player-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendMessage();
-  });
+sendBtn.addEventListener('click', sendMessage);
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
 </script>
 </body>
 </html>
