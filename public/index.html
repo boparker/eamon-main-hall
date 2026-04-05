@@ -227,6 +227,21 @@
     #hud-voice-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     #hud-voice-btn.active { border-color: var(--gold); color: var(--gold); }
 
+    #hud-music-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #hud-music-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    #hud-music-btn.active { border-color: var(--gold); color: var(--gold); }
+
     /* ── Narrative Area ── */
     #narrative-area {
       position: relative;
@@ -418,6 +433,7 @@
         <span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">—</span>
       </div>
     </div>
+    <button id="hud-music-btn" class="active" title="Toggle music">🎵</button>
     <button id="hud-voice-btn" title="Toggle voice narration">🔊</button>
   </div>
 
@@ -451,6 +467,37 @@
   let currentUtterance = null;
   let character = { name: null, hd: 20, ag: 14, ch: 12, gold: 200 };
   let gameStarted = false;
+
+  // ── Music ────────────────────────────────────────────────────────────────────
+  let musicEnabled = true;
+  const bgMusic = new Audio('lead-drip-psalm.mp3');
+  bgMusic.loop = true;
+  bgMusic.volume = 0;
+
+  function startMusic() {
+    if (!musicEnabled) return;
+    bgMusic.play().catch(() => {});
+    // Fade in over 3 seconds
+    let vol = 0;
+    const fadeIn = setInterval(() => {
+      vol = Math.min(vol + 0.01, 0.35);
+      bgMusic.volume = vol;
+      if (vol >= 0.35) clearInterval(fadeIn);
+    }, 60);
+  }
+
+  document.getElementById('hud-music-btn').addEventListener('click', () => {
+    musicEnabled = !musicEnabled;
+    const btn = document.getElementById('hud-music-btn');
+    btn.classList.toggle('active', musicEnabled);
+    btn.textContent = musicEnabled ? '🎵' : '🔇';
+    if (musicEnabled) {
+      bgMusic.play().catch(() => {});
+      bgMusic.volume = 0.35;
+    } else {
+      bgMusic.pause();
+    }
+  });
 
   // ── Voice ────────────────────────────────────────────────────────────────────
   function speak(text) {
@@ -636,6 +683,8 @@
 
     // Show game screen IMMEDIATELY so text lands on a visible surface
     document.getElementById('game-screen').classList.add('active');
+    // Start ambient music (needs user gesture)
+    startMusic();
     // Then fade the title out over it
     document.getElementById('title-screen').classList.add('fade-out');
     setTimeout(() => {
