@@ -295,7 +295,7 @@ app.post('/api/tts', async (req, res) => {
 });
 
 // ── Gemini Image Generation ───────────────────────────────────────────────────
-const GEMINI_KEY = process.env.GEMINI_API_KEY || 'AIzaSyA-BgZs_kb_fqs0fTgHy07HhPZmcV5vUto';
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const IMAGE_CACHE_DIR = join(__dirname, 'public', 'gen-images');
 
 // Ensure cache directory exists
