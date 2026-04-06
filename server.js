@@ -355,8 +355,8 @@ async function generateGeminiImage(prompt, cachePrefix) {
 
     if (!gemRes.ok) {
       const err = await gemRes.text();
-      console.error('[IMG] Imagen error:', gemRes.status, err);
-      return null;
+      console.error('[IMG] Imagen error:', gemRes.status, err.slice(0, 200));
+      return { error: `API ${gemRes.status}: ${err.slice(0, 100)}` };
     }
 
     const data = await gemRes.json();
@@ -382,8 +382,9 @@ app.post('/api/scene-image', async (req, res) => {
   if (!location) return res.status(400).json({ error: 'missing location' });
 
   const prompt = `${SCENE_STYLE_PREFIX}. Scene: ${location}${description ? '. ' + description : ''}`;
-  const url = await generateGeminiImage(prompt, 'scene');
-  res.json({ url });
+  const result = await generateGeminiImage(prompt, 'scene');
+  if (result?.error) return res.status(500).json(result);
+  res.json({ url: result });
 });
 
 // Monster/NPC portrait endpoint
