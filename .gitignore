@@ -1,1 +1,3 @@
 node_modules/
+public/gen-images/*.jpg
+!public/gen-images/.gitkeep

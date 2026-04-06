@@ -53,8 +53,18 @@
     #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
     #game-screen.active { opacity: 1; pointer-events: all; }
 
-    #scene-bg { position: absolute; inset: 0; z-index: 0; background: url('bg.jpg') center top / cover no-repeat, var(--bg); }
-    #scene-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(5,4,4,0.15) 0%, rgba(5,4,4,0.1) 20%, rgba(5,4,4,0.6) 55%, rgba(5,4,4,0.97) 100%); }
+    #scene-bg { position: absolute; inset: 0; z-index: 0; background: url('bg.jpg') center top / cover no-repeat, var(--bg); transition: opacity 1.5s ease; }
+    #scene-bg-next { position: absolute; inset: 0; z-index: 0; background: center top / cover no-repeat var(--bg); opacity: 0; transition: opacity 1.5s ease; }
+    #scene-bg::after, #scene-bg-next::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(5,4,4,0.15) 0%, rgba(5,4,4,0.1) 20%, rgba(5,4,4,0.6) 55%, rgba(5,4,4,0.97) 100%); }
+    /* Portrait panel */
+    #portrait-frame { position: absolute; bottom: 200px; right: 20px; z-index: 5; width: 140px; height: 170px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; opacity: 0; transform: translateX(30px); transition: opacity 0.6s ease, transform 0.6s ease; background: var(--bg); }
+    #portrait-frame.visible { opacity: 1; transform: translateX(0); }
+    #portrait-frame img { width: 100%; height: 130px; object-fit: cover; }
+    #portrait-name { padding: 4px 8px; font-family: var(--font-head); font-size: 0.65rem; color: var(--gold); text-align: center; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #portrait-stats { padding: 0 8px 4px; font-size: 0.55rem; color: var(--text-dim); text-align: center; }
+    /* Generating indicator */
+    .img-generating { position: absolute; top: 50%; left: 50%; z-index: 2; transform: translate(-50%,-50%); font-family: var(--font-head); font-size: 0.7rem; letter-spacing: 0.15em; color: var(--gold-dim); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+    .img-generating.active { opacity: 1; }
     #grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 128px; animation: grainShift 0.5s steps(1) infinite; }
     @keyframes grainShift { 0%{background-position:0 0}20%{background-position:-30px 10px}40%{background-position:10px -20px}60%{background-position:-20px -10px}80%{background-position:30px 20px}100%{background-position:0 0} }
 
@@ -236,6 +246,13 @@
 <!-- ═ GAME ═ -->
 <div id="game-screen">
   <div id="scene-bg"></div>
+  <div id="scene-bg-next"></div>
+  <div class="img-generating" id="img-generating">◈ CONJURING VISION ◈</div>
+  <div id="portrait-frame">
+    <img id="portrait-img" src="" alt="">
+    <div id="portrait-name"></div>
+    <div id="portrait-stats"></div>
+  </div>
   <div id="grain"></div>
 
   <div id="hud">
@@ -515,6 +532,9 @@ document.getElementById('hud-voice-btn').addEventListener('click', () => {
 });
 
 // ── Location Title ──
+let lastBgLocation = '';
+const bgCache = {};
+
 function setLocation(name) {
   const el = document.getElementById('location-title');
   el.textContent = name;
@@ -525,6 +545,82 @@ function setLocation(name) {
   const lowerName = name.toLowerCase();
   const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn');
   switchMusic(isHall ? hallMusic : adventureMusic);
+  // Generate background image for new locations
+  if (name !== lastBgLocation) {
+    lastBgLocation = name;
+    generateSceneBg(name);
+  }
+}
+
+async function generateSceneBg(location) {
+  // Check local cache
+  if (bgCache[location]) {
+    crossfadeBg(bgCache[location]);
+    return;
+  }
+  const indicator = document.getElementById('img-generating');
+  indicator.classList.add('active');
+  try {
+    const res = await fetch('/api/scene-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      bgCache[location] = data.url;
+      crossfadeBg(data.url);
+    }
+  } catch (e) { console.error('Scene image error:', e); }
+  finally { indicator.classList.remove('active'); }
+}
+
+function crossfadeBg(url) {
+  const current = document.getElementById('scene-bg');
+  const next = document.getElementById('scene-bg-next');
+  // Preload
+  const img = new Image();
+  img.onload = () => {
+    next.style.backgroundImage = `url('${url}')`;
+    next.style.opacity = '1';
+    setTimeout(() => {
+      current.style.backgroundImage = `url('${url}')`;
+      next.style.opacity = '0';
+    }, 1600);
+  };
+  img.src = url;
+}
+
+// Portrait system
+const portraitCache = {};
+async function showPortrait(name, desc, kind) {
+  const frame = document.getElementById('portrait-frame');
+  const cacheKey = kind + ':' + name;
+  let url = portraitCache[cacheKey];
+  if (!url) {
+    try {
+      const res = await fetch('/api/portrait', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: desc, type: kind }),
+      });
+      const data = await res.json();
+      if (data.url) { url = data.url; portraitCache[cacheKey] = url; }
+    } catch (e) { console.error('Portrait error:', e); }
+  }
+  if (url) {
+    document.getElementById('portrait-img').src = url;
+    document.getElementById('portrait-name').textContent = name;
+    document.getElementById('portrait-stats').textContent = kind === 'monster' ? '⚔ Hostile' : '✦ Friendly';
+    frame.classList.add('visible');
+    // Auto-hide after 20s if no new portrait
+    clearTimeout(frame._hideTimer);
+    frame._hideTimer = setTimeout(() => frame.classList.remove('visible'), 20000);
+  }
+}
+
+function hidePortrait() {
+  document.getElementById('portrait-frame').classList.remove('visible');
 }
 
 // ── Choices ──
@@ -656,6 +752,7 @@ async function streamMessage(endpoint, body) {
           if (evt.type === 'choice') pendingChoices.push(evt.text);
           if (evt.type === 'input_hint') doneInputHint = evt.hint;
           if (evt.type === 'shop') { if (evt.shop === 'close') closeShop(); else openShop(evt.shop); }
+          if (evt.type === 'portrait') showPortrait(evt.name, evt.desc, evt.kind);
           if (evt.type === 'done') {
             finishStreamLine();
             doneVoiceId = evt.voiceId;

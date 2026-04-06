@@ -3,6 +3,9 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { writeFile, readFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import crypto from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -102,6 +105,14 @@ When the player enters an adventure, shift to cinematic narrator voice.
 - Describe rooms vividly in 2-3 sentences.
 - Present choices for movement/action.
 - Track combat logically. Enemies have HP. The player can die.
+
+MONSTER/NPC PORTRAIT TAGS:
+When the player encounters a monster or notable NPC for the first time, include:
+[MONSTER: Goblin | snarling green-skinned creature with jagged teeth and rusty dagger]
+or [NPC: Cynthia | young woman with auburn hair and leather armor, kind eyes]
+The description after | should be a vivid visual description (10-20 words) for portrait generation.
+Use [MONSTER: ...] for hostile creatures and [NPC: ...] for friendly/neutral characters.
+Only emit this tag ONCE per unique character/monster per session.
 
 SHOP DATA TAGS:
 When the player enters a shop, include a shop inventory tag:
@@ -204,11 +215,15 @@ async function streamAI(messages, res, session) {
             const choiceMatch = tagBuffer.match(/\[CHOICE:\s*(.+?)\]/);
             const inputMatch = tagBuffer.match(/\[INPUT:\s*(.+?)\]/);
             const shopMatch = tagBuffer.match(/\[SHOP:\s*(.+?)\]/);
+            const monsterMatch = tagBuffer.match(/\[MONSTER:\s*(.+?)(?:\s*\|\s*(.+?))?\]/);
+            const npcMatch = tagBuffer.match(/\[NPC:\s*(.+?)(?:\s*\|\s*(.+?))?\]/);
             if (locMatch) res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
             else if (voiceMatch) res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
             else if (choiceMatch) res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
             else if (inputMatch) res.write(`data: ${JSON.stringify({ type: 'input_hint', hint: inputMatch[1] })}\n\n`);
             else if (shopMatch) res.write(`data: ${JSON.stringify({ type: 'shop', shop: shopMatch[1] })}\n\n`);
+            else if (monsterMatch) res.write(`data: ${JSON.stringify({ type: 'portrait', name: monsterMatch[1], desc: monsterMatch[2] || '', kind: 'monster' })}\n\n`);
+            else if (npcMatch) res.write(`data: ${JSON.stringify({ type: 'portrait', name: npcMatch[1], desc: npcMatch[2] || '', kind: 'npc' })}\n\n`);
             tagBuffer = '';
           }
           continue;
@@ -277,6 +292,104 @@ app.post('/api/tts', async (req, res) => {
     console.error('TTS error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Gemini Image Generation ───────────────────────────────────────────────────
+const GEMINI_KEY = process.env.GEMINI_API_KEY || 'AIzaSyA-BgZs_kb_fqs0fTgHy07HhPZmcV5vUto';
+const IMAGE_CACHE_DIR = join(__dirname, 'public', 'gen-images');
+
+// Ensure cache directory exists
+(async () => {
+  if (!existsSync(IMAGE_CACHE_DIR)) await mkdir(IMAGE_CACHE_DIR, { recursive: true });
+})();
+
+const SCENE_STYLE_PREFIX = `Eyvind Earle painting style, geometric painterly landscape, angular Gothic forms, ` +
+  `dramatic depth and layered parallax planes, jewel-tone palette with deep purples midnight blues and burnished gold, ` +
+  `architectural detail, Sleeping Beauty 1959 background aesthetic, cinematic wide composition, no text no words no letters`;
+
+const PORTRAIT_STYLE_PREFIX = `Eyvind Earle and Sleeping Beauty 1959 character design, flat cel-shaded with 1-2 subtle shadow planes, ` +
+  `angular elegant features, tall adult proportions 8 heads tall, Celtic ornamental detail on clothing and armor, ` +
+  `jewel-tone palette, dark moody background, portrait bust shot centered, no text no words no letters`;
+
+function cacheKey(prefix, text) {
+  return prefix + '-' + crypto.createHash('md5').update(text.toLowerCase().trim()).digest('hex').slice(0, 12);
+}
+
+async function generateGeminiImage(prompt, cachePrefix) {
+  const key = cacheKey(cachePrefix, prompt);
+  const cachedPath = join(IMAGE_CACHE_DIR, `${key}.jpg`);
+  const publicUrl = `/gen-images/${key}.jpg`;
+
+  // Check cache first
+  if (existsSync(cachedPath)) {
+    console.log(`[IMG] Cache hit: ${key}`);
+    return publicUrl;
+  }
+
+  if (!GEMINI_KEY) {
+    console.error('[IMG] No GEMINI_API_KEY set');
+    return null;
+  }
+
+  console.log(`[IMG] Generating: ${cachePrefix} — ${prompt.slice(0, 80)}...`);
+
+  const aspectRatio = cachePrefix === 'scene' ? '16:9' : '3:4';
+
+  try {
+    const gemRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${GEMINI_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt }],
+          parameters: { sampleCount: 1, aspectRatio }
+        }),
+      }
+    );
+
+    if (!gemRes.ok) {
+      const err = await gemRes.text();
+      console.error('[IMG] Imagen error:', gemRes.status, err);
+      return null;
+    }
+
+    const data = await gemRes.json();
+    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) {
+      console.error('[IMG] No image data in Imagen response');
+      return null;
+    }
+
+    const imageBuffer = Buffer.from(b64, 'base64');
+    await writeFile(cachedPath, imageBuffer);
+    console.log(`[IMG] Saved: ${cachedPath} (${(imageBuffer.length / 1024).toFixed(0)}KB)`);
+    return publicUrl;
+  } catch (err) {
+    console.error('[IMG] Generation error:', err.message);
+    return null;
+  }
+}
+
+// Background scene endpoint
+app.post('/api/scene-image', async (req, res) => {
+  const { location, description } = req.body;
+  if (!location) return res.status(400).json({ error: 'missing location' });
+
+  const prompt = `${SCENE_STYLE_PREFIX}. Scene: ${location}${description ? '. ' + description : ''}`;
+  const url = await generateGeminiImage(prompt, 'scene');
+  res.json({ url });
+});
+
+// Monster/NPC portrait endpoint
+app.post('/api/portrait', async (req, res) => {
+  const { name, description, type } = req.body;
+  if (!name) return res.status(400).json({ error: 'missing name' });
+
+  const typeHint = type === 'monster' ? 'fearsome creature portrait' : type === 'npc' ? 'RPG character portrait' : 'character portrait';
+  const prompt = `${PORTRAIT_STYLE_PREFIX}. ${typeHint}: ${name}${description ? '. ' + description : ''}`;
+  const url = await generateGeminiImage(prompt, type || 'char');
+  res.json({ url });
 });
 
 // ── Start session ─────────────────────────────────────────────────────────────
