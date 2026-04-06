@@ -75,7 +75,7 @@
       position: relative; z-index: 15;
       text-align: center; padding: 20px 28px 8px;
       font-family: var(--font-head);
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-size: clamp(2rem, 5.5vw, 3.2rem);
       color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase;
       text-shadow: 0 0 50px rgba(200,168,75,0.3), 0 2px 12px rgba(0,0,0,0.9);
       opacity: 0; transition: opacity 0.8s ease;
@@ -254,6 +254,22 @@ document.getElementById('hud-music-btn').addEventListener('click', () => {
 
 // ── Voice (ElevenLabs) ──
 let ttsAudio = null;
+function speakBrowserTTS(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.88; utter.pitch = 0.85; utter.volume = 0.9;
+  // Try to pick a deep male voice
+  const voices = window.speechSynthesis.getVoices();
+  const pref = voices.find(v => /daniel|james|thomas|aaron/i.test(v.name) && /en/i.test(v.lang))
+    || voices.find(v => /male/i.test(v.name) && /en/i.test(v.lang))
+    || voices.find(v => /en-/i.test(v.lang));
+  if (pref) utter.voice = pref;
+  window.speechSynthesis.speak(utter);
+}
+// Preload voices
+if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+
 async function speakElevenLabs(text, voiceId) {
   if (!voiceEnabled || !text) return;
   try {
@@ -262,14 +278,21 @@ async function speakElevenLabs(text, voiceId) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, voiceId }),
     });
-    if (!res.ok) { console.warn('TTS failed:', res.status); return; }
+    if (!res.ok) {
+      console.warn('ElevenLabs failed, falling back to browser TTS');
+      speakBrowserTTS(text);
+      return;
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     ttsAudio = new Audio(url);
     ttsAudio.volume = 0.9;
     ttsAudio.play().catch(()=>{});
     ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null; };
-  } catch (e) { console.warn('TTS error:', e); }
+  } catch (e) {
+    console.warn('TTS error, falling back to browser:', e);
+    speakBrowserTTS(text);
+  }
 }
 document.getElementById('hud-voice-btn').addEventListener('click', () => {
   voiceEnabled = !voiceEnabled;
