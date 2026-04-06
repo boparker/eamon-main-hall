@@ -196,6 +196,11 @@
     .shop-item-info { flex: 1; }
     .shop-item-name { font-size: 1rem; color: var(--text); margin-bottom: 2px; }
     .shop-item-desc { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+    .shop-item-stats { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+    .shop-stat { font-size: 0.72rem; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+    .shop-stat-val { color: var(--gold); font-weight: 600; }
+    .shop-stat.stat-positive .shop-stat-val { color: #8fbc6a; }
+    .shop-stat.stat-negative .shop-stat-val { color: #c46a5a; }
     .shop-item-price { font-family: var(--font-head); font-size: 0.95rem; color: var(--gold); white-space: nowrap; margin-left: 16px; }
     .shop-item.cant-afford { opacity: 0.4; cursor: not-allowed; }
     .shop-item.cant-afford:hover { background: transparent; }
@@ -281,27 +286,27 @@ const SHOP_DATA = {
   marcos: {
     title: "MARCOS CAVIELLI'S WEAPONS",
     items: [
-      { name: 'Short Sword', desc: 'Reliable and light', price: 30 },
-      { name: 'Broadsword', desc: 'Standard warrior\'s blade', price: 60 },
-      { name: 'Battle Axe', desc: 'Heavy, devastating swings', price: 80 },
-      { name: 'Mace', desc: 'Crushes armor and bone', price: 50 },
-      { name: 'Spear', desc: 'Reach advantage in combat', price: 40 },
-      { name: 'War Hammer', desc: 'Slow but lethal', price: 90 },
-      { name: 'Leather Armor', desc: 'Basic protection', price: 50 },
-      { name: 'Chain Mail', desc: 'Solid defense, some weight', price: 120 },
-      { name: 'Plate Armor', desc: 'Heavy but near-impervious', price: 200 },
-      { name: 'Shield', desc: 'Blocks incoming strikes', price: 40 },
+      { name: 'Short Sword', desc: 'Reliable and light', price: 30, stats: { dmg: '1d6', odds: '25%', type: 'Sword' } },
+      { name: 'Broadsword', desc: 'Standard warrior\'s blade', price: 60, stats: { dmg: '2d6', odds: '30%', type: 'Sword' } },
+      { name: 'Battle Axe', desc: 'Heavy, devastating swings', price: 80, stats: { dmg: '2d8', odds: '20%', type: 'Axe' } },
+      { name: 'Mace', desc: 'Crushes armor and bone', price: 50, stats: { dmg: '2d4', odds: '30%', type: 'Mace' } },
+      { name: 'Spear', desc: 'Reach advantage in combat', price: 40, stats: { dmg: '1d8', odds: '25%', type: 'Spear' } },
+      { name: 'War Hammer', desc: 'Slow but lethal', price: 90, stats: { dmg: '3d6', odds: '15%', type: 'Hammer' } },
+      { name: 'Leather Armor', desc: 'Basic protection', price: 50, stats: { def: '+2', weight: 'Light', type: 'Armor' } },
+      { name: 'Chain Mail', desc: 'Solid defense, some weight', price: 120, stats: { def: '+5', weight: 'Medium', ag: '-1', type: 'Armor' } },
+      { name: 'Plate Armor', desc: 'Heavy but near-impervious', price: 200, stats: { def: '+8', weight: 'Heavy', ag: '-3', type: 'Armor' } },
+      { name: 'Shield', desc: 'Blocks incoming strikes', price: 40, stats: { def: '+2', block: '15%', type: 'Shield' } },
     ]
   },
   hokas: {
     title: "HOKAS TOKAS' MAGIC EMPORIUM",
     items: [
-      { name: 'Blast Spell', desc: 'Deals magical damage', price: 100 },
-      { name: 'Heal Spell', desc: 'Restore lost Hardiness', price: 80 },
-      { name: 'Speed Spell', desc: 'Boost Agility in combat', price: 120 },
-      { name: 'Power Spell', desc: 'Random powerful effect', price: 150 },
-      { name: 'Healing Potion', desc: 'One-use, restores 10 HD', price: 25 },
-      { name: 'Scroll of Protection', desc: 'Reduces damage taken', price: 60 },
+      { name: 'Blast Spell', desc: 'Deals magical damage', price: 100, stats: { dmg: '2d8', range: 'Ranged', type: 'Spell' } },
+      { name: 'Heal Spell', desc: 'Restore lost Hardiness', price: 80, stats: { heal: '2d6', uses: '3/adventure', type: 'Spell' } },
+      { name: 'Speed Spell', desc: 'Boost Agility in combat', price: 120, stats: { buff: 'AG +5', dur: '3 rounds', type: 'Spell' } },
+      { name: 'Power Spell', desc: 'Random powerful effect', price: 150, stats: { effect: 'Random', power: 'High', type: 'Spell' } },
+      { name: 'Healing Potion', desc: 'One-use, restores 10 HD', price: 25, stats: { heal: '+10 HD', uses: '1 (consumed)', type: 'Potion' } },
+      { name: 'Scroll of Protection', desc: 'Reduces damage taken', price: 60, stats: { def: '+3', dur: '5 rounds', uses: '1 (consumed)', type: 'Scroll' } },
     ]
   },
   bank: {
@@ -333,10 +338,21 @@ function openShop(shopKey) {
     const canAfford = item.price === 0 || (character.gold || 0) >= item.price;
     const div = document.createElement('div');
     div.className = 'shop-item' + (canAfford ? '' : ' cant-afford');
+    let statsHtml = '';
+    if (item.stats) {
+      const statEntries = Object.entries(item.stats).filter(([k]) => k !== 'type');
+      statsHtml = '<div class="shop-item-stats">' + statEntries.map(([k, v]) => {
+        const label = k === 'dmg' ? 'DMG' : k === 'def' ? 'DEF' : k === 'odds' ? 'HIT' : k === 'heal' ? 'HEAL' : k === 'buff' ? 'BUFF' : k === 'block' ? 'BLOCK' : k === 'dur' ? 'DUR' : k === 'uses' ? 'USES' : k === 'range' ? 'RNG' : k === 'effect' ? 'FX' : k === 'power' ? 'PWR' : k === 'weight' ? 'WT' : k === 'ag' ? 'AG' : k.toUpperCase();
+        const cls = String(v).startsWith('+') ? 'stat-positive' : String(v).startsWith('-') ? 'stat-negative' : '';
+        return `<span class="shop-stat ${cls}">${label} <span class="shop-stat-val">${v}</span></span>`;
+      }).join('') + '</div>';
+      statsHtml = `<div class="shop-item-type" style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">${item.stats.type || ''}</div>` + statsHtml;
+    }
     div.innerHTML = `
       <div class="shop-item-info">
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-desc">${item.desc}</div>
+        ${statsHtml}
       </div>
       <div class="shop-item-price">${item.price > 0 ? item.price + ' gold' : '—'}</div>
     `;
