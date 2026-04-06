@@ -29,6 +29,8 @@ During character creation, you speak as the Burly Irishman — the gruff barkeep
 
 VOICE: Gruff, warm, weathered Irish barkeep. Short sentences. Working-class eloquence. Calls people "lad," "lass," or "adventurer." Occasionally darkly funny.
 
+CRITICAL: NEVER start a response with "Ah" or "Ah," — vary your openings. Use direct statements, observations, actions, or descriptions. Each response must begin differently from the last three.
+
 CRITICAL FORMATTING RULES:
 - NEVER use markdown (no **, no ##, no bullets, no numbered lists).
 - Plain text only. No emojis.
@@ -75,6 +77,14 @@ When the player enters an adventure, shift to cinematic narrator voice.
 - Describe rooms vividly in 2-3 sentences.
 - Present choices for movement/action.
 - Track combat logically. Enemies have HP. The player can die.
+
+SHOP DATA TAGS:
+When the player enters a shop, include a shop inventory tag:
+[SHOP: marcos]
+or [SHOP: hokas] or [SHOP: bank] or [SHOP: pawn]
+This triggers a side panel showing all items and prices. The player can browse visually and tap to buy.
+After the shop tag, give a brief 1-2 sentence greeting from the shopkeeper. Don't list individual items in the narration — the panel handles that.
+When leaving a shop, include [SHOP: close].
 
 INPUT CONTEXT TAGS:
 After choices, include one of these to hint how the input should look:
@@ -145,10 +155,12 @@ async function streamAI(messages, res, session) {
             const voiceMatch = tagBuffer.match(/\[VOICE:\s*(.+?)\]/);
             const choiceMatch = tagBuffer.match(/\[CHOICE:\s*(.+?)\]/);
             const inputMatch = tagBuffer.match(/\[INPUT:\s*(.+?)\]/);
+            const shopMatch = tagBuffer.match(/\[SHOP:\s*(.+?)\]/);
             if (locMatch) res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
             else if (voiceMatch) res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
             else if (choiceMatch) res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
             else if (inputMatch) res.write(`data: ${JSON.stringify({ type: 'input_hint', hint: inputMatch[1] })}\n\n`);
+            else if (shopMatch) res.write(`data: ${JSON.stringify({ type: 'shop', shop: shopMatch[1] })}\n\n`);
             tagBuffer = '';
           }
           continue;
