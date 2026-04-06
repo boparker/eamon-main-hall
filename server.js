@@ -13,7 +13,7 @@ app.use(express.static(join(__dirname, 'public')));
 let AI_PROVIDER, MODEL;
 if (process.env.ANTHROPIC_API_KEY) {
   AI_PROVIDER = 'anthropic';
-  MODEL = 'claude-haiku-4-5-20250315';
+  MODEL = 'claude-3-5-haiku-20241022';
 } else if (process.env.XAI_API_KEY) {
   AI_PROVIDER = 'xai';
   MODEL = 'grok-3-mini';
