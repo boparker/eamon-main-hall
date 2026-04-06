@@ -337,6 +337,7 @@ function openShop(shopKey) {
   if (!shop) return;
   const panel = document.getElementById('shop-panel');
   document.getElementById('shop-title').textContent = shop.title;
+  document.getElementById('shop-title').dataset.shopKey = shopKey;
   document.getElementById('shop-gold').textContent = `Your gold: ${character.gold || 0}`;
   const container = document.getElementById('shop-items');
   container.innerHTML = '';
@@ -392,8 +393,20 @@ function openShop(shopKey) {
     `;
     if (canAfford && item.price > 0) {
       div.addEventListener('click', () => {
+        // Debit gold client-side immediately
+        character.gold = (character.gold || 0) - item.price;
+        document.getElementById('stat-gold').textContent = character.gold;
+        document.getElementById('shop-gold').textContent = `Your gold: ${character.gold}`;
+        // Add to inventory tracking
+        if (!character.inventory) character.inventory = [];
+        character.inventory.push({ name: item.name, stats: item.stats });
+        // Re-render shop to update afford states
+        const currentShopKey = document.getElementById('shop-title').dataset.shopKey;
+        // Send buy command to AI
         inputEl.value = `Buy ${item.name}`;
         sendMessage();
+        // Refresh shop panel after short delay to update can-afford styling
+        setTimeout(() => { if (currentShopKey) openShop(currentShopKey); }, 300);
       });
     }
     container.appendChild(div);
