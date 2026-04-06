@@ -15,12 +15,12 @@ const openai = new OpenAI({
 });
 const MODEL = process.env.XAI_API_KEY ? 'grok-3-mini' : 'gpt-4o';
 
-// ── ElevenLabs config ─────────────────────────────────────────────────────────
+// ── ElevenLabs config (FULL voice IDs) ────────────────────────────────────────
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY;
 const VOICES = {
-  irishman: 'JBFqnCBsd6RM',  // George — warm, captivating storyteller
-  narrator: 'nPczCjzI2dev',  // Brian — deep, resonant and comforting
-  shopkeep: 'iP95p4xoKVk5',  // Chris — charming, down-to-earth
+  irishman: 'JBFqnCBsd6RMkjVDRZzb',  // George — warm, captivating storyteller (British)
+  narrator: 'nPczCjzI2devNBz1zQrb',  // Brian — deep, resonant and comforting
+  shopkeep: 'iP95p4xoKVk53GoZ742B',  // Chris — charming, down-to-earth
 };
 
 // ── System prompt ─────────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ CRITICAL FORMATTING RULES:
 - Plain text only. No emojis.
 - Keep responses under 100 words. Punchy. No walls of text.
 - ALWAYS drive forward. Never leave the player without a clear next action.
+- When you ask the player to DO something (a question they must answer, an action they must take), wrap that specific phrase in curly braces like {What's your name, lad?} or {Which path calls to you?}. Only the actionable question/prompt, not the whole paragraph.
 
 LOCATION TAGS:
 At the START of every response, include a location tag on its own line:
@@ -43,22 +44,22 @@ or [LOCATION: The Beginner's Cave - Entrance]
 etc. This updates the scene title for the player. Always include it.
 
 VOICE TAGS:
-At the START of dialogue sections, tag the speaker:
+After the location tag, tag the speaker:
 [VOICE: irishman] for the Burly Irishman
 [VOICE: narrator] for adventure narration
 [VOICE: shopkeep] for shop NPCs
-These tags tell the system which voice to use. Always include one after the location tag.
+These tags tell the system which voice to use. Always include one.
 
 CHOICE FORMATTING:
 When presenting choices, format them as:
 [CHOICE: Visit the weapon shop]
 [CHOICE: Browse the magic emporium]
 [CHOICE: Enter the Adventure Gate]
-Put these at the END of your response, after the narration. The system renders them as clickable cards. You can include 2-5 choices. The player can still type freely — choices are suggestions, not restrictions.
+Put these at the END of your response, after the narration. 2-5 choices. The player can still type freely.
 
 CHARACTER CREATION FLOW (follow exactly):
-1. GREETING: Welcome them. Describe the Guild Hall in 2 sentences. Ask their name.
-   Include: [CHOICE: (just type your name below)]
+1. GREETING: Welcome them. Describe the Guild Hall in 2 sentences. Then: {What's your name, adventurer?}
+   Include: [CHOICE: (type your name below)]
 2. AFTER NAME: Acknowledge warmly. Offer three paths:
    [CHOICE: The way of the Warrior — strong and tough]
    [CHOICE: The path of the Rogue — quick and cunning]
@@ -77,7 +78,7 @@ When the player enters an adventure, shift to cinematic narrator voice.
 
 INPUT CONTEXT TAGS:
 After choices, include one of these to hint how the input should look:
-[INPUT: name] — for name entry (quill/parchment style)
+[INPUT: name] — for name entry
 [INPUT: choice] — for selecting from options
 [INPUT: action] — for freeform adventure commands
 [INPUT: shop] — for shop interactions
@@ -94,34 +95,14 @@ const sessions = new Map();
 function getSession(id) {
   if (!sessions.has(id)) {
     sessions.set(id, {
-      id,
-      phase: 'intro',
-      character: null,
+      id, phase: 'intro', character: null,
       history: [{ role: 'system', content: DM_SYSTEM }],
     });
   }
   return sessions.get(id);
 }
 
-// ── Parse DM response for structured data ─────────────────────────────────────
-function parseDMResponse(text) {
-  const location = text.match(/\[LOCATION:\s*(.+?)\]/)?.[1] || null;
-  const voice = text.match(/\[VOICE:\s*(.+?)\]/)?.[1] || 'narrator';
-  const inputHint = text.match(/\[INPUT:\s*(.+?)\]/)?.[1] || 'action';
-  const choices = [...text.matchAll(/\[CHOICE:\s*(.+?)\]/g)].map(m => m[1]);
-
-  // Strip tags from display text
-  const clean = text
-    .replace(/\[LOCATION:.*?\]\n?/g, '')
-    .replace(/\[VOICE:.*?\]\n?/g, '')
-    .replace(/\[INPUT:.*?\]\n?/g, '')
-    .replace(/\[CHOICE:.*?\]\n?/g, '')
-    .trim();
-
-  return { location, voice, inputHint, choices, clean };
-}
-
-// ── Stream AI with structured parsing ─────────────────────────────────────────
+// ── Stream AI with tag parsing ────────────────────────────────────────────────
 async function streamAI(messages, res, session) {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -129,76 +110,71 @@ async function streamAI(messages, res, session) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: MODEL,
-      messages,
-      stream: true,
-      max_tokens: 300,
-      temperature: 0.85,
+      model: MODEL, messages, stream: true, max_tokens: 300, temperature: 0.85,
     });
 
     let full = '';
     let tagBuffer = '';
     let inTag = false;
+    let braceBuffer = '';
+    let inBrace = false;
 
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content || '';
       if (!delta) continue;
-
       full += delta;
 
-      // Process character by character for tag detection
       for (const ch of delta) {
-        if (ch === '[') {
-          inTag = true;
-          tagBuffer = '[';
+        // Brace detection for action highlights
+        if (ch === '{' && !inTag) { inBrace = true; braceBuffer = ''; continue; }
+        if (ch === '}' && inBrace) {
+          inBrace = false;
+          res.write(`data: ${JSON.stringify({ type: 'action_text', text: braceBuffer })}\n\n`);
+          braceBuffer = '';
           continue;
         }
+        if (inBrace) { braceBuffer += ch; continue; }
+
+        // Tag detection
+        if (ch === '[') { inTag = true; tagBuffer = '['; continue; }
         if (inTag) {
           tagBuffer += ch;
           if (ch === ']') {
             inTag = false;
-            // Parse the complete tag
             const locMatch = tagBuffer.match(/\[LOCATION:\s*(.+?)\]/);
             const voiceMatch = tagBuffer.match(/\[VOICE:\s*(.+?)\]/);
             const choiceMatch = tagBuffer.match(/\[CHOICE:\s*(.+?)\]/);
             const inputMatch = tagBuffer.match(/\[INPUT:\s*(.+?)\]/);
-
-            if (locMatch) {
-              res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
-            } else if (voiceMatch) {
-              res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
-            } else if (choiceMatch) {
-              res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
-            } else if (inputMatch) {
-              res.write(`data: ${JSON.stringify({ type: 'input_hint', hint: inputMatch[1] })}\n\n`);
-            }
+            if (locMatch) res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
+            else if (voiceMatch) res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
+            else if (choiceMatch) res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
+            else if (inputMatch) res.write(`data: ${JSON.stringify({ type: 'input_hint', hint: inputMatch[1] })}\n\n`);
             tagBuffer = '';
           }
           continue;
         }
-        // Regular text token
         res.write(`data: ${JSON.stringify({ type: 'token', text: ch })}\n\n`);
       }
     }
 
     session.history.push({ role: 'assistant', content: full });
 
-    // Send phase update if character was just set
     let phaseUpdate = null;
     if (session.phase === 'classed' && session.character) {
       phaseUpdate = { phase: 'playing', character: session.character };
     }
 
-    // Parse full response for TTS text
-    const parsed = parseDMResponse(full);
+    // Clean text for TTS
+    const clean = full
+      .replace(/\[LOCATION:.*?\]\n?/g, '').replace(/\[VOICE:.*?\]\n?/g, '')
+      .replace(/\[INPUT:.*?\]\n?/g, '').replace(/\[CHOICE:.*?\]\n?/g, '')
+      .replace(/[{}]/g, '').trim();
 
-    res.write(`data: ${JSON.stringify({
-      type: 'done',
-      full: parsed.clean,
-      phaseUpdate,
-      voiceId: VOICES[parsed.voice] || VOICES.narrator,
-      ttsText: parsed.clean,
-    })}\n\n`);
+    // Determine voice from response
+    const voiceKey = full.match(/\[VOICE:\s*(.+?)\]/)?.[1] || 'narrator';
+    const voiceId = VOICES[voiceKey] || VOICES.narrator;
+
+    res.write(`data: ${JSON.stringify({ type: 'done', full: clean, phaseUpdate, voiceId, ttsText: clean })}\n\n`);
     res.end();
   } catch (err) {
     console.error(err);
@@ -212,17 +188,12 @@ app.post('/api/tts', async (req, res) => {
   const { text, voiceId } = req.body;
   if (!text || !ELEVEN_KEY) return res.status(400).json({ error: 'missing text or API key' });
 
-  const vid = voiceId || VOICES.narrator;
-
   try {
-    const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}/stream`, {
+    const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId || VOICES.narrator}/stream`, {
       method: 'POST',
-      headers: {
-        'xi-api-key': ELEVEN_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        text: text.slice(0, 500), // Cap length for cost
+        text: text.slice(0, 500),
         model_id: 'eleven_turbo_v2_5',
         voice_settings: { stability: 0.55, similarity_boost: 0.75, style: 0.35 },
       }),
@@ -230,22 +201,18 @@ app.post('/api/tts', async (req, res) => {
 
     if (!ttsRes.ok) {
       const errText = await ttsRes.text();
-      console.error('ElevenLabs error:', errText);
+      console.error('ElevenLabs error:', ttsRes.status, errText);
       return res.status(ttsRes.status).json({ error: errText });
     }
 
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache');
-
     const reader = ttsRes.body.getReader();
-    const pump = async () => {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) { res.end(); return; }
-        res.write(Buffer.from(value));
-      }
-    };
-    await pump();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) { res.end(); return; }
+      res.write(Buffer.from(value));
+    }
   } catch (err) {
     console.error('TTS error:', err);
     res.status(500).json({ error: err.message });
@@ -263,7 +230,7 @@ app.post('/api/start', async (req, res) => {
 
   session.history.push({
     role: 'user',
-    content: '[SYSTEM: The player just entered the Guild Hall. Greet them as the Burly Irishman. 2 vivid sentences about the hall, then ask their name. Under 60 words. Remember to include [LOCATION: The Great Hall], [VOICE: irishman], and [INPUT: name] tags.]'
+    content: '[SYSTEM: Player entered the Guild Hall. Greet them as the Burly Irishman. 2 vivid sentences about the hall, then ask their name using {braces} around the question. Under 60 words. Include [LOCATION: The Great Hall], [VOICE: irishman], [INPUT: name] tags, and [CHOICE: (type your name below)].]'
   });
 
   await streamAI(session.history, res, session);
@@ -282,7 +249,7 @@ app.post('/api/chat', async (req, res) => {
     session.history.push({ role: 'user', content: `My name is ${message}` });
     session.history.push({
       role: 'system',
-      content: '[Acknowledge their name warmly. Offer three paths: Warrior, Rogue, Mystic. Use [CHOICE:] tags for each. Include [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 80 words.]'
+      content: '[Acknowledge name warmly. Offer three paths: Warrior, Rogue, Mystic. Use [CHOICE:] tags. Use {braces} around the question asking which path. Include [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 80 words.]'
     });
   } else if (session.phase === 'named') {
     const lower = message.toLowerCase();
@@ -302,7 +269,7 @@ app.post('/api/chat', async (req, res) => {
     session.history.push({ role: 'user', content: `I choose the path of the ${cls}.` });
     session.history.push({
       role: 'system',
-      content: `[They chose ${cls}. Stats: HD ${stats[cls].hd}, AG ${stats[cls].ag}, CH ${stats[cls].ch}, Gold ${stats[cls].gold}. Confirm with flavor, state stats, offer shops or Adventure Gate. Use [CHOICE:] tags, [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 100 words.]`
+      content: `[They chose ${cls}. Stats: HD ${stats[cls].hd}, AG ${stats[cls].ag}, CH ${stats[cls].ch}, Gold ${stats[cls].gold}. Confirm with flavor, state stats, offer shops or Adventure Gate. Use [CHOICE:] tags, {braces} around the question, [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 100 words.]`
     });
   } else {
     session.history.push({ role: 'user', content: message });
