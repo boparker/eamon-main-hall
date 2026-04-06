@@ -326,7 +326,9 @@ async function generateGeminiImage(prompt, cachePrefix) {
     return publicUrl;
   }
 
-  if (!GEMINI_KEY) {
+  // Read env var at runtime (not just at startup)
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
     console.error('[IMG] No GEMINI_API_KEY set');
     return null;
   }
@@ -337,7 +339,7 @@ async function generateGeminiImage(prompt, cachePrefix) {
 
   try {
     const gemRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${GEMINI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
