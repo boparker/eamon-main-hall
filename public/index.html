@@ -355,8 +355,32 @@ let character = {};
 let currentVoiceId = null;
 
 // ── Music ──
-const bgMusic = new Audio('lead-drip-psalm.mp3');
-bgMusic.loop = true; bgMusic.volume = 0;
+const hallMusic = new Audio('concrete-omen.mp3');
+hallMusic.loop = true; hallMusic.volume = 0;
+const adventureMusic = new Audio('lead-drip-psalm.mp3');
+adventureMusic.loop = true; adventureMusic.volume = 0;
+let bgMusic = hallMusic; // start with hall music
+
+function switchMusic(track) {
+  if (bgMusic === track) return;
+  const oldMusic = bgMusic;
+  bgMusic = track;
+  // Crossfade
+  const fadeOut = setInterval(() => {
+    oldMusic.volume = Math.max(0, oldMusic.volume - 0.02);
+    if (oldMusic.volume <= 0) { oldMusic.pause(); clearInterval(fadeOut); }
+  }, 50);
+  if (musicEnabled) {
+    track.volume = 0;
+    track.play().catch(()=>{});
+    let vol2 = 0;
+    const fadeIn = setInterval(() => {
+      vol2 = Math.min(vol2 + 0.008, 0.3);
+      track.volume = vol2;
+      if (vol2 >= 0.3) clearInterval(fadeIn);
+    }, 50);
+  }
+}
 function startMusic() {
   if (!musicEnabled) return;
   bgMusic.play().catch(()=>{});
@@ -368,7 +392,7 @@ document.getElementById('hud-music-btn').addEventListener('click', () => {
   const btn = document.getElementById('hud-music-btn');
   btn.classList.toggle('active', musicEnabled);
   btn.textContent = musicEnabled ? '🎵' : '🔇';
-  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; } else bgMusic.pause();
+  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; } else { hallMusic.pause(); adventureMusic.pause(); }
 });
 
 // ── Voice (ElevenLabs) ──
@@ -428,6 +452,10 @@ function setLocation(name) {
   el.classList.remove('visible', 'reveal');
   void el.offsetWidth;
   el.classList.add('visible', 'reveal');
+  // Switch music based on location
+  const lowerName = name.toLowerCase();
+  const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn');
+  switchMusic(isHall ? hallMusic : adventureMusic);
 }
 
 // ── Choices ──

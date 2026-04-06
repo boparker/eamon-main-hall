@@ -1,5 +1,6 @@
 import express from 'express';
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -8,12 +9,24 @@ const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-// ── AI Client (Grok via xAI, OpenAI-compatible) ──────────────────────────────
-const openai = new OpenAI({
+// ── AI Client ─────────────────────────────────────────────────────────────────
+let AI_PROVIDER, MODEL;
+if (process.env.ANTHROPIC_API_KEY) {
+  AI_PROVIDER = 'anthropic';
+  MODEL = 'claude-haiku-4-5-20250315';
+} else if (process.env.XAI_API_KEY) {
+  AI_PROVIDER = 'xai';
+  MODEL = 'grok-3-mini';
+} else {
+  AI_PROVIDER = 'openai';
+  MODEL = 'gpt-4o';
+}
+
+const anthropic = AI_PROVIDER === 'anthropic' ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+const openai = AI_PROVIDER !== 'anthropic' ? new OpenAI({
   apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
   baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1',
-});
-const MODEL = process.env.XAI_API_KEY ? 'grok-3-mini' : 'gpt-4o';
+}) : null;
 
 // ── ElevenLabs config (FULL voice IDs) ────────────────────────────────────────
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY;
@@ -119,9 +132,34 @@ async function streamAI(messages, res, session) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: MODEL, messages, stream: true, max_tokens: 300, temperature: 0.85,
-    });
+    // Create stream based on provider
+    let streamIterator;
+    if (AI_PROVIDER === 'anthropic') {
+      // Convert messages: extract system, keep user/assistant
+      const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+      const chatMsgs = messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }));
+      const anthropicStream = anthropic.messages.stream({
+        model: MODEL, system: systemMsg, messages: chatMsgs,
+        max_tokens: 300, temperature: 0.85,
+      });
+      streamIterator = (async function*() {
+        for await (const event of anthropicStream) {
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            yield event.delta.text;
+          }
+        }
+      })();
+    } else {
+      const oaiStream = await openai.chat.completions.create({
+        model: MODEL, messages, stream: true, max_tokens: 300, temperature: 0.85,
+      });
+      streamIterator = (async function*() {
+        for await (const chunk of oaiStream) {
+          const delta = chunk.choices[0]?.delta?.content || '';
+          if (delta) yield delta;
+        }
+      })();
+    }
 
     let full = '';
     let tagBuffer = '';
@@ -129,9 +167,7 @@ async function streamAI(messages, res, session) {
     let braceBuffer = '';
     let inBrace = false;
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content || '';
-      if (!delta) continue;
+    for await (const delta of streamIterator) {
       full += delta;
 
       for (const ch of delta) {
