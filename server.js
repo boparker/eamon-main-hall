@@ -453,5 +453,16 @@ app.post('/api/chat', async (req, res) => {
   await streamAI(session.history, res, session);
 });
 
+// ── Health / Debug ────────────────────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    gemini_key_set: !!process.env.GEMINI_API_KEY,
+    gemini_key_length: process.env.GEMINI_API_KEY?.length || 0,
+    model: MODEL,
+    provider: AI_PROVIDER,
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${MODEL}`));
