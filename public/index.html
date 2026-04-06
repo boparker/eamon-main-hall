@@ -349,9 +349,23 @@ const SHOP_DATA = {
   },
 };
 
+// Shop-to-location mapping for background generation
+const SHOP_LOCATIONS = {
+  marcos: "Marcos Cavielli's Weapon Shop — racks of swords and axes on stone walls, anvil, forge glow",
+  hokas: "Hokas Tokas' Magic Emporium — shelves of potions, glowing crystals, arcane tomes, purple mist",
+  bank: "Shylock McFenney's Bank — gold stacks, iron vault doors, counting tables, candlelight",
+  pawn: "Sam Slicker's Pawn Shop — cluttered shelves of adventuring gear, dusty treasures, dim lanterns"
+};
+
 function openShop(shopKey) {
   const shop = SHOP_DATA[shopKey];
   if (!shop) return;
+  // Generate shop-specific background
+  const shopLocation = SHOP_LOCATIONS[shopKey];
+  if (shopLocation && shopLocation !== lastBgLocation) {
+    lastBgLocation = shopLocation;
+    generateSceneBg(shopLocation);
+  }
   const panel = document.getElementById('shop-panel');
   document.getElementById('shop-title').textContent = shop.title;
   document.getElementById('shop-title').dataset.shopKey = shopKey;
@@ -372,18 +386,20 @@ function openShop(shopKey) {
   });
   // Only show category headers if more than one category
   const showHeaders = sortedCats.length > 1;
+  let lastHeaderLabel = '';
   for (const cat of sortedCats) {
     if (showHeaders) {
-      // Merge weapon subtypes under one header
+      // Merge weapon subtypes under one header, shield under armor
       const weaponTypes = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer'];
-      const headerLabel = weaponTypes.includes(cat) ? '⚔ WEAPONS' : cat === 'Armor' ? '🛡 ARMOR' : cat === 'Shield' ? '🛡 SHIELDS' : cat === 'Spell' ? '✦ SPELLS' : cat === 'Potion' ? '🧪 POTIONS' : cat === 'Scroll' ? '📜 SCROLLS' : cat;
-      // Avoid duplicate weapon headers
-      const lastHeader = container.querySelector('.shop-category:last-of-type');
-      if (!lastHeader || lastHeader.textContent !== headerLabel) {
+      const armorTypes = ['Armor', 'Shield'];
+      const headerLabel = weaponTypes.includes(cat) ? '⚔ WEAPONS' : armorTypes.includes(cat) ? '🛡 ARMOR & SHIELDS' : cat === 'Spell' ? '✦ SPELLS' : cat === 'Potion' ? '🧪 POTIONS' : cat === 'Scroll' ? '📜 SCROLLS' : cat;
+      // Avoid duplicate headers
+      if (headerLabel !== lastHeaderLabel) {
         const hdr = document.createElement('div');
         hdr.className = 'shop-category';
         hdr.textContent = headerLabel;
         container.appendChild(hdr);
+        lastHeaderLabel = headerLabel;
       }
     }
     for (const item of groups[cat]) {
