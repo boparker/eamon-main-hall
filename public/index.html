@@ -24,101 +24,80 @@
       --font-body: "Crimson Text", Georgia, serif;
     }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      overflow: hidden;
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); overflow: hidden; }
 
-    /* ── Title Screen ── */
+    /* ═══ TITLE SCREEN ═══ */
     #title-screen {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      z-index: 100; background: var(--bg); gap: 32px;
-      transition: opacity 1.2s ease;
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100;
+      background: var(--bg); gap: 32px; transition: opacity 1.2s ease;
     }
     #title-screen.fade-out { opacity: 0; pointer-events: none; }
 
     .title-sigil {
-      width: 72px; height: 72px;
-      border: 1px solid var(--gold-dim); border-radius: 50%;
+      width: 72px; height: 72px; border: 1px solid var(--gold-dim); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; color: var(--gold-dim);
-      animation: breathe 4s ease-in-out infinite;
+      font-size: 1.8rem; color: var(--gold-dim); animation: breathe 4s ease-in-out infinite;
     }
     @keyframes breathe {
-      0%, 100% { box-shadow: 0 0 20px rgba(200,168,75,0.1); }
+      0%,100% { box-shadow: 0 0 20px rgba(200,168,75,0.1); }
       50% { box-shadow: 0 0 40px rgba(200,168,75,0.25), 0 0 80px rgba(200,168,75,0.08); }
     }
-
-    .title-main {
-      font-family: var(--font-head);
-      font-size: clamp(2.8rem, 8vw, 5rem);
-      font-weight: 400; color: var(--gold);
-      letter-spacing: 0.12em; text-align: center; line-height: 1;
-    }
-    .title-sub {
-      font-style: italic; color: var(--text-dim);
-      font-size: 1rem; letter-spacing: 0.15em; text-align: center;
-    }
+    .title-main { font-family: var(--font-head); font-size: clamp(2.8rem,8vw,5rem); font-weight: 400; color: var(--gold); letter-spacing: 0.12em; text-align: center; line-height: 1; }
+    .title-sub { font-style: italic; color: var(--text-dim); font-size: 1rem; letter-spacing: 0.15em; }
     .enter-btn {
-      margin-top: 16px; padding: 14px 56px;
-      font-family: var(--font-head); font-size: 1rem; letter-spacing: 0.15em;
-      color: var(--gold); background: transparent;
-      border: 1px solid var(--gold-dim); border-radius: 2px;
-      cursor: pointer; transition: all 0.3s ease;
+      margin-top: 16px; padding: 14px 56px; font-family: var(--font-head); font-size: 1rem;
+      letter-spacing: 0.15em; color: var(--gold); background: transparent;
+      border: 1px solid var(--gold-dim); border-radius: 2px; cursor: pointer; transition: all 0.3s;
     }
-    .enter-btn:hover {
-      background: rgba(200,168,75,0.06); border-color: var(--gold);
-      box-shadow: 0 0 30px rgba(200,168,75,0.12);
-    }
+    .enter-btn:hover { background: rgba(200,168,75,0.06); border-color: var(--gold); box-shadow: 0 0 30px rgba(200,168,75,0.12); }
 
-    /* ── Game Screen ── */
+    /* ═══ GAME SCREEN ═══ */
     #game-screen {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
-      opacity: 0; pointer-events: none;
-      transition: opacity 1.2s ease;
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
     }
     #game-screen.active { opacity: 1; pointer-events: all; }
 
+    /* ── Scene Background ── */
     #scene-bg {
-      position: absolute; inset: 0;
+      position: absolute; inset: 0; z-index: 0;
       background: url('bg.jpg') center top / cover no-repeat, var(--bg);
-      z-index: 0;
     }
     #scene-bg::after {
       content: ''; position: absolute; inset: 0;
       background: linear-gradient(to bottom,
-        rgba(5,4,4,0.35) 0%, rgba(5,4,4,0.2) 30%,
-        rgba(5,4,4,0.7) 65%, rgba(5,4,4,0.97) 100%);
+        rgba(5,4,4,0.15) 0%, rgba(5,4,4,0.1) 20%,
+        rgba(5,4,4,0.6) 55%, rgba(5,4,4,0.97) 100%);
     }
 
     #grain {
-      position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      opacity: 0.025;
+      position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.025;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-      background-repeat: repeat; background-size: 128px;
-      animation: grainShift 0.5s steps(1) infinite;
+      background-repeat: repeat; background-size: 128px; animation: grainShift 0.5s steps(1) infinite;
     }
-    @keyframes grainShift {
-      0% { background-position: 0 0; }
-      20% { background-position: -30px 10px; }
-      40% { background-position: 10px -20px; }
-      60% { background-position: -20px -10px; }
-      80% { background-position: 30px 20px; }
-      100% { background-position: 0 0; }
+    @keyframes grainShift { 0%{background-position:0 0}20%{background-position:-30px 10px}40%{background-position:10px -20px}60%{background-position:-20px -10px}80%{background-position:30px 20px}100%{background-position:0 0} }
+
+    /* ── Location Title (overlaid on scene) ── */
+    #location-title {
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 15; font-family: var(--font-head); font-size: clamp(1.2rem, 3vw, 1.8rem);
+      color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase;
+      text-shadow: 0 0 40px rgba(200,168,75,0.3), 0 2px 8px rgba(0,0,0,0.8);
+      white-space: nowrap; opacity: 0; transition: opacity 0.8s ease;
     }
+    #location-title.visible { opacity: 1; }
+    @keyframes titleReveal {
+      from { opacity: 0; transform: translateX(-50%) translateY(-6px); letter-spacing: 0.3em; }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); letter-spacing: 0.18em; }
+    }
+    #location-title.reveal { animation: titleReveal 1s ease-out forwards; }
 
     /* ── HUD ── */
     #hud {
-      position: relative; z-index: 10;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 28px;
-      background: rgba(5,4,4,0.75);
-      border-bottom: 1px solid var(--border);
+      position: relative; z-index: 10; display: flex; align-items: center;
+      justify-content: space-between; padding: 12px 28px;
+      background: rgba(5,4,4,0.75); border-bottom: 1px solid var(--border);
       backdrop-filter: blur(8px); flex-shrink: 0;
     }
     #hud-name { font-family: var(--font-head); font-size: 1.1rem; color: var(--gold); letter-spacing: 0.06em; }
@@ -127,155 +106,122 @@
     .hud-stat-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
     .hud-stat-val { font-size: 1rem; color: var(--text); font-weight: 600; }
     .hud-controls { display: flex; gap: 8px; }
-
     .hud-btn {
-      background: none; border: 1px solid var(--border);
-      border-radius: 50%; width: 32px; height: 32px;
-      cursor: pointer; color: var(--text-dim); font-size: 0.85rem;
-      transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid var(--border); border-radius: 50%;
+      width: 32px; height: 32px; cursor: pointer; color: var(--text-dim);
+      font-size: 0.85rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
     }
     .hud-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     .hud-btn.active { border-color: var(--gold); color: var(--gold); }
 
+    /* ── NPC Portrait ── */
+    #npc-portrait {
+      position: absolute; top: 80px; right: clamp(20px, 4vw, 60px); z-index: 12;
+      width: 120px; height: 150px; border: 2px solid var(--gold-dim); border-radius: 4px;
+      background: rgba(5,4,4,0.7); backdrop-filter: blur(6px);
+      display: none; flex-direction: column; align-items: center; overflow: hidden;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+    }
+    #npc-portrait.visible { display: flex; animation: portraitIn 0.6s ease-out; }
+    @keyframes portraitIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    #npc-portrait-img { width: 100%; height: 110px; object-fit: cover; background: rgba(200,168,75,0.05); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+    #npc-portrait-name { font-family: var(--font-head); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--gold); padding: 6px; text-align: center; text-transform: uppercase; }
+
     /* ── Narrative ── */
     #narrative-area {
-      position: relative; z-index: 5; flex: 1;
-      display: flex; flex-direction: column; justify-content: flex-end;
-      padding: 0 clamp(20px, 5vw, 80px) 0; overflow: hidden;
+      position: relative; z-index: 5; flex: 1; display: flex;
+      flex-direction: column; justify-content: flex-end;
+      padding: 0 clamp(20px,5vw,80px) 0; overflow: hidden;
     }
-    #narrative-scroll {
-      max-height: 45vh; overflow-y: auto; scrollbar-width: none;
-    }
+    #narrative-scroll { max-height: 42vh; overflow-y: auto; scrollbar-width: none; }
     #narrative-scroll::-webkit-scrollbar { display: none; }
-
-    .narrative-line {
-      font-size: clamp(1.05rem, 2.2vw, 1.3rem);
-      line-height: 1.8; color: var(--text);
-      margin-bottom: 12px; max-width: 750px;
-    }
-    .narrative-line.player-line {
-      color: var(--gold); font-style: italic;
-      font-size: 0.95em; margin-bottom: 16px;
-      opacity: 0.8;
-    }
+    .narrative-line { font-size: clamp(1.05rem,2.2vw,1.3rem); line-height: 1.8; color: var(--text); margin-bottom: 12px; max-width: 700px; }
+    .narrative-line.player-line { color: var(--gold); font-style: italic; font-size: 0.95em; margin-bottom: 16px; opacity: 0.8; }
     .narrative-line.player-line::before { content: '› '; color: var(--gold-dim); }
-
-    .cursor {
-      display: inline-block; width: 2px; height: 1.1em;
-      background: var(--gold); margin-left: 2px; vertical-align: text-bottom;
-      animation: blink 0.7s step-end infinite;
-    }
+    .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--gold); margin-left: 2px; vertical-align: text-bottom; animation: blink 0.7s step-end infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    @keyframes lineIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes lineIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .line-enter { animation: lineIn 0.4s ease-out forwards; }
 
+    /* ── Choices ── */
+    #choices-area {
+      position: relative; z-index: 10; display: none; flex-wrap: wrap; gap: 8px;
+      padding: 8px clamp(20px,5vw,80px) 12px; max-width: 780px;
+    }
+    #choices-area.visible { display: flex; animation: lineIn 0.5s ease-out; }
+    .choice-card {
+      padding: 10px 20px; background: rgba(200,168,75,0.04);
+      border: 1px solid var(--gold-dim); border-radius: 3px; cursor: pointer;
+      font-family: var(--font-body); font-size: 0.95rem; color: var(--gold);
+      transition: all 0.25s ease; letter-spacing: 0.02em;
+    }
+    .choice-card:hover {
+      background: rgba(200,168,75,0.1); border-color: var(--gold);
+      box-shadow: 0 0 20px var(--gold-glow); transform: translateY(-1px);
+    }
+
     /* ── Thinking ── */
-    #thinking {
-      display: none; align-items: center; gap: 8px;
-      padding: 8px 0 12px; color: var(--text-dim);
-      font-style: italic; font-size: 0.9rem;
-    }
-    .think-dot {
-      width: 4px; height: 4px; border-radius: 50%;
-      background: var(--gold-dim);
-      animation: thinkPulse 1.4s ease-in-out infinite;
-    }
+    #thinking { display: none; align-items: center; gap: 8px; padding: 8px clamp(20px,5vw,80px) 4px; color: var(--text-dim); font-style: italic; font-size: 0.9rem; }
+    .think-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold-dim); animation: thinkPulse 1.4s ease-in-out infinite; }
     .think-dot:nth-child(2) { animation-delay: 0.2s; }
     .think-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes thinkPulse {
-      0%,80%,100% { transform: scale(0.6); opacity: 0.3; }
-      40% { transform: scale(1.2); opacity: 1; }
-    }
+    @keyframes thinkPulse { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1.2);opacity:1} }
 
-    /* ── Input Zone ── */
-    #input-zone {
-      position: relative; z-index: 10;
-      padding: 0 clamp(20px, 5vw, 80px) 28px;
-    }
+    /* ═══ INPUT ZONE ═══ */
+    #input-zone { position: relative; z-index: 10; padding: 0 clamp(20px,5vw,80px) 28px; }
 
     #input-label {
-      font-family: var(--font-head);
-      font-size: 0.75rem;
-      letter-spacing: 0.15em;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-      padding-left: 2px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
+      font-family: var(--font-head); font-size: 0.75rem; letter-spacing: 0.15em;
+      color: var(--gold); text-transform: uppercase; margin-bottom: 10px; padding-left: 2px;
+      opacity: 0; transition: opacity 0.5s ease;
     }
     #input-label.visible { opacity: 1; }
 
     #input-box {
-      display: flex; align-items: center; gap: 12px;
-      max-width: 750px;
-      padding: 16px 20px;
-      background: rgba(12,10,8,0.85);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      backdrop-filter: blur(12px);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      display: flex; align-items: center; gap: 12px; max-width: 700px;
+      padding: 16px 20px; background: rgba(12,10,8,0.85);
+      border: 1px solid var(--border); border-radius: 4px;
+      backdrop-filter: blur(12px); transition: border-color 0.3s, box-shadow 0.3s;
     }
-    #input-box.glow {
-      border-color: var(--gold-dim);
-      box-shadow: 0 0 20px var(--gold-glow), 0 0 60px rgba(200,168,75,0.05);
-    }
-    #input-box:focus-within {
-      border-color: var(--gold);
-      box-shadow: 0 0 24px var(--gold-glow);
-    }
+    #input-box.glow { border-color: var(--gold-dim); box-shadow: 0 0 20px var(--gold-glow), 0 0 60px rgba(200,168,75,0.05); }
+    #input-box:focus-within { border-color: var(--gold); box-shadow: 0 0 24px var(--gold-glow); }
 
-    #prompt-arrow {
-      color: var(--gold); font-family: var(--font-head);
-      font-size: 1.2rem; flex-shrink: 0;
-    }
+    /* Input context skins */
+    #input-box.skin-name { border-color: rgba(200,168,75,0.5); background: rgba(40,30,15,0.9); }
+    #input-box.skin-name #prompt-arrow::before { content: '✒'; }
+    #input-box.skin-shop { border-color: rgba(120,100,60,0.5); background: rgba(30,25,15,0.9); }
 
+    #prompt-arrow { color: var(--gold); font-family: var(--font-head); font-size: 1.2rem; flex-shrink: 0; }
     #player-input {
       flex: 1; background: transparent; border: none; outline: none;
-      font-family: var(--font-body);
-      font-size: clamp(1.05rem, 2vw, 1.2rem);
-      color: var(--text); caret-color: var(--gold);
-      letter-spacing: 0.01em;
+      font-family: var(--font-body); font-size: clamp(1.05rem,2vw,1.2rem);
+      color: var(--text); caret-color: var(--gold); letter-spacing: 0.01em;
     }
     #player-input::placeholder { color: var(--text-dim); font-style: italic; }
-
     #send-btn {
-      flex-shrink: 0; background: none;
-      border: 1px solid var(--border); border-radius: 2px;
-      padding: 8px 20px; font-family: var(--font-head);
-      font-size: 0.8rem; letter-spacing: 0.1em;
-      color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+      flex-shrink: 0; background: none; border: 1px solid var(--border); border-radius: 2px;
+      padding: 8px 20px; font-family: var(--font-head); font-size: 0.8rem;
+      letter-spacing: 0.1em; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
     }
     #send-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* Pulse animation for input when waiting for player */
     @keyframes inputPulse {
-      0%, 100% { box-shadow: 0 0 20px var(--gold-glow); }
+      0%,100% { box-shadow: 0 0 20px var(--gold-glow); }
       50% { box-shadow: 0 0 35px rgba(200,168,75,0.2), 0 0 70px rgba(200,168,75,0.06); }
     }
-    #input-box.pulse {
-      border-color: var(--gold-dim);
-      animation: inputPulse 2.5s ease-in-out infinite;
-    }
+    #input-box.pulse { border-color: var(--gold-dim); animation: inputPulse 2.5s ease-in-out infinite; }
 
-    /* ── Stats reveal animation ── */
-    @keyframes statPop {
-      0% { transform: scale(0.5); opacity: 0; }
-      60% { transform: scale(1.15); }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    @keyframes statPop { 0%{transform:scale(0.5);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
     .stat-reveal { animation: statPop 0.4s ease-out forwards; }
 
-    /* ── Responsive ── */
     @media (max-width: 640px) {
       #hud-stats { gap: 14px; }
       .hud-stat-val { font-size: 0.9rem; }
       #input-box { padding: 12px 16px; }
+      #npc-portrait { width: 90px; height: 115px; top: 70px; right: 12px; }
+      #npc-portrait-img { height: 80px; font-size: 2rem; }
+      .choice-card { padding: 8px 14px; font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -293,6 +239,13 @@
 <div id="game-screen">
   <div id="scene-bg"></div>
   <div id="grain"></div>
+  <div id="location-title"></div>
+
+  <!-- NPC Portrait -->
+  <div id="npc-portrait">
+    <div id="npc-portrait-img"></div>
+    <div id="npc-portrait-name"></div>
+  </div>
 
   <div id="hud">
     <div id="hud-name">—</div>
@@ -310,10 +263,13 @@
 
   <div id="narrative-area">
     <div id="narrative-scroll"></div>
-    <div id="thinking">
-      <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
-    </div>
   </div>
+
+  <div id="thinking">
+    <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
+  </div>
+
+  <div id="choices-area"></div>
 
   <div id="input-zone">
     <div id="input-label"></div>
@@ -330,66 +286,46 @@ const SESSION_ID = 'eamon-' + Math.random().toString(36).slice(2, 10);
 let voiceEnabled = true;
 let musicEnabled = true;
 let isStreaming = false;
-let speechSynth = window.speechSynthesis;
-let gamePhase = 'intro'; // intro → named → classed → playing
-let character = { name: null, hd: null, ag: null, ch: null, gold: null };
+let gamePhase = 'intro';
+let character = {};
+let currentVoiceId = null;
 
 // ── Music ──
 const bgMusic = new Audio('lead-drip-psalm.mp3');
-bgMusic.loop = true;
-bgMusic.volume = 0;
-
+bgMusic.loop = true; bgMusic.volume = 0;
 function startMusic() {
   if (!musicEnabled) return;
-  bgMusic.play().catch(() => {});
+  bgMusic.play().catch(()=>{});
   let vol = 0;
-  const fade = setInterval(() => {
-    vol = Math.min(vol + 0.008, 0.3);
-    bgMusic.volume = vol;
-    if (vol >= 0.3) clearInterval(fade);
-  }, 50);
+  const fade = setInterval(() => { vol = Math.min(vol + 0.008, 0.3); bgMusic.volume = vol; if (vol >= 0.3) clearInterval(fade); }, 50);
 }
-
 document.getElementById('hud-music-btn').addEventListener('click', () => {
   musicEnabled = !musicEnabled;
   const btn = document.getElementById('hud-music-btn');
   btn.classList.toggle('active', musicEnabled);
   btn.textContent = musicEnabled ? '🎵' : '🔇';
-  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; }
-  else { bgMusic.pause(); }
+  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; } else bgMusic.pause();
 });
 
-// ── Voice (sentence-by-sentence as tokens stream) ──
-let voiceQueue = [];
-let speakingNow = false;
-let sentenceBuffer = '';
-
-function queueSpeech(text) {
-  if (!voiceEnabled || !speechSynth) return;
-  const clean = text.replace(/[*_#`]/g, '').trim();
-  if (!clean) return;
-  voiceQueue.push(clean);
-  if (!speakingNow) speakNext();
-}
-
-function speakNext() {
-  if (voiceQueue.length === 0) { speakingNow = false; return; }
-  speakingNow = true;
-  const text = voiceQueue.shift();
-  const utt = new SpeechSynthesisUtterance(text);
-  const voices = speechSynth.getVoices();
-  const preferred = voices.find(v =>
-    v.name.includes('Daniel') || v.name.includes('Eddy') ||
-    v.name.includes('Google UK English Male') ||
-    (v.lang === 'en-GB' && v.name.toLowerCase().includes('male'))
-  ) || voices.find(v => v.lang.startsWith('en'));
-  if (preferred) utt.voice = preferred;
-  utt.rate = 0.9;
-  utt.pitch = 0.82;
-  utt.volume = 0.95;
-  utt.onend = speakNext;
-  utt.onerror = speakNext;
-  speechSynth.speak(utt);
+// ── Voice (ElevenLabs) ──
+let ttsAudio = null;
+async function speakElevenLabs(text, voiceId) {
+  if (!voiceEnabled || !text) return;
+  try {
+    if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voiceId }),
+    });
+    if (!res.ok) throw new Error('TTS failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    ttsAudio = new Audio(url);
+    ttsAudio.volume = 0.9;
+    ttsAudio.play().catch(()=>{});
+    ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null; };
+  } catch (e) { console.warn('ElevenLabs TTS error:', e); }
 }
 
 document.getElementById('hud-voice-btn').addEventListener('click', () => {
@@ -397,15 +333,61 @@ document.getElementById('hud-voice-btn').addEventListener('click', () => {
   const btn = document.getElementById('hud-voice-btn');
   btn.classList.toggle('active', voiceEnabled);
   btn.textContent = voiceEnabled ? '🔊' : '🔇';
-  if (!voiceEnabled) { speechSynth.cancel(); voiceQueue = []; speakingNow = false; sentenceBuffer = ''; }
+  if (!voiceEnabled && ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
 });
 
-speechSynth.getVoices();
-speechSynth.onvoiceschanged = () => speechSynth.getVoices();
+// ── Location Title ──
+function setLocation(name) {
+  const el = document.getElementById('location-title');
+  el.textContent = name;
+  el.classList.remove('visible', 'reveal');
+  void el.offsetWidth;
+  el.classList.add('visible', 'reveal');
+}
+
+// ── NPC Portrait ──
+const NPC_PORTRAITS = {
+  irishman:  { emoji: '🍺', name: 'The Burly Irishman' },
+  narrator:  { emoji: '📖', name: 'Narrator' },
+  shopkeep:  { emoji: '⚔️', name: 'Marcos Cavielli' },
+};
+function showPortrait(voice) {
+  const npc = NPC_PORTRAITS[voice] || NPC_PORTRAITS.narrator;
+  const el = document.getElementById('npc-portrait');
+  document.getElementById('npc-portrait-img').textContent = npc.emoji;
+  document.getElementById('npc-portrait-name').textContent = npc.name;
+  el.classList.remove('visible');
+  void el.offsetWidth;
+  el.classList.add('visible');
+}
+function hidePortrait() {
+  document.getElementById('npc-portrait').classList.remove('visible');
+}
+
+// ── Choices ──
+const choicesArea = document.getElementById('choices-area');
+let pendingChoices = [];
+
+function renderChoices() {
+  choicesArea.innerHTML = '';
+  if (pendingChoices.length === 0) { choicesArea.classList.remove('visible'); return; }
+  for (const text of pendingChoices) {
+    const card = document.createElement('div');
+    card.className = 'choice-card';
+    card.textContent = text;
+    card.addEventListener('click', () => {
+      choicesArea.classList.remove('visible');
+      pendingChoices = [];
+      inputEl.value = text;
+      sendMessage();
+    });
+    choicesArea.appendChild(card);
+  }
+  choicesArea.classList.add('visible');
+}
 
 // ── Narrative ──
 const scroll = document.getElementById('narrative-scroll');
-
 function addPlayerLine(text) {
   const div = document.createElement('div');
   div.className = 'narrative-line player-line line-enter';
@@ -413,61 +395,51 @@ function addPlayerLine(text) {
   scroll.appendChild(div);
   scroll.scrollTop = scroll.scrollHeight;
 }
-
 let activeStreamLine = null;
-let streamBuffer = '';
-
 function startStreamLine() {
-  streamBuffer = '';
-  sentenceBuffer = '';
   activeStreamLine = document.createElement('div');
   activeStreamLine.className = 'narrative-line line-enter';
   const cursor = document.createElement('span');
-  cursor.className = 'cursor';
-  cursor.id = 'stream-cursor';
+  cursor.className = 'cursor'; cursor.id = 'stream-cursor';
   activeStreamLine.appendChild(cursor);
   scroll.appendChild(activeStreamLine);
   scroll.scrollTop = scroll.scrollHeight;
 }
-
 function appendStreamToken(token) {
-  streamBuffer += token;
-  sentenceBuffer += token;
   const cursor = document.getElementById('stream-cursor');
   if (cursor) cursor.before(document.createTextNode(token));
   scroll.scrollTop = scroll.scrollHeight;
-
-  // Speak sentence-by-sentence as they complete
-  const sentenceEnd = sentenceBuffer.match(/[.!?]["']?\s/);
-  if (sentenceEnd) {
-    const idx = sentenceEnd.index + sentenceEnd[0].length;
-    const sentence = sentenceBuffer.slice(0, idx);
-    sentenceBuffer = sentenceBuffer.slice(idx);
-    queueSpeech(sentence);
-  }
 }
-
 function finishStreamLine() {
   const cursor = document.getElementById('stream-cursor');
   if (cursor) cursor.remove();
   activeStreamLine = null;
-  // Speak any remaining text
-  if (sentenceBuffer.trim()) {
-    queueSpeech(sentenceBuffer);
-    sentenceBuffer = '';
-  }
 }
 
-// ── Input state management ──
+// ── Input state ──
 const inputEl = document.getElementById('player-input');
 const inputBox = document.getElementById('input-box');
 const inputLabel = document.getElementById('input-label');
 const sendBtn = document.getElementById('send-btn');
 
-function setInputState(placeholder, label, enabled) {
-  inputEl.placeholder = placeholder;
-  inputLabel.textContent = label;
-  inputLabel.classList.toggle('visible', !!label);
+const INPUT_SKINS = {
+  name:   { placeholder: 'Sign thy name here...', label: 'SIGN THE BOOK', skin: 'skin-name', arrow: '✒' },
+  choice: { placeholder: 'Choose your path...', label: 'YOUR CHOICE', skin: '', arrow: '›' },
+  action: { placeholder: 'What do you do?', label: '', skin: '', arrow: '›' },
+  shop:   { placeholder: 'What catches your eye?', label: 'BROWSE THE WARES', skin: 'skin-shop', arrow: '⚖' },
+};
+
+function setInputState(hint, enabled) {
+  const cfg = INPUT_SKINS[hint] || INPUT_SKINS.action;
+  inputEl.placeholder = cfg.placeholder;
+  inputLabel.textContent = cfg.label;
+  inputLabel.classList.toggle('visible', !!cfg.label);
+  document.getElementById('prompt-arrow').textContent = cfg.arrow;
+
+  // Remove all skins, apply new one
+  inputBox.classList.remove('skin-name', 'skin-shop');
+  if (cfg.skin) inputBox.classList.add(cfg.skin);
+
   inputEl.disabled = !enabled;
   sendBtn.disabled = !enabled;
   if (enabled) {
@@ -482,16 +454,20 @@ function setInputState(placeholder, label, enabled) {
 async function streamMessage(endpoint, body) {
   if (isStreaming) return;
   isStreaming = true;
-  setInputState('', '', false);
+  setInputState('action', false);
+  pendingChoices = [];
+  choicesArea.classList.remove('visible');
   document.getElementById('thinking').style.display = 'flex';
+
+  let ttsText = '';
+  let doneVoiceId = null;
+  let doneInputHint = 'action';
 
   try {
     const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-
     document.getElementById('thinking').style.display = 'none';
     startStreamLine();
 
@@ -509,11 +485,15 @@ async function streamMessage(endpoint, body) {
         if (!line.startsWith('data: ')) continue;
         try {
           const evt = JSON.parse(line.slice(6));
-          if (evt.type === 'token') appendStreamToken(evt.text);
+          if (evt.type === 'token') { appendStreamToken(evt.text); ttsText += evt.text; }
+          if (evt.type === 'location') setLocation(evt.text);
+          if (evt.type === 'voice') { currentVoiceId = evt.voice; showPortrait(evt.voice); }
+          if (evt.type === 'choice') pendingChoices.push(evt.text);
+          if (evt.type === 'input_hint') doneInputHint = evt.hint;
           if (evt.type === 'done') {
             finishStreamLine();
-            // Handle phase updates from server
-            if (evt.phaseUpdate && evt.phaseUpdate.character) {
+            doneVoiceId = evt.voiceId;
+            if (evt.phaseUpdate?.character) {
               character = { ...character, ...evt.phaseUpdate.character };
               updateHUD(true);
             }
@@ -526,23 +506,10 @@ async function streamMessage(endpoint, body) {
     addPlayerLine('[Connection error — try refreshing]');
   } finally {
     isStreaming = false;
-    // Set input based on current phase
-    updateInputForPhase();
-  }
-}
-
-function updateInputForPhase() {
-  switch (gamePhase) {
-    case 'intro':
-      setInputState('Type your name here...', 'SPEAK YOUR NAME', true);
-      break;
-    case 'named':
-      setInputState('Warrior, Rogue, or Mystic...', 'CHOOSE YOUR PATH', true);
-      break;
-    case 'classed':
-    case 'playing':
-      setInputState('What do you do?', '', true);
-      break;
+    renderChoices();
+    setInputState(doneInputHint, true);
+    // Fire ElevenLabs TTS with full clean text
+    if (ttsText.trim() && doneVoiceId) speakElevenLabs(ttsText.trim(), doneVoiceId);
   }
 }
 
@@ -551,8 +518,8 @@ async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text || isStreaming) return;
   inputEl.value = '';
+  hidePortrait();
 
-  // Track phase on client side
   if (gamePhase === 'intro') {
     character.name = text.split(' ').slice(0, 3).join(' ');
     document.getElementById('hud-name').textContent = character.name;
@@ -560,7 +527,6 @@ async function sendMessage() {
   } else if (gamePhase === 'named') {
     gamePhase = 'classed';
   }
-
   if (gamePhase === 'classed') gamePhase = 'playing';
 
   addPlayerLine(text);
@@ -575,11 +541,7 @@ function updateHUD(animate) {
     const el = document.getElementById(id);
     if (val != null) {
       el.textContent = val;
-      if (animate) {
-        el.classList.remove('stat-reveal');
-        void el.offsetWidth; // force reflow
-        el.classList.add('stat-reveal');
-      }
+      if (animate) { el.classList.remove('stat-reveal'); void el.offsetWidth; el.classList.add('stat-reveal'); }
     }
   }
 }
@@ -590,7 +552,6 @@ document.getElementById('enter-btn').addEventListener('click', async () => {
   startMusic();
   document.getElementById('title-screen').classList.add('fade-out');
   setTimeout(() => document.getElementById('title-screen').style.display = 'none', 1200);
-
   await streamMessage('/api/start', { sessionId: SESSION_ID });
 });
 

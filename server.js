@@ -8,56 +8,94 @@ const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-// Use xAI/Grok (OpenAI-compatible) — falls back to OpenAI if no XAI key
+// ── AI Client (Grok via xAI, OpenAI-compatible) ──────────────────────────────
 const openai = new OpenAI({
   apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
   baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1',
 });
+const MODEL = process.env.XAI_API_KEY ? 'grok-3-mini' : 'gpt-4o';
 
-// ── System prompt: the AI Dungeon Master ──────────────────────────────────────
-const DM_SYSTEM = `You are the Dungeon Master and narrator for Eamon: The Second Age, a dark text RPG.
-You speak as a character — the Burly Irishman who runs the Guild of Free Adventurers.
+// ── ElevenLabs config ─────────────────────────────────────────────────────────
+const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY;
+const VOICES = {
+  irishman: 'JBFqnCBsd6RM',  // George — warm, captivating storyteller
+  narrator: 'nPczCjzI2dev',  // Brian — deep, resonant and comforting
+  shopkeep: 'iP95p4xoKVk5',  // Chris — charming, down-to-earth
+};
 
-VOICE: Gruff, warm, weathered. A barkeep who's seen a thousand adventurers come and go. Think a medieval Irish publican — direct, colorful, occasionally darkly funny. You call people "lad," "lass," or just "adventurer." Short sentences. Working-class eloquence.
+// ── System prompt ─────────────────────────────────────────────────────────────
+const DM_SYSTEM = `You are the Dungeon Master for Eamon: The Second Age, a dark text RPG.
+During character creation, you speak as the Burly Irishman — the gruff barkeep who runs the Guild of Free Adventurers. During adventures, you become an omniscient cinematic narrator.
 
-CRITICAL RULES:
-- ALWAYS drive the conversation forward. Never leave the player without a clear next action.
-- After EVERY response, tell the player exactly what to type or do next.
+VOICE: Gruff, warm, weathered Irish barkeep. Short sentences. Working-class eloquence. Calls people "lad," "lass," or "adventurer." Occasionally darkly funny.
+
+CRITICAL FORMATTING RULES:
+- NEVER use markdown (no **, no ##, no bullets, no numbered lists).
+- Plain text only. No emojis.
 - Keep responses under 100 words. Punchy. No walls of text.
-- Stay in character always. You ARE the Burly Irishman during character creation. During adventures, you become an omniscient narrator.
-- Never use markdown formatting (no **, no ##, no bullets). Plain text only.
-- Do not use emojis.
+- ALWAYS drive forward. Never leave the player without a clear next action.
 
-CHARACTER CREATION FLOW (follow this exactly):
-1. GREETING: Welcome them to the Guild Hall. Describe it in 2 sentences max. Then ask: "What's your name, adventurer?" — nothing else.
-2. AFTER NAME: Acknowledge their name with personality. Then ask them to choose a path:
-   "Three paths lie before you: the way of the Warrior (strong, tough), the Rogue (quick, cunning), or the Mystic (charming, magical). Which calls to you?"
-3. AFTER CLASS: Confirm their choice with flavor. Announce their stats. Then say:
-   "The Guild Hall has much to offer before you venture out. You could visit Marcos Cavielli at the weapon shop, browse Hokas Tokas' magic emporium, or... if you're feeling bold, step through the Adventure Gate and face what's waiting in the dark. What'll it be?"
-4. From here, respond to whatever they choose. If they go to a shop, roleplay the shopkeeper. If they choose the gate, begin the Beginner's Cave adventure.
+LOCATION TAGS:
+At the START of every response, include a location tag on its own line:
+[LOCATION: The Great Hall]
+or [LOCATION: Marcos Cavielli's Weapon Shop]
+or [LOCATION: The Beginner's Cave - Entrance]
+etc. This updates the scene title for the player. Always include it.
+
+VOICE TAGS:
+At the START of dialogue sections, tag the speaker:
+[VOICE: irishman] for the Burly Irishman
+[VOICE: narrator] for adventure narration
+[VOICE: shopkeep] for shop NPCs
+These tags tell the system which voice to use. Always include one after the location tag.
+
+CHOICE FORMATTING:
+When presenting choices, format them as:
+[CHOICE: Visit the weapon shop]
+[CHOICE: Browse the magic emporium]
+[CHOICE: Enter the Adventure Gate]
+Put these at the END of your response, after the narration. The system renders them as clickable cards. You can include 2-5 choices. The player can still type freely — choices are suggestions, not restrictions.
+
+CHARACTER CREATION FLOW (follow exactly):
+1. GREETING: Welcome them. Describe the Guild Hall in 2 sentences. Ask their name.
+   Include: [CHOICE: (just type your name below)]
+2. AFTER NAME: Acknowledge warmly. Offer three paths:
+   [CHOICE: The way of the Warrior — strong and tough]
+   [CHOICE: The path of the Rogue — quick and cunning]
+   [CHOICE: The calling of the Mystic — charming and magical]
+3. AFTER CLASS: Confirm with flavor. Announce stats plainly. Then offer:
+   [CHOICE: Visit Marcos Cavielli's weapon shop]
+   [CHOICE: Browse Hokas Tokas' magic emporium]
+   [CHOICE: Step through the Adventure Gate]
 
 ADVENTURE MODE:
-When the player enters an adventure, shift from the Irishman's voice to a cinematic narrator voice.
-- Describe rooms vividly but briefly (2-3 sentences max).
-- When combat starts, describe the enemy and the tension. Let the player choose their action freely.
-- Track combat logically. Enemies have HP. Hits deal damage. The player can die.
-- After clearing a room or defeating an enemy, describe what they see and hear next.
-- Always end with a clear prompt for action.
+When the player enters an adventure, shift to cinematic narrator voice.
+- Use [VOICE: narrator] and update [LOCATION: ...] for each room.
+- Describe rooms vividly in 2-3 sentences.
+- Present choices for movement/action.
+- Track combat logically. Enemies have HP. The player can die.
 
-STATS (for reference):
+INPUT CONTEXT TAGS:
+After choices, include one of these to hint how the input should look:
+[INPUT: name] — for name entry (quill/parchment style)
+[INPUT: choice] — for selecting from options
+[INPUT: action] — for freeform adventure commands
+[INPUT: shop] — for shop interactions
+
+STATS (reference):
 - Warrior: Hardiness 22, Agility 14, Charisma 10, Gold 200
 - Rogue: Hardiness 14, Agility 22, Charisma 12, Gold 200
 - Mystic: Hardiness 12, Agility 14, Charisma 22, Gold 250
 `;
 
-// ── In-memory session store ───────────────────────────────────────────────────
+// ── Session store ─────────────────────────────────────────────────────────────
 const sessions = new Map();
 
 function getSession(id) {
   if (!sessions.has(id)) {
     sessions.set(id, {
       id,
-      phase: 'intro', // intro → named → classed → playing
+      phase: 'intro',
       character: null,
       history: [{ role: 'system', content: DM_SYSTEM }],
     });
@@ -65,7 +103,25 @@ function getSession(id) {
   return sessions.get(id);
 }
 
-// ── Shared streaming helper ───────────────────────────────────────────────────
+// ── Parse DM response for structured data ─────────────────────────────────────
+function parseDMResponse(text) {
+  const location = text.match(/\[LOCATION:\s*(.+?)\]/)?.[1] || null;
+  const voice = text.match(/\[VOICE:\s*(.+?)\]/)?.[1] || 'narrator';
+  const inputHint = text.match(/\[INPUT:\s*(.+?)\]/)?.[1] || 'action';
+  const choices = [...text.matchAll(/\[CHOICE:\s*(.+?)\]/g)].map(m => m[1]);
+
+  // Strip tags from display text
+  const clean = text
+    .replace(/\[LOCATION:.*?\]\n?/g, '')
+    .replace(/\[VOICE:.*?\]\n?/g, '')
+    .replace(/\[INPUT:.*?\]\n?/g, '')
+    .replace(/\[CHOICE:.*?\]\n?/g, '')
+    .trim();
+
+  return { location, voice, inputHint, choices, clean };
+}
+
+// ── Stream AI with structured parsing ─────────────────────────────────────────
 async function streamAI(messages, res, session) {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -73,36 +129,76 @@ async function streamAI(messages, res, session) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: process.env.XAI_API_KEY ? 'grok-3-mini' : 'gpt-4o',
+      model: MODEL,
       messages,
       stream: true,
-      max_tokens: 200,
+      max_tokens: 300,
       temperature: 0.85,
     });
 
     let full = '';
+    let tagBuffer = '';
+    let inTag = false;
+
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content || '';
-      if (delta) {
-        full += delta;
-        res.write(`data: ${JSON.stringify({ type: 'token', text: delta })}\n\n`);
+      if (!delta) continue;
+
+      full += delta;
+
+      // Process character by character for tag detection
+      for (const ch of delta) {
+        if (ch === '[') {
+          inTag = true;
+          tagBuffer = '[';
+          continue;
+        }
+        if (inTag) {
+          tagBuffer += ch;
+          if (ch === ']') {
+            inTag = false;
+            // Parse the complete tag
+            const locMatch = tagBuffer.match(/\[LOCATION:\s*(.+?)\]/);
+            const voiceMatch = tagBuffer.match(/\[VOICE:\s*(.+?)\]/);
+            const choiceMatch = tagBuffer.match(/\[CHOICE:\s*(.+?)\]/);
+            const inputMatch = tagBuffer.match(/\[INPUT:\s*(.+?)\]/);
+
+            if (locMatch) {
+              res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
+            } else if (voiceMatch) {
+              res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
+            } else if (choiceMatch) {
+              res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
+            } else if (inputMatch) {
+              res.write(`data: ${JSON.stringify({ type: 'input_hint', hint: inputMatch[1] })}\n\n`);
+            }
+            tagBuffer = '';
+          }
+          continue;
+        }
+        // Regular text token
+        res.write(`data: ${JSON.stringify({ type: 'token', text: ch })}\n\n`);
       }
     }
 
     session.history.push({ role: 'assistant', content: full });
 
-    // Detect phase transitions from DM response
+    // Send phase update if character was just set
     let phaseUpdate = null;
-    if (session.phase === 'intro') {
-      // DM just asked for name — next input will be name
-    } else if (session.phase === 'named') {
-      // DM just asked for class — next input will be class choice
-    } else if (session.phase === 'classed') {
-      // DM announced stats — send them to client
+    if (session.phase === 'classed' && session.character) {
       phaseUpdate = { phase: 'playing', character: session.character };
     }
 
-    res.write(`data: ${JSON.stringify({ type: 'done', full, phaseUpdate })}\n\n`);
+    // Parse full response for TTS text
+    const parsed = parseDMResponse(full);
+
+    res.write(`data: ${JSON.stringify({
+      type: 'done',
+      full: parsed.clean,
+      phaseUpdate,
+      voiceId: VOICES[parsed.voice] || VOICES.narrator,
+      ttsText: parsed.clean,
+    })}\n\n`);
     res.end();
   } catch (err) {
     console.error(err);
@@ -110,6 +206,51 @@ async function streamAI(messages, res, session) {
     res.end();
   }
 }
+
+// ── ElevenLabs TTS endpoint ───────────────────────────────────────────────────
+app.post('/api/tts', async (req, res) => {
+  const { text, voiceId } = req.body;
+  if (!text || !ELEVEN_KEY) return res.status(400).json({ error: 'missing text or API key' });
+
+  const vid = voiceId || VOICES.narrator;
+
+  try {
+    const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}/stream`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': ELEVEN_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: text.slice(0, 500), // Cap length for cost
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: { stability: 0.55, similarity_boost: 0.75, style: 0.35 },
+      }),
+    });
+
+    if (!ttsRes.ok) {
+      const errText = await ttsRes.text();
+      console.error('ElevenLabs error:', errText);
+      return res.status(ttsRes.status).json({ error: errText });
+    }
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-cache');
+
+    const reader = ttsRes.body.getReader();
+    const pump = async () => {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) { res.end(); return; }
+        res.write(Buffer.from(value));
+      }
+    };
+    await pump();
+  } catch (err) {
+    console.error('TTS error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Start session ─────────────────────────────────────────────────────────────
 app.post('/api/start', async (req, res) => {
@@ -120,37 +261,34 @@ app.post('/api/start', async (req, res) => {
   session.history = [{ role: 'system', content: DM_SYSTEM }];
   session.phase = 'intro';
 
-  const startMsg = { role: 'user', content: '[SYSTEM: The player just entered the Guild Hall for the first time. Greet them in character as the Burly Irishman. Describe the hall in 1-2 vivid sentences, then ask their name. Keep it under 60 words. End with a direct question asking their name.]' };
-  session.history.push(startMsg);
+  session.history.push({
+    role: 'user',
+    content: '[SYSTEM: The player just entered the Guild Hall. Greet them as the Burly Irishman. 2 vivid sentences about the hall, then ask their name. Under 60 words. Remember to include [LOCATION: The Great Hall], [VOICE: irishman], and [INPUT: name] tags.]'
+  });
 
   await streamAI(session.history, res, session);
 });
 
-// ── Chat endpoint ─────────────────────────────────────────────────────────────
+// ── Chat ──────────────────────────────────────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
   const { sessionId, message } = req.body;
   if (!sessionId || !message) return res.status(400).json({ error: 'missing fields' });
 
   const session = getSession(sessionId);
 
-  // Phase-aware message wrapping
-  let wrappedMessage = message;
-
   if (session.phase === 'intro') {
-    // Player is giving their name
-    wrappedMessage = `My name is ${message}`;
     session.character = { name: message.trim() };
     session.phase = 'named';
-
-    // Add instruction for DM to offer class choice
-    session.history.push({ role: 'user', content: wrappedMessage });
-    session.history.push({ role: 'system', content: '[Acknowledge their name warmly. Now offer the three paths: Warrior (strong/tough), Rogue (quick/cunning), Mystic (charming/magical). Keep it under 80 words. Make each path sound appealing but distinct.]' });
+    session.history.push({ role: 'user', content: `My name is ${message}` });
+    session.history.push({
+      role: 'system',
+      content: '[Acknowledge their name warmly. Offer three paths: Warrior, Rogue, Mystic. Use [CHOICE:] tags for each. Include [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 80 words.]'
+    });
   } else if (session.phase === 'named') {
-    // Player is choosing a class
     const lower = message.toLowerCase();
     let cls = 'warrior';
-    if (lower.includes('rogue') || lower.includes('thief') || lower.includes('quick') || lower.includes('cunning') || lower.includes('agil')) cls = 'rogue';
-    if (lower.includes('mystic') || lower.includes('magic') || lower.includes('mage') || lower.includes('wizard') || lower.includes('charm')) cls = 'mystic';
+    if (lower.includes('rogue') || lower.includes('thief') || lower.includes('quick') || lower.includes('cunning')) cls = 'rogue';
+    if (lower.includes('mystic') || lower.includes('magic') || lower.includes('mage') || lower.includes('wizard')) cls = 'mystic';
 
     const stats = {
       warrior: { hd: 22, ag: 14, ch: 10, gold: 200 },
@@ -158,15 +296,14 @@ app.post('/api/chat', async (req, res) => {
       mystic:  { hd: 12, ag: 14, ch: 22, gold: 250 },
     };
 
-    session.character = {
-      ...session.character,
-      class: cls,
-      ...stats[cls],
-    };
+    session.character = { ...session.character, class: cls, ...stats[cls] };
     session.phase = 'classed';
 
     session.history.push({ role: 'user', content: `I choose the path of the ${cls}.` });
-    session.history.push({ role: 'system', content: `[They chose ${cls}. Their stats: Hardiness ${stats[cls].hd}, Agility ${stats[cls].ag}, Charisma ${stats[cls].ch}, Gold ${stats[cls].gold}. Confirm their choice with 1-2 lines of flavor. State their stats plainly. Then offer: visit Marcos Cavielli's weapon shop, Hokas Tokas' magic emporium, or step through the Adventure Gate. Under 100 words.]` });
+    session.history.push({
+      role: 'system',
+      content: `[They chose ${cls}. Stats: HD ${stats[cls].hd}, AG ${stats[cls].ag}, CH ${stats[cls].ch}, Gold ${stats[cls].gold}. Confirm with flavor, state stats, offer shops or Adventure Gate. Use [CHOICE:] tags, [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 100 words.]`
+    });
   } else {
     session.history.push({ role: 'user', content: message });
   }
@@ -175,4 +312,4 @@ app.post('/api/chat', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Eamon: The Second Age running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${MODEL}`));
