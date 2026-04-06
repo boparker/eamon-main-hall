@@ -8,7 +8,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Use xAI/Grok (OpenAI-compatible) — falls back to OpenAI if no XAI key
+const openai = new OpenAI({
+  apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1',
+});
 
 // ── System prompt: the AI Dungeon Master ──────────────────────────────────────
 const DM_SYSTEM = `You are the Dungeon Master and narrator for Eamon: The Second Age, a dark text RPG.
@@ -69,7 +73,7 @@ async function streamAI(messages, res, session) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: process.env.XAI_API_KEY ? 'grok-3-mini' : 'gpt-4o',
       messages,
       stream: true,
       max_tokens: 200,
