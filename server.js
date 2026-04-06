@@ -11,12 +11,12 @@ app.use(express.static(join(__dirname, 'public')));
 
 // ── AI Client ─────────────────────────────────────────────────────────────────
 let AI_PROVIDER, MODEL;
-if (process.env.ANTHROPIC_API_KEY) {
-  AI_PROVIDER = 'anthropic';
-  MODEL = 'claude-3-5-haiku-20241022';
-} else if (process.env.XAI_API_KEY) {
+if (process.env.XAI_API_KEY) {
   AI_PROVIDER = 'xai';
   MODEL = 'grok-3-mini';
+} else if (process.env.OPENAI_API_KEY) {
+  AI_PROVIDER = 'openai';
+  MODEL = 'gpt-4o';
 } else {
   AI_PROVIDER = 'openai';
   MODEL = 'gpt-4o';
