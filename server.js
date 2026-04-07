@@ -337,7 +337,7 @@ async function generateImage(prompt, cachePrefix) {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent`,
       {
         method: 'POST',
         headers: { 
