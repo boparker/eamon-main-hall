@@ -294,8 +294,8 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-// ── Image Generation (Gemini 2.0 Flash - Nano Banana) ─────────────────────────
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// ── Image Generation (fal.ai Flux) ────────────────────────────────────────────
+const FAL_KEY = process.env.FAL_KEY;
 const IMAGE_CACHE_DIR = join(__dirname, 'public', 'gen-images');
 
 // Ensure cache directory exists
@@ -327,48 +327,97 @@ async function generateImage(prompt, cachePrefix) {
   }
 
   // Read env var at runtime
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.FAL_KEY;
   if (!apiKey) {
-    console.error('[IMG] No GEMINI_API_KEY set');
+    console.error('[IMG] No FAL_KEY set');
     return { error: 'No API key configured' };
   }
 
   console.log(`[IMG] Generating: ${cachePrefix} — ${prompt.slice(0, 60)}...`);
 
+  const aspectRatio = cachePrefix === 'scene' ? '16:9' : '3:4';
+  const width = aspectRatio === '16:9' ? 1024 : 768;
+  const height = aspectRatio === '16:9' ? 576 : 1024;
+
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent`,
-      {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        }),
+    // Submit request to fal.ai
+    const submitRes = await fetch('https://queue.fal.run/fal-ai/flux/dev', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        image_size: { width, height },
+        num_inference_steps: 28,
+        guidance_scale: 3.5,
+      }),
+    });
+
+    if (!submitRes.ok) {
+      const err = await submitRes.text();
+      console.error('[IMG] fal.ai submit error:', submitRes.status, err.slice(0, 200));
+      return { error: `API ${submitRes.status}` };
+    }
+
+    const { request_id } = await submitRes.json();
+    console.log(`[IMG] Request queued: ${request_id}`);
+
+    // Poll for result (max 60s)
+    let attempts = 0;
+    const maxAttempts = 30;
+    while (attempts < maxAttempts) {
+      await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+
+      const statusRes = await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${request_id}/status`, {
+        headers: { 'Authorization': `Key ${apiKey}` },
+      });
+
+      if (!statusRes.ok) continue;
+      const status = await statusRes.json();
+
+      if (status.status === 'COMPLETED') {
+        // Get result
+        const resultRes = await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${request_id}`, {
+          headers: { 'Authorization': `Key ${apiKey}` },
+        });
+
+        if (!resultRes.ok) {
+          console.error('[IMG] Failed to get result');
+          return { error: 'Failed to get result' };
+        }
+
+        const result = await resultRes.json();
+        const imageUrl = result.images?.[0]?.url;
+
+        if (!imageUrl) {
+          console.error('[IMG] No image URL in response');
+          return { error: 'No image URL' };
+        }
+
+        // Download and cache
+        const imgRes = await fetch(imageUrl);
+        if (!imgRes.ok) {
+          console.error('[IMG] Failed to download image');
+          return { error: 'Download failed' };
+        }
+
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
+        await writeFile(cachedPath, buffer);
+        console.log(`[IMG] Saved: ${cachedPath} (${(buffer.length / 1024).toFixed(0)}KB)`);
+        return publicUrl;
       }
-    );
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('[IMG] Gemini error:', res.status, err.slice(0, 200));
-      return { error: `API ${res.status}: ${err.slice(0, 100)}` };
+      if (status.status === 'FAILED') {
+        console.error('[IMG] Generation failed');
+        return { error: 'Generation failed' };
+      }
     }
 
-    const data = await res.json();
-    const imageData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!imageData) {
-      console.error('[IMG] No image data in Gemini response');
-      return { error: 'No image data' };
-    }
-
-    const buffer = Buffer.from(imageData, 'base64');
-    await writeFile(cachedPath, buffer);
-    console.log(`[IMG] Saved: ${cachedPath} (${(buffer.length / 1024).toFixed(0)}KB)`);
-    return publicUrl;
+    console.error('[IMG] Polling timeout');
+    return { error: 'Timeout' };
   } catch (err) {
     console.error('[IMG] Generation error:', err.message);
     return { error: err.message };
@@ -461,8 +510,8 @@ app.post('/api/chat', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
-    gemini_key_set: !!process.env.GEMINI_API_KEY,
-    gemini_key_length: process.env.GEMINI_API_KEY?.length || 0,
+    fal_key_set: !!process.env.FAL_KEY,
+    fal_key_length: process.env.FAL_KEY?.length || 0,
     model: MODEL,
     provider: AI_PROVIDER,
   });
