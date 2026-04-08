@@ -1,16 +1,103 @@
 import express from 'express';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import pg from 'pg';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import crypto from 'crypto';
 
+const { Pool } = pg;
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
+
+// ── Database Setup ────────────────────────────────────────────────────────────
+const pool = process.env.DATABASE_URL ? new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+}) : null;
+
+async function initDatabase() {
+  if (!pool) {
+    console.log('[DB] No DATABASE_URL, skipping database init');
+    return;
+  }
+  
+  try {
+    console.log('[DB] Checking connection...');
+    await pool.query('SELECT NOW()');
+    console.log('[DB] Connected successfully');
+    
+    // Check if schema is already initialized
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'adventures'
+      );
+    `);
+    
+    if (tableCheck.rows[0].exists) {
+      console.log('[DB] Schema already initialized');
+      return;
+    }
+    
+    console.log('[DB] Creating schema...');
+    
+    // Create tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS adventures (
+        id SERIAL PRIMARY KEY,
+        slug TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        difficulty INTEGER DEFAULT 1,
+        author TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS locations (
+        id SERIAL PRIMARY KEY,
+        adventure_id INTEGER REFERENCES adventures(id),
+        room_number INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        style_prompt_prefix TEXT,
+        image_url TEXT,
+        UNIQUE(adventure_id, room_number)
+      );
+      
+      CREATE TABLE IF NOT EXISTS characters (
+        id SERIAL PRIMARY KEY,
+        adventure_id INTEGER REFERENCES adventures(id),
+        name TEXT NOT NULL,
+        description TEXT,
+        type TEXT CHECK (type IN ('monster', 'npc', 'friendly')),
+        hardiness INTEGER DEFAULT 10,
+        agility INTEGER DEFAULT 10,
+        charisma INTEGER DEFAULT 10,
+        portrait_url TEXT
+      );
+      
+      CREATE TABLE IF NOT EXISTS exits (
+        id SERIAL PRIMARY KEY,
+        location_id INTEGER REFERENCES locations(id),
+        direction TEXT NOT NULL,
+        destination_room INTEGER NOT NULL,
+        description TEXT
+      );
+    `);
+    
+    console.log('[DB] Schema created successfully');
+    console.log('[DB] Ready for seed data');
+    
+  } catch (err) {
+    console.error('[DB] Initialization error:', err.message);
+  }
+}
 
 // ── AI Client ─────────────────────────────────────────────────────────────────
 let AI_PROVIDER, MODEL;
@@ -34,9 +121,9 @@ const openai = AI_PROVIDER !== 'anthropic' ? new OpenAI({
 // ── ElevenLabs config (FULL voice IDs) ────────────────────────────────────────
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY;
 const VOICES = {
-  irishman: 'JBFqnCBsd6RMkjVDRZzb',  // George — warm, captivating storyteller (British)
-  narrator: 'nPczCjzI2devNBz1zQrb',  // Brian — deep, resonant and comforting
-  shopkeep: 'iP95p4xoKVk53GoZ742B',  // Chris — charming, down-to-earth
+  irishman: 'JBFqnCBsd6RMkjVDRZzb',
+  narrator: 'nPczCjzI2devNBz1zQrb',
+  shopkeep: 'iP95p4xoKVk53GoZ742B',
 };
 
 // ── System prompt ─────────────────────────────────────────────────────────────
@@ -155,10 +242,8 @@ async function streamAI(messages, res, session) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    // Create stream based on provider
     let streamIterator;
     if (AI_PROVIDER === 'anthropic') {
-      // Convert messages: extract system, keep user/assistant
       const systemMsg = messages.find(m => m.role === 'system')?.content || '';
       const chatMsgs = messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }));
       const anthropicStream = anthropic.messages.stream({
@@ -194,7 +279,6 @@ async function streamAI(messages, res, session) {
       full += delta;
 
       for (const ch of delta) {
-        // Brace detection for action highlights
         if (ch === '{' && !inTag) { inBrace = true; braceBuffer = ''; continue; }
         if (ch === '}' && inBrace) {
           inBrace = false;
@@ -204,7 +288,6 @@ async function streamAI(messages, res, session) {
         }
         if (inBrace) { braceBuffer += ch; continue; }
 
-        // Tag detection
         if (ch === '[') { inTag = true; tagBuffer = '['; continue; }
         if (inTag) {
           tagBuffer += ch;
@@ -239,13 +322,11 @@ async function streamAI(messages, res, session) {
       phaseUpdate = { phase: 'playing', character: session.character };
     }
 
-    // Clean text for TTS
     const clean = full
       .replace(/\[LOCATION:.*?\]\n?/g, '').replace(/\[VOICE:.*?\]\n?/g, '')
       .replace(/\[INPUT:.*?\]\n?/g, '').replace(/\[CHOICE:.*?\]\n?/g, '')
       .replace(/[{}]/g, '').trim();
 
-    // Determine voice from response
     const voiceKey = full.match(/\[VOICE:\s*(.+?)\]/)?.[1] || 'narrator';
     const voiceId = VOICES[voiceKey] || VOICES.narrator;
 
@@ -298,7 +379,6 @@ app.post('/api/tts', async (req, res) => {
 const FAL_KEY = process.env.FAL_KEY;
 const IMAGE_CACHE_DIR = join(__dirname, 'public', 'gen-images');
 
-// Ensure cache directory exists
 (async () => {
   if (!existsSync(IMAGE_CACHE_DIR)) await mkdir(IMAGE_CACHE_DIR, { recursive: true });
 })();
@@ -334,7 +414,6 @@ async function pollFalResult(requestId, falKey) {
     console.log(`[IMG] Fal status: ${status.status}`);
     
     if (status.status === 'COMPLETED') {
-      // Get the result
       const resultRes = await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${requestId}`, {
         headers: { 'Authorization': `Key ${falKey}` }
       });
@@ -356,13 +435,11 @@ async function generateImage(prompt, cachePrefix) {
   const cachedPath = join(IMAGE_CACHE_DIR, `${key}.jpg`);
   const publicUrl = `/gen-images/${key}.jpg`;
 
-  // Check cache first
   if (existsSync(cachedPath)) {
     console.log(`[IMG] Cache hit: ${key}`);
     return publicUrl;
   }
 
-  // Read env var at runtime
   const falKey = process.env.FAL_KEY;
   if (!falKey) {
     console.error('[IMG] No FAL_KEY set');
@@ -372,7 +449,6 @@ async function generateImage(prompt, cachePrefix) {
   console.log(`[IMG] Generating: ${cachePrefix} — ${prompt.slice(0, 60)}...`);
 
   try {
-    // Submit to Fal.ai queue
     const submitRes = await fetch('https://queue.fal.run/fal-ai/flux/dev', {
       method: 'POST',
       headers: {
@@ -403,7 +479,6 @@ async function generateImage(prompt, cachePrefix) {
 
     console.log(`[IMG] Fal request: ${requestId}`);
     
-    // Poll for result
     const result = await pollFalResult(requestId, falKey);
     
     if (!result.images?.[0]?.url) {
@@ -411,7 +486,6 @@ async function generateImage(prompt, cachePrefix) {
       return { error: 'No image data' };
     }
 
-    // Download the image
     const imageRes = await fetch(result.images[0].url);
     if (!imageRes.ok) {
       return { error: 'Failed to download image' };
@@ -427,7 +501,6 @@ async function generateImage(prompt, cachePrefix) {
   }
 }
 
-// Background scene endpoint
 app.post('/api/scene-image', async (req, res) => {
   const { location, description } = req.body;
   if (!location) return res.status(400).json({ error: 'missing location' });
@@ -438,7 +511,6 @@ app.post('/api/scene-image', async (req, res) => {
   res.json({ url: result });
 });
 
-// Monster/NPC portrait endpoint
 app.post('/api/portrait', async (req, res) => {
   const { name, description, type } = req.body;
   if (!name) return res.status(400).json({ error: 'missing name' });
@@ -448,6 +520,33 @@ app.post('/api/portrait', async (req, res) => {
   const result = await generateImage(prompt, type || 'char');
   if (result?.error) return res.status(500).json(result);
   res.json({ url: result });
+});
+
+// ── Database Query Endpoints ──────────────────────────────────────────────────
+app.get('/api/adventures', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Database not available' });
+  try {
+    const result = await pool.query('SELECT * FROM adventures ORDER BY id');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/adventures/:slug/locations', async (req, res) => {
+  if (!pool) return res.status(503).json({ error: 'Database not available' });
+  try {
+    const advResult = await pool.query('SELECT id FROM adventures WHERE slug = $1', [req.params.slug]);
+    if (advResult.rows.length === 0) return res.status(404).json({ error: 'Adventure not found' });
+    
+    const result = await pool.query(
+      'SELECT * FROM locations WHERE adventure_id = $1 ORDER BY room_number',
+      [advResult.rows[0].id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Start session ─────────────────────────────────────────────────────────────
@@ -498,6 +597,7 @@ app.post('/api/chat', async (req, res) => {
     session.phase = 'classed';
 
     session.history.push({ role: 'user', content: `I choose the path of the ${cls}.` });
+
     session.history.push({
       role: 'system',
       content: `[They chose ${cls}. Stats: HD ${stats[cls].hd}, AG ${stats[cls].ag}, CH ${stats[cls].ch}, Gold ${stats[cls].gold}. Confirm with flavor, state stats, offer shops or Adventure Gate. Use [CHOICE:] tags, {braces} around the question, [VOICE: irishman], [LOCATION: The Great Hall], [INPUT: choice]. Under 100 words.]`
@@ -515,10 +615,18 @@ app.get('/api/health', (req, res) => {
     ok: true,
     fal_key_set: !!process.env.FAL_KEY,
     fal_key_length: process.env.FAL_KEY?.length || 0,
+    db_connected: !!pool,
     model: MODEL,
     provider: AI_PROVIDER,
   });
 });
 
+// ── Initialize and Start ──────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${MODEL}`));
+
+async function start() {
+  await initDatabase();
+  app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${MODEL}`));
+}
+
+start();
