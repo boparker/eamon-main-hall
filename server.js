@@ -571,7 +571,7 @@ app.post('/api/admin/seed', async (req, res) => {
     // Insert adventure
     const advResult = await client.query(
       'INSERT INTO adventures (slug, name, description, difficulty, author) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      ['beginners-cave', 'The Beginner''s Cave', 'A simple cave for new adventurers to learn the ropes.', 1, 'Donald Brown']
+      ['beginners-cave', 'The Beginner\'s Cave', 'A simple cave for new adventurers to learn the ropes.', 1, 'Donald Brown']
     );
     const advId = advResult.rows[0].id;
     
@@ -582,7 +582,7 @@ app.post('/api/admin/seed', async (req, res) => {
       [3, 'Large Cavern', 'The passage opens into a large cavern. The ceiling disappears into darkness above.', 'vast underground cavern, towering stalactites, bioluminescent fungi, echoing drips, mysterious vastness'],
       [4, 'Side Chamber', 'A small side chamber branches off from the main cavern. It appears empty.', 'small cave chamber, scattered bones, ancient campfire ashes, cracked stone floor, abandoned campsite'],
       [5, 'Healing Spring', 'A natural spring bubbles up from the rocks. The water glows with faint magical light.', 'magical underground spring, glowing blue water, crystalline formations, peaceful ethereal light, healing waters'],
-      [6, 'Narrow Crevice', 'You squeeze through a narrow crevice in the rock. It''s barely wide enough to pass.', 'tight rock crevice, rough stone scraping, dim light ahead, geological striations, passage through stone'],
+      [6, 'Narrow Crevice', 'You squeeze through a narrow crevice in the rock. It\'s barely wide enough to pass.', 'tight rock crevice, rough stone scraping, dim light ahead, geological striations, passage through stone'],
       [7, 'Crystal Grotto', 'Crystals line the walls of this small grotto, reflecting what little light there is.', 'crystal-lined grotto, refracted rainbow light, faceted gemstone walls, magical luminescence, natural wonder'],
       [8, 'Collapsed Tunnel', 'A tunnel has collapsed here, blocking further passage. Rubble fills the way forward.', 'collapsed mine tunnel, fallen boulders, dust motes in light, broken support beams, impassable rubble'],
       [9, 'Underground River', 'An underground river rushes past, its waters dark and swift.', 'underground river, rushing dark waters, natural stone bridge, echoing cavern, treacherous crossing'],
@@ -593,16 +593,16 @@ app.post('/api/admin/seed', async (req, res) => {
       [14, 'Mimic Chamber', 'This room appears to contain a treasure chest. But something feels wrong.', 'deceptive chamber, ornate treasure chest, too-perfect arrangement, subtle wrongness, mimic lair'],
       [15, 'Cursed Altar', 'An altar to forgotten gods stands here, covered in incomprehensible runes.', 'cursed altar, eldritch runes, dried blood stains, flickering shadow-flames, forbidden worship site'],
       [16, 'Rat Warren', 'The walls here are chewed and scratched. The smell is overpowering.', 'rat warren, chewed stone walls, scattered droppings, scratching sounds in walls, vermin infestation'],
-      [17, 'Hermit''s Cave', 'Someone has lived here recently. A bed of straw and cold ashes suggest a former occupant.', 'hermit dwelling, straw bed, cold campfire, primitive furnishings, abandoned shelter'],
+      [17, 'Hermit\'s Cave', 'Someone has lived here recently. A bed of straw and cold ashes suggest a former occupant.', 'hermit dwelling, straw bed, cold campfire, primitive furnishings, abandoned shelter'],
       [18, 'Gorilla Lair', 'Large ape-like prints mark the dusty floor. The smell is musky and wild.', 'gorilla territory, large primate prints, scattered fruit peels, musky animal scent, jungle-like humidity'],
-      [19, 'Priest''s Sanctum', 'Religious symbols cover the walls. Someone practiced forbidden rites here.', 'priest sanctum, religious icons, forbidden symbols, incense smoke, corrupted chapel'],
+      [19, 'Priest\'s Sanctum', 'Religious symbols cover the walls. Someone practiced forbidden rites here.', 'priest sanctum, religious icons, forbidden symbols, incense smoke, corrupted chapel'],
       [20, 'Flooded Passage', 'Water covers the floor here, ankle-deep and freezing cold.', 'flooded passage, ankle-deep icy water, dripping ceiling, treacherous footing, cold mist'],
       [21, 'Bat Colony', 'The ceiling crawls with bats. They stir at your presence.', 'bat colony, ceiling covered in leathery wings, squeaking echoes, guano-covered floor, overwhelming smell'],
       [22, 'Ore Vein', 'A rich vein of ore sparkles in the torchlight. Someone mined here long ago.', 'mining tunnel, exposed ore vein, abandoned pickaxes, glittering minerals, dwarven remnants'],
       [23, 'Bottomless Pit', 'A dark pit yawns before you. No bottom is visible.', 'bottomless pit, yawning darkness, crumbling edge, vertigo-inducing depth, ancient chasm'],
       [24, 'Ancient Shrine', 'An ancient shrine to unknown powers. Offerings of gold still rest upon it.', 'ancient shrine, piled gold offerings, mysterious deity statue, eternal flames, sacred site'],
       [25, 'Guardian Chamber', 'A chamber that feels watched. Something protects the way forward.', 'guardian chamber, magical pressure, warning symbols, defensive enchantments, ominous presence'],
-      [26, 'Pirate''s Cove', 'A hidden cove where pirates once stored their ill-gotten gains. The water laps at the shore.', 'pirate cove, hidden beach, scattered treasure chests, weathered ship beams, underground lake shore']
+      [26, 'Pirate\'s Cove', 'A hidden cove where pirates once stored their ill-gotten gains. The water laps at the shore.', 'pirate cove, hidden beach, scattered treasure chests, weathered ship beams, underground lake shore']
     ];
     
     const roomIds = {};
@@ -664,11 +664,11 @@ app.post('/api/admin/seed', async (req, res) => {
       [15, 'SOUTH', 14, 'Back to mimic chamber'],
       [15, 'EAST', 16, 'To rat warren'],
       [16, 'WEST', 15, 'Back to altar'],
-      [16, 'NORTH', 17, 'To hermit''s cave'],
+      [16, 'NORTH', 17, 'To hermit\'s cave'],
       [17, 'SOUTH', 16, 'Back to rat warren'],
       [17, 'EAST', 18, 'To gorilla lair'],
       [18, 'WEST', 17, 'Back to hermit'],
-      [18, 'NORTH', 19, 'To priest''s sanctum'],
+      [18, 'NORTH', 19, 'To priest\'s sanctum'],
       [19, 'SOUTH', 18, 'Back to gorilla lair'],
       [19, 'DOWN', 20, 'To flooded passage'],
       [20, 'UP', 19, 'Back to sanctum'],
@@ -682,7 +682,7 @@ app.post('/api/admin/seed', async (req, res) => {
       [24, 'SOUTH', 23, 'Back to pit'],
       [24, 'EAST', 25, 'To guardian chamber'],
       [25, 'WEST', 24, 'Back to shrine'],
-      [25, 'EAST', 26, 'To pirate''s cove'],
+      [25, 'EAST', 26, 'To pirate\'s cove'],
       [26, 'WEST', 25, 'Back to guardian chamber'],
       [26, 'OUT', -1, 'Exit the cave']
     ];
@@ -714,7 +714,6 @@ app.post('/api/admin/seed', async (req, res) => {
   } finally {
     client.release();
   }
-});
 });
 
 // ── Start session ─────────────────────────────────────────────────────────────
@@ -787,7 +786,6 @@ app.get('/api/health', (req, res) => {
     model: MODEL,
     provider: AI_PROVIDER,
   });
-});
 
 // ── Initialize and Start ──────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -798,3 +796,5 @@ async function start() {
 }
 
 start();
+
+})();
