@@ -294,8 +294,8 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-// ── Image Generation (Google Imagen 4.0) ──────────────────────────────────────
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// ── Image Generation (Fal.ai Flux) ───────────────────────────────────────────
+const FAL_KEY = process.env.FAL_KEY;
 const IMAGE_CACHE_DIR = join(__dirname, 'public', 'gen-images');
 
 // Ensure cache directory exists
@@ -315,6 +315,42 @@ function cacheKey(prefix, text) {
   return prefix + '-' + crypto.createHash('md5').update(text.toLowerCase().trim()).digest('hex').slice(0, 12);
 }
 
+async function pollFalResult(requestId, falKey) {
+  const maxAttempts = 30;
+  const delayMs = 1000;
+  
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${requestId}/status`, {
+      headers: { 'Authorization': `Key ${falKey}` }
+    });
+    
+    if (!res.ok) {
+      console.error('[IMG] Fal poll error:', res.status);
+      await new Promise(r => setTimeout(r, delayMs));
+      continue;
+    }
+    
+    const status = await res.json();
+    console.log(`[IMG] Fal status: ${status.status}`);
+    
+    if (status.status === 'COMPLETED') {
+      // Get the result
+      const resultRes = await fetch(`https://queue.fal.run/fal-ai/flux/dev/requests/${requestId}`, {
+        headers: { 'Authorization': `Key ${falKey}` }
+      });
+      if (resultRes.ok) {
+        return await resultRes.json();
+      }
+    } else if (status.status === 'FAILED') {
+      throw new Error('Fal generation failed');
+    }
+    
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  
+  throw new Error('Fal polling timeout');
+}
+
 async function generateImage(prompt, cachePrefix) {
   const key = cacheKey(cachePrefix, prompt);
   const cachedPath = join(IMAGE_CACHE_DIR, `${key}.jpg`);
@@ -327,50 +363,61 @@ async function generateImage(prompt, cachePrefix) {
   }
 
   // Read env var at runtime
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('[IMG] No GEMINI_API_KEY set');
+  const falKey = process.env.FAL_KEY;
+  if (!falKey) {
+    console.error('[IMG] No FAL_KEY set');
     return { error: 'No API key configured' };
   }
 
   console.log(`[IMG] Generating: ${cachePrefix} — ${prompt.slice(0, 60)}...`);
 
-  const aspectRatio = cachePrefix === 'scene' ? '16:9' : '3:4';
-
   try {
-    // Use Imagen 4.0 Fast via Google AI Studio API
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          instances: [{ prompt: prompt }],
-          parameters: {
-            aspectRatio: aspectRatio,
-            sampleCount: 1,
-          }
-        }),
-      }
-    );
+    // Submit to Fal.ai queue
+    const submitRes = await fetch('https://queue.fal.run/fal-ai/flux/dev', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Key ${falKey}`
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        image_size: cachePrefix === 'scene' ? 'landscape_16_9' : 'portrait_4_3',
+        num_inference_steps: 28,
+        guidance_scale: 3.5
+      })
+    });
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('[IMG] Imagen error:', res.status, err.slice(0, 200));
-      return { error: `API ${res.status}: ${err.slice(0, 100)}` };
+    if (!submitRes.ok) {
+      const err = await submitRes.text();
+      console.error('[IMG] Fal submit error:', submitRes.status, err.slice(0, 200));
+      return { error: `API ${submitRes.status}: ${err.slice(0, 100)}` };
     }
 
-    const data = await res.json();
-    const imageData = data.predictions?.[0]?.bytesBase64Encoded;
-    if (!imageData) {
-      console.error('[IMG] No image data in Imagen response');
+    const submitData = await submitRes.json();
+    const requestId = submitData.request_id;
+    
+    if (!requestId) {
+      console.error('[IMG] No request_id from Fal');
+      return { error: 'No request ID' };
+    }
+
+    console.log(`[IMG] Fal request: ${requestId}`);
+    
+    // Poll for result
+    const result = await pollFalResult(requestId, falKey);
+    
+    if (!result.images?.[0]?.url) {
+      console.error('[IMG] No image URL in Fal response');
       return { error: 'No image data' };
     }
 
-    const buffer = Buffer.from(imageData, 'base64');
+    // Download the image
+    const imageRes = await fetch(result.images[0].url);
+    if (!imageRes.ok) {
+      return { error: 'Failed to download image' };
+    }
+    
+    const buffer = Buffer.from(await imageRes.arrayBuffer());
     await writeFile(cachedPath, buffer);
     console.log(`[IMG] Saved: ${cachedPath} (${(buffer.length / 1024).toFixed(0)}KB)`);
     return publicUrl;
@@ -466,8 +513,8 @@ app.post('/api/chat', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
-    gemini_key_set: !!process.env.GEMINI_API_KEY,
-    gemini_key_length: process.env.GEMINI_API_KEY?.length || 0,
+    fal_key_set: !!process.env.FAL_KEY,
+    fal_key_length: process.env.FAL_KEY?.length || 0,
     model: MODEL,
     provider: AI_PROVIDER,
   });
