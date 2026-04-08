@@ -32,7 +32,6 @@ async function initDatabase() {
     await pool.query('SELECT NOW()');
     console.log('[DB] Connected successfully');
     
-    // Check if schema is already initialized
     const tableCheck = await pool.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -47,7 +46,6 @@ async function initDatabase() {
     
     console.log('[DB] Creating schema...');
     
-    // Create tables
     await pool.query(`
       CREATE TABLE IF NOT EXISTS adventures (
         id SERIAL PRIMARY KEY,
@@ -546,6 +544,26 @@ app.get('/api/adventures/:slug/locations', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Seed Database (protected) ────────────────────────────────────────────────
+app.post('/api/admin/seed', async (req, res) => {
+  if (req.headers.authorization !== 'Bearer eamon-seed-2024') {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+  if (!pool) return res.status(503).json({ error: 'Database not available' });
+  
+  try {
+    const seedSQL = await readFile(join(__dirname, 'database', 'seed-beginners-cave-full.sql'), 'utf8');
+    await pool.query(seedSQL);
+    res.json({ success: true, message: 'Database seeded' });
+  } catch (err) {
+    if (err.message.includes('duplicate key')) {
+      res.json({ success: true, message: 'Already seeded' });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
