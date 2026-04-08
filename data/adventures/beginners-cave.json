@@ -1,0 +1,243 @@
+{
+  "adventure": {
+    "id": "beginners-cave",
+    "name": "The Beginner's Cave",
+    "description": "A simple cavern for new adventurers to test their mettle. Many have entered. Some have returned.",
+    "artist_style": "Eyvind Earle",
+    "inspiration_artist": "Eyvind Earle Sleeping Beauty 1959",
+    "style_prompt_prefix": "Eyvind Earle Sleeping Beauty 1959 style, geometric angular Gothic architecture, jewel-tone palette of deep purples and midnight blues with burnished gold accents, Byzantine and Persian miniature influence, architectural depth with layered planes, painterly backgrounds with light-defined detail, flat graphic characters with subtle shading, Celtic ornamental details",
+    "music_track": "cave-static-teeth.mp3",
+    "difficulty": 1,
+    "author": "Donald Brown",
+    "image_preference": "generate"
+  },
+  
+  "locations": [
+    {
+      "id": "beginners-cave-1",
+      "room_number": 1,
+      "name": "Cave Entrance",
+      "narration_text": "You stand at the mouth of a damp cave. The walls glisten with moisture. Flickering torches cast dancing shadows on rough stone. A narrow tunnel leads north into darkness.",
+      "background_description": "Rocky cave entrance, moss-covered stone walls, flickering torchlight casting warm orange glow, damp ground with puddles, angular Gothic rock formations, dark tunnel mouth leading north",
+      "light_level": "dim",
+      "is_combat_zone": false
+    },
+    {
+      "id": "beginners-cave-2", 
+      "room_number": 2,
+      "name": "Damp Corridor",
+      "narration_text": "The corridor stretches east and west. Water drips steadily from the ceiling, creating a rhythmic tapping echo.",
+      "background_description": "Narrow stone corridor, water dripping from ceiling, wet stone floor with reflections, distant torchlight glow, angular stone arches, damp atmosphere",
+      "light_level": "dim",
+      "is_combat_zone": false
+    },
+    {
+      "id": "beginners-cave-3",
+      "room_number": 3,
+      "name": "Goblin Den",
+      "narration_text": "A foul stench fills this chamber. Bones litter the floor. In the shadows, something moves. A goblin shrieks and attacks!",
+      "background_description": "Cave chamber with bones scattered on floor, dark corners with shadows, rough stone walls, ominous red glow from unseen source, debris and filth, threatening atmosphere",
+      "light_level": "dark",
+      "is_combat_zone": true
+    },
+    {
+      "id": "beginners-cave-4",
+      "room_number": 4,
+      "name": "Underground River",
+      "narration_text": "An underground river rushes past, its waters black as obsidian. The sound is deafening. A rickety bridge crosses to the east bank.",
+      "background_description": "Underground cavern with rushing river, black water with reflections, rickety wooden bridge, stalactites hanging from ceiling, blue-green bioluminescent glow from water, dramatic perspective",
+      "light_level": "dim",
+      "is_combat_zone": false
+    },
+    {
+      "id": "beginners-cave-5",
+      "room_number": 5,
+      "name": "Hidden Cache",
+      "narration_text": "Behind a false wall, you discover a small chamber. Dusty chests and forgotten sacks sit undisturbed. Someone's treasure, left unguarded.",
+      "background_description": "Small secret chamber behind stone wall, dusty wooden chests, cloth sacks, cobwebs, single shaft of light from above, treasure scattered on stone floor, mysterious atmosphere",
+      "light_level": "bright",
+      "is_combat_zone": false
+    },
+    {
+      "id": "beginners-cave-6",
+      "room_number": 6,
+      "name": "Chamber of Rest",
+      "narration_text": "A surprisingly clean chamber with a stone bench. Old campfire ashes suggest other adventurers have rested here. You feel safe.",
+      "background_description": "Small clean cave chamber, stone bench carved from wall, cold campfire ashes in center, warm torchlight, welcoming atmosphere, evidence of past visitors",
+      "light_level": "bright",
+      "is_combat_zone": false
+    },
+    {
+      "id": "beginners-cave-7",
+      "room_number": 7,
+      "name": "The Mimic's Lair",
+      "narration_text": "A tempting chest sits in the corner. As you approach, it sprouts legs and teeth! The mimic lunges!",
+      "background_description": "Dark cave chamber, treasure chest in corner that is actually a monster with teeth and legs, surprise attack moment, dramatic lighting, monster partially transformed",
+      "light_level": "dark",
+      "is_combat_zone": true
+    },
+    {
+      "id": "beginners-cave-26",
+      "room_number": 26,
+      "name": "Pirate's Cove",
+      "narration_text": "A hidden cove where pirates once stored their loot. The remains of a camp suggest recent occupation. A skull leers from atop a crate.",
+      "background_description": "Hidden underground cove, pirate camp remains, wooden crates and barrels, skull decoration, tattered pirate flag, scattered gold coins, torchlit with dramatic shadows",
+      "light_level": "dim",
+      "is_combat_zone": true
+    }
+  ],
+
+  "characters": [
+    {
+      "id": "beginners-cave-cynthia",
+      "name": "Cynthia",
+      "slug": "cynthia",
+      "type": "npc",
+      "is_hostile": false,
+      "description": "A fellow adventurer resting by the fire. She wears leather armor and carries a short sword.",
+      "portrait_description": "Young female adventurer, leather armor, kind face with warm smile, short brown hair, holding sword, Eyvind Earle flat graphic style with subtle shading, Celtic ornamental trim on armor",
+      "voice_role": "shopkeep",
+      "voice_id": "iP95p4xoKVk53GoZ742B",
+      "friendliness": "friendly",
+      "first_encounter_text": "Oh! Another brave soul. I'm Cynthia. Careful in the east tunnel — I heard growling.",
+      "hp": 15,
+      "location_room": 6
+    },
+    {
+      "id": "beginners-cave-goblin",
+      "name": "Cave Goblin",
+      "slug": "goblin",
+      "type": "enemy",
+      "is_hostile": true,
+      "description": "A wiry green goblin with jagged teeth and rusty dagger.",
+      "portrait_description": "Green goblin, wiry build, jagged yellow teeth, rusty dagger in hand, aggressive snarl, ragged clothing, Eyvind Earle flat graphic style with angular features",
+      "voice_role": "narrator",
+      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "friendliness": "hostile",
+      "first_encounter_text": "The goblin shrieks and lunges at you with its dagger!",
+      "hp": 6,
+      "damage_dice": "1d4",
+      "armor_class": 3,
+      "loot_table": ["goblin-dagger", "goblin-coins"],
+      "location_room": 3
+    },
+    {
+      "id": "beginners-cave-mimic",
+      "name": "Mimic",
+      "slug": "mimic",
+      "type": "boss",
+      "is_hostile": true,
+      "description": "A predatory creature disguised as a treasure chest. Rows of teeth and grasping pseudopods.",
+      "portrait_description": "Mimic monster as treasure chest with teeth and tongue, wooden texture turning into flesh, grasping tentacle-legs, surprise attack pose, Eyvind Earle stylized horror",
+      "voice_role": "narrator",
+      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "friendliness": "hostile",
+      "first_encounter_text": "The chest sprouts legs and teeth! The mimic attacks!",
+      "hp": 20,
+      "damage_dice": "2d4",
+      "armor_class": 5,
+      "special_ability": "Surprise attack: first round attacks with advantage",
+      "loot_table": ["mimic-treasure"],
+      "location_room": 7
+    },
+    {
+      "id": "beginners-cave-pirate",
+      "name": "Skeleton Pirate",
+      "slug": "pirate",
+      "type": "enemy",
+      "is_hostile": true,
+      "description": "An undead pirate, bones held together by dark magic. Wields a rusted cutlass.",
+      "portrait_description": "Skeleton pirate, bones held by dark magic, rusted cutlass, tattered pirate hat, glowing eye sockets, menacing pose, Eyvind Earle stylized undead",
+      "voice_role": "narrator",
+      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "friendliness": "hostile",
+      "first_encounter_text": "The skeleton pirate rattles its bones and raises its cutlass!",
+      "hp": 12,
+      "damage_dice": "1d6",
+      "armor_class": 4,
+      "loot_table": ["pirate-cutlass", "trollsfire"],
+      "location_room": 26
+    },
+    {
+      "id": "beginners-cave-hermit",
+      "name": "Old Hermit",
+      "slug": "hermit",
+      "type": "npc",
+      "is_hostile": false,
+      "description": "An elderly hermit who dwells in the deeper caves. He may help or hinder.",
+      "portrait_description": "Elderly hermit, long white beard, tattered robes, wise but wary eyes, holding wooden staff, Eyvind Earle flat graphic style, Celtic ornamental details on staff",
+      "voice_role": "narrator",
+      "voice_id": "HAvvFKatz0uu0Fv55Riy",
+      "friendliness": "neutral",
+      "first_encounter_text": "The herit squints at you. 'Not many come this deep, traveler. What do you seek?'",
+      "hp": 8,
+      "location_room": 4
+    }
+  ],
+
+  "items": [
+    {
+      "id": "beginners-cave-healing-potion",
+      "name": "Healing Potion",
+      "slug": "healing-potion",
+      "type": "potion",
+      "description": "A small vial of glowing red liquid. Smells of herbs and honey.",
+      "value": 50,
+      "weight": 1,
+      "heal_amount": 10,
+      "uses": 1
+    },
+    {
+      "id": "beginners-cave-goblin-dagger",
+      "name": "Rusty Dagger",
+      "slug": "goblin-dagger",
+      "type": "weapon",
+      "description": "A crude iron dagger, pitted with rust but still sharp.",
+      "value": 5,
+      "weight": 2,
+      "damage_dice": "1d4",
+      "hit_bonus": 0
+    },
+    {
+      "id": "beginners-cave-pirate-cutlass",
+      "name": "Rusted Cutlass",
+      "slug": "pirate-cutlass",
+      "type": "weapon",
+      "description": "A sailor's blade, corroded by salt and time.",
+      "value": 15,
+      "weight": 4,
+      "damage_dice": "1d6",
+      "hit_bonus": 0
+    },
+    {
+      "id": "beginners-cave-trollsfire",
+      "name": "Troll's Fire",
+      "slug": "trollsfire",
+      "type": "weapon",
+      "description": "A flaming blade that burns with cold fire. Rare and valuable.",
+      "value": 200,
+      "weight": 5,
+      "damage_dice": "2d6",
+      "hit_bonus": 2,
+      "special_ability": "Deals bonus fire damage"
+    },
+    {
+      "id": "beginners-cave-diamonds",
+      "name": "Bag of Diamonds",
+      "slug": "diamonds",
+      "type": "treasure",
+      "description": "A small leather bag containing uncut diamonds.",
+      "value": 200,
+      "weight": 1
+    },
+    {
+      "id": "beginners-cave-jewels",
+      "name": "Velvet Jewels",
+      "slug": "jewels",
+      "type": "treasure",
+      "description": "A velvet pouch of assorted precious gems.",
+      "value": 168,
+      "weight": 1
+    }
+  ]
+}
