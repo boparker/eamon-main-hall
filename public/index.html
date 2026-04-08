@@ -569,6 +569,20 @@ function setLocation(name) {
 }
 
 async function generateSceneBg(location) {
+  // Map location names to local scene images
+  const sceneMap = {
+    'The Great Hall': 'scenes/great-hall.jpg',
+    "Marcos Cavielli's Weapon Shop": 'scenes/weapon-shop.jpg',
+    "Hokas Tokas' Magic Emporium": 'scenes/magic-shop.jpg',
+    "Shylock McFenney's Bank": 'scenes/bank.jpg',
+    "Sam Slicker's Pawn Shop": 'scenes/pawn-shop.jpg'
+  };
+  
+  if (sceneMap[location]) {
+    crossfadeBg(sceneMap[location]);
+    return;
+  }
+  
   // Check local cache
   if (bgCache[location]) {
     crossfadeBg(bgCache[location]);
