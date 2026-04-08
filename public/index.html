@@ -50,7 +50,7 @@
     .enter-btn:hover { background: rgba(200,168,75,0.06); border-color: var(--gold); box-shadow: 0 0 30px rgba(200,168,75,0.12); }
 
     /* ═══ GAME SCREEN ═══ */
-    #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
+    #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; padding: 0 0 8vh 0; }
     #game-screen.active { opacity: 1; pointer-events: all; }
 
     #scene-bg { position: absolute; inset: 0; z-index: 0; background: url('bg.jpg') center top / cover no-repeat, var(--bg); transition: opacity 1.5s ease; }
@@ -279,8 +279,6 @@
     <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
   </div>
 
-  <div id="choices-area"></div>
-
   <!-- ═ SHOP PANEL ═ -->
   <div id="shop-panel">
     <div class="shop-header">
@@ -299,6 +297,8 @@
       <button id="send-btn" disabled>SEND</button>
     </div>
   </div>
+
+  <div id="choices-area"></div>
 </div>
 
 <script>
