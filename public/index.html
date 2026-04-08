@@ -787,7 +787,10 @@ async function streamMessage(endpoint, body) {
             finishStreamLine();
             doneVoiceId = evt.voiceId;
             if (evt.phaseUpdate?.character) {
+              // Preserve local gold - server doesn't track spending
+              const localGold = character.gold;
               character = { ...character, ...evt.phaseUpdate.character };
+              if (localGold !== undefined) character.gold = localGold;
               updateHUD(true);
             }
           }
