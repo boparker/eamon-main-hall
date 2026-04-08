@@ -77,7 +77,7 @@ Put these at the END of your response, after the narration. 2-5 choices. The pla
 
 CHARACTER CREATION FLOW (follow exactly):
 1. GREETING: Welcome them. Describe the Guild Hall in 2 sentences. Then: {What's your name, adventurer?}
-   Include: [CHOICE: (type your name below)]
+   Include: [CHOICE: Type your name]
 2. AFTER NAME: Acknowledge warmly. Offer three paths:
    [CHOICE: The way of the Warrior — strong and tough]
    [CHOICE: The path of the Rogue — quick and cunning]
