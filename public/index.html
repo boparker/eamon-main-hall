@@ -426,19 +426,10 @@ function openShop(shopKey) {
     `;
     if (canAfford && item.price > 0) {
       div.addEventListener('click', () => {
-        // Debit gold client-side immediately
-        character.gold = (character.gold || 0) - item.price;
-        document.getElementById('stat-gold').textContent = character.gold;
-        document.getElementById('shop-gold').textContent = `Your gold: ${character.gold}`;
-        // Add to inventory tracking
-        if (!character.inventory) character.inventory = [];
-        character.inventory.push({ name: item.name, stats: item.stats });
-        // Re-render shop to update afford states
+        applyLocalPurchase(item);
         const currentShopKey = document.getElementById('shop-title').dataset.shopKey;
-        // Send buy command to AI
         inputEl.value = `Buy ${item.name}`;
         sendMessage();
-        // Refresh shop panel after short delay to update can-afford styling
         setTimeout(() => { if (currentShopKey) openShop(currentShopKey); }, 300);
       });
     }
@@ -455,6 +446,39 @@ let isStreaming = false;
 let gamePhase = 'intro';
 let character = {};
 let currentVoiceId = null;
+let pendingState = {
+  goldDelta: 0,
+  hdDelta: 0,
+  inventoryAdds: [],
+};
+
+function applyLocalPurchase(item) {
+  pendingState.goldDelta -= item.price || 0;
+  pendingState.inventoryAdds.push({ name: item.name, stats: item.stats });
+  character.gold = Math.max(0, (character.gold || 0) - (item.price || 0));
+  if (!character.inventory) character.inventory = [];
+  character.inventory.push({ name: item.name, stats: item.stats });
+  updateHUD(true);
+  const shopGold = document.getElementById('shop-gold');
+  if (shopGold) shopGold.textContent = `Your gold: ${character.gold}`;
+}
+
+function mergeServerCharacter(serverCharacter = {}) {
+  const merged = { ...character, ...serverCharacter };
+  if (serverCharacter.gold != null || pendingState.goldDelta !== 0) {
+    const baseGold = serverCharacter.gold != null ? serverCharacter.gold : (character.gold || 0);
+    merged.gold = Math.max(0, baseGold + pendingState.goldDelta);
+  }
+  if (serverCharacter.hd != null || pendingState.hdDelta !== 0) {
+    const baseHd = serverCharacter.hd != null ? serverCharacter.hd : (character.hd || 0);
+    merged.hd = Math.max(0, baseHd + pendingState.hdDelta);
+  }
+  if (!Array.isArray(merged.inventory)) merged.inventory = [];
+  if (pendingState.inventoryAdds.length) {
+    merged.inventory = [...merged.inventory, ...pendingState.inventoryAdds];
+  }
+  character = merged;
+}
 
 // ── Music ──
 const hallMusic = new Audio('concrete-omen.mp3');
@@ -787,10 +811,7 @@ async function streamMessage(endpoint, body) {
             finishStreamLine();
             doneVoiceId = evt.voiceId;
             if (evt.phaseUpdate?.character) {
-              // Preserve local gold - server doesn't track spending
-              const localGold = character.gold;
-              character = { ...character, ...evt.phaseUpdate.character };
-              if (localGold !== undefined) character.gold = localGold;
+              mergeServerCharacter(evt.phaseUpdate.character);
               updateHUD(true);
             }
           }
