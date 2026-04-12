@@ -39,9 +39,9 @@
       filter: drop-shadow(0 0 40px rgba(200,168,75,0.15));
       animation: dragonBreathe 5s ease-in-out infinite;
     }
-    @keyframes dragonBreathe { 
-      0%,100%{filter: drop-shadow(0 0 30px rgba(200,168,75,0.1)); transform: scale(1);} 
-      50%{filter: drop-shadow(0 0 60px rgba(200,168,75,0.2)); transform: scale(1.02);} 
+    @keyframes dragonBreathe {
+      0%,100%{filter: drop-shadow(0 0 30px rgba(200,168,75,0.1)); transform: scale(1);}
+      50%{filter: drop-shadow(0 0 60px rgba(200,168,75,0.2)); transform: scale(1.02);}
     }
     @keyframes breathe { 0%,100%{box-shadow:0 0 20px rgba(200,168,75,0.1)} 50%{box-shadow:0 0 40px rgba(200,168,75,0.25),0 0 80px rgba(200,168,75,0.08)} }
     .title-main { font-family: var(--font-head); font-size: clamp(2.8rem,8vw,5rem); font-weight: 400; color: var(--gold); letter-spacing: 0.12em; text-align: center; line-height: 1; }
@@ -224,7 +224,6 @@
 
     @media (max-width: 640px) {
       #shop-panel { width: 100%; right: -100%; }
-    }
       #hud-stats { gap: 14px; }
       .hud-stat-val { font-size: 0.85rem; }
       #input-box { padding: 12px 16px; }
@@ -247,7 +246,7 @@
 <div id="game-screen">
   <div id="scene-bg"></div>
   <div id="scene-bg-next"></div>
-  <div class="img-generating" id="img-generating">◈ CONJURING VISION ◈</div>
+  <div class="img-generating" id="img-generating">&#9670; CONJURING VISION &#9670;</div>
   <div id="portrait-frame">
     <img id="portrait-img" src="" alt="">
     <div id="portrait-name"></div>
@@ -256,16 +255,16 @@
   <div id="grain"></div>
 
   <div id="hud">
-    <div id="hud-name">—</div>
+    <div id="hud-name">&mdash;</div>
     <div id="hud-stats">
-      <div class="hud-stat"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">—</span></div>
-      <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">—</span></div>
-      <div class="hud-stat"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">—</span></div>
-      <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">—</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">&mdash;</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">&mdash;</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">&mdash;</span></div>
+      <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">&mdash;</span></div>
     </div>
     <div class="hud-controls">
-      <button class="hud-btn active" id="hud-music-btn" title="Toggle music">🎵</button>
-      <button class="hud-btn active" id="hud-voice-btn" title="Toggle voice">🔊</button>
+      <button class="hud-btn active" id="hud-music-btn" title="Toggle music">&#127925;</button>
+      <button class="hud-btn active" id="hud-voice-btn" title="Toggle voice">&#128266;</button>
     </div>
   </div>
 
@@ -285,7 +284,7 @@
       <span class="shop-title" id="shop-title">SHOP</span>
       <button class="shop-close" id="shop-close-btn">&times;</button>
     </div>
-    <div class="shop-gold" id="shop-gold">Your gold: —</div>
+    <div class="shop-gold" id="shop-gold">Your gold: &mdash;</div>
     <div class="shop-items" id="shop-items"></div>
   </div>
 
@@ -294,584 +293,25 @@
   <div id="input-zone" style="margin-bottom:10vh">
     <div id="input-label"></div>
     <div id="input-box" style="min-height:56px;padding:14px 20px">
-      <span id="prompt-arrow" style="font-size:1.3rem">›</span>
+      <span id="prompt-arrow" style="font-size:1.3rem">&#8250;</span>
       <input type="text" id="player-input" placeholder="" autocomplete="off" spellcheck="false" disabled style="font-size:1.15rem">
       <button id="send-btn" disabled style="font-size:1.05rem;padding:10px 22px">SEND</button>
     </div>
   </div>
 </div>
 
-<script>
-const SESSION_ID = 'eamon-' + Math.random().toString(36).slice(2, 10);
+<!-- ═ GAME LOGIC (ES Modules) ═
+     js/state.js      — Shared game state
+     js/stream.js     — SSE streaming + tag parsing
+     js/hud.js        — HUD stat display
+     js/narrative.js  — Text rendering + scroll
+     js/input.js      — Input box + choices
+     js/shop.js       — Shop panel + inventory
+     js/scene.js      — Backgrounds + portraits
+     js/audio.js      — Music + TTS
+     js/main.js       — Boot + wiring
+-->
+<script type="module" src="js/main.js"></script>
 
-// ── Shop Data ──
-const SHOP_DATA = {
-  marcos: {
-    title: "MARCOS CAVIELLI'S WEAPONS",
-    items: [
-      { name: 'Short Sword', desc: 'Reliable and light', price: 30, stats: { dmg: '1d6', odds: '25%', type: 'Sword' } },
-      { name: 'Broadsword', desc: 'Standard warrior\'s blade', price: 60, stats: { dmg: '2d6', odds: '30%', type: 'Sword' } },
-      { name: 'Battle Axe', desc: 'Heavy, devastating swings', price: 80, stats: { dmg: '2d8', odds: '20%', type: 'Axe' } },
-      { name: 'Mace', desc: 'Crushes armor and bone', price: 50, stats: { dmg: '2d4', odds: '30%', type: 'Mace' } },
-      { name: 'Spear', desc: 'Reach advantage in combat', price: 40, stats: { dmg: '1d8', odds: '25%', type: 'Spear' } },
-      { name: 'War Hammer', desc: 'Slow but lethal', price: 90, stats: { dmg: '3d6', odds: '15%', type: 'Hammer' } },
-      { name: 'Leather Armor', desc: 'Basic protection', price: 50, stats: { def: '+2', weight: 'Light', type: 'Armor' } },
-      { name: 'Chain Mail', desc: 'Solid defense, some weight', price: 120, stats: { def: '+5', weight: 'Medium', ag: '-1', type: 'Armor' } },
-      { name: 'Plate Armor', desc: 'Heavy but near-impervious', price: 200, stats: { def: '+8', weight: 'Heavy', ag: '-3', type: 'Armor' } },
-      { name: 'Shield', desc: 'Blocks incoming strikes', price: 40, stats: { def: '+2', block: '15%', type: 'Shield' } },
-    ]
-  },
-  hokas: {
-    title: "HOKAS TOKAS' MAGIC EMPORIUM",
-    items: [
-      { name: 'Blast Spell', desc: 'Deals magical damage', price: 100, stats: { dmg: '2d8', range: 'Ranged', type: 'Spell' } },
-      { name: 'Heal Spell', desc: 'Restore lost Hardiness', price: 80, stats: { heal: '2d6', uses: '3/adventure', type: 'Spell' } },
-      { name: 'Speed Spell', desc: 'Boost Agility in combat', price: 120, stats: { buff: 'AG +5', dur: '3 rounds', type: 'Spell' } },
-      { name: 'Power Spell', desc: 'Random powerful effect', price: 150, stats: { effect: 'Random', power: 'High', type: 'Spell' } },
-      { name: 'Healing Potion', desc: 'One-use, restores 10 HD', price: 25, stats: { heal: '+10 HD', uses: '1 (consumed)', type: 'Potion' } },
-      { name: 'Scroll of Protection', desc: 'Reduces damage taken', price: 60, stats: { def: '+3', dur: '5 rounds', uses: '1 (consumed)', type: 'Scroll' } },
-    ]
-  },
-  bank: {
-    title: "SHYLOCK McFENNEY'S BANK",
-    items: [
-      { name: 'Deposit 50 Gold', desc: 'Safe keeping', price: 0 },
-      { name: 'Deposit 100 Gold', desc: 'Safe keeping', price: 0 },
-      { name: 'Withdraw 50 Gold', desc: 'From your account', price: 0 },
-      { name: 'Withdraw 100 Gold', desc: 'From your account', price: 0 },
-    ]
-  },
-  pawn: {
-    title: "SAM SLICKER'S PAWN SHOP",
-    items: [
-      { name: 'Sell your loot here', desc: 'Prices vary by item', price: 0 },
-    ]
-  },
-};
-
-// Shop-to-location mapping for background generation
-const SHOP_LOCATIONS = {
-  marcos: "Marcos Cavielli's Weapon Shop — racks of swords and axes on stone walls, anvil, forge glow",
-  hokas: "Hokas Tokas' Magic Emporium — shelves of potions, glowing crystals, arcane tomes, purple mist",
-  bank: "Shylock McFenney's Bank — gold stacks, iron vault doors, counting tables, candlelight",
-  pawn: "Sam Slicker's Pawn Shop — cluttered shelves of adventuring gear, dusty treasures, dim lanterns"
-};
-
-function openShop(shopKey) {
-  const shop = SHOP_DATA[shopKey];
-  if (!shop) return;
-  // Generate shop-specific background
-  const shopLocation = SHOP_LOCATIONS[shopKey];
-  if (shopLocation && shopLocation !== lastBgLocation) {
-    lastBgLocation = shopLocation;
-    generateSceneBg(shopLocation);
-  }
-  const panel = document.getElementById('shop-panel');
-  document.getElementById('shop-title').textContent = shop.title;
-  document.getElementById('shop-title').dataset.shopKey = shopKey;
-  document.getElementById('shop-gold').textContent = `Your gold: ${character.gold || 0}`;
-  const container = document.getElementById('shop-items');
-  container.innerHTML = '';
-  // Group items by category
-  const groups = {};
-  for (const item of shop.items) {
-    const cat = (item.stats && item.stats.type) || 'General';
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(item);
-  }
-  const categoryOrder = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer', 'Armor', 'Shield', 'Spell', 'Potion', 'Scroll', 'General'];
-  const sortedCats = Object.keys(groups).sort((a, b) => {
-    const ai = categoryOrder.indexOf(a), bi = categoryOrder.indexOf(b);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
-  // Only show category headers if more than one category
-  const showHeaders = sortedCats.length > 1;
-  let lastHeaderLabel = '';
-  for (const cat of sortedCats) {
-    if (showHeaders) {
-      // Merge weapon subtypes under one header, shield under armor
-      const weaponTypes = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer'];
-      const armorTypes = ['Armor', 'Shield'];
-      const headerLabel = weaponTypes.includes(cat) ? '⚔ WEAPONS' : armorTypes.includes(cat) ? '🛡 ARMOR & SHIELDS' : cat === 'Spell' ? '✦ SPELLS' : cat === 'Potion' ? '🧪 POTIONS' : cat === 'Scroll' ? '📜 SCROLLS' : cat;
-      // Avoid duplicate headers
-      if (headerLabel !== lastHeaderLabel) {
-        const hdr = document.createElement('div');
-        hdr.className = 'shop-category';
-        hdr.textContent = headerLabel;
-        container.appendChild(hdr);
-        lastHeaderLabel = headerLabel;
-      }
-    }
-    for (const item of groups[cat]) {
-    const canAfford = item.price === 0 || (character.gold || 0) >= item.price;
-    const div = document.createElement('div');
-    div.className = 'shop-item' + (canAfford ? '' : ' cant-afford');
-    let statsHtml = '';
-    if (item.stats) {
-      const statEntries = Object.entries(item.stats).filter(([k]) => k !== 'type');
-      statsHtml = '<div class="shop-item-stats">' + statEntries.map(([k, v]) => {
-        const label = k === 'dmg' ? 'DMG' : k === 'def' ? 'DEF' : k === 'odds' ? 'HIT' : k === 'heal' ? 'HEAL' : k === 'buff' ? 'BUFF' : k === 'block' ? 'BLOCK' : k === 'dur' ? 'DUR' : k === 'uses' ? 'USES' : k === 'range' ? 'RNG' : k === 'effect' ? 'FX' : k === 'power' ? 'PWR' : k === 'weight' ? 'WT' : k === 'ag' ? 'AG' : k.toUpperCase();
-        const cls = String(v).startsWith('+') ? 'stat-positive' : String(v).startsWith('-') ? 'stat-negative' : '';
-        return `<span class="shop-stat ${cls}">${label} <span class="shop-stat-val">${v}</span></span>`;
-      }).join('') + '</div>';
-      statsHtml = `<div class="shop-item-type" style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">${item.stats.type || ''}</div>` + statsHtml;
-    }
-    div.innerHTML = `
-      <div class="shop-item-info">
-        <div class="shop-item-name">${item.name}</div>
-        <div class="shop-item-desc">${item.desc}</div>
-        ${statsHtml}
-      </div>
-      <div class="shop-item-price">${item.price > 0 ? item.price + ' gold' : '—'}</div>
-    `;
-    if (canAfford && item.price > 0) {
-      div.addEventListener('click', () => {
-        applyLocalPurchase(item);
-        const currentShopKey = document.getElementById('shop-title').dataset.shopKey;
-        inputEl.value = `Buy ${item.name}`;
-        sendMessage();
-        setTimeout(() => { if (currentShopKey) openShop(currentShopKey); }, 300);
-      });
-    }
-    container.appendChild(div);
-  } // end items in category
-  } // end categories
-  panel.classList.add('open');
-}
-function closeShop() { document.getElementById('shop-panel').classList.remove('open'); }
-document.getElementById('shop-close-btn').addEventListener('click', closeShop);
-let voiceEnabled = true;
-let musicEnabled = true;
-let isStreaming = false;
-let gamePhase = 'intro';
-let character = {};
-let currentVoiceId = null;
-let pendingState = {
-  goldDelta: 0,
-  hdDelta: 0,
-  inventoryAdds: [],
-};
-
-function applyLocalPurchase(item) {
-  pendingState.goldDelta -= item.price || 0;
-  pendingState.inventoryAdds.push({ name: item.name, stats: item.stats });
-  character.gold = Math.max(0, (character.gold || 0) - (item.price || 0));
-  if (!character.inventory) character.inventory = [];
-  character.inventory.push({ name: item.name, stats: item.stats });
-  updateHUD(true);
-  const shopGold = document.getElementById('shop-gold');
-  if (shopGold) shopGold.textContent = `Your gold: ${character.gold}`;
-}
-
-function mergeServerCharacter(serverCharacter = {}) {
-  const merged = { ...character, ...serverCharacter };
-  if (serverCharacter.gold != null || pendingState.goldDelta !== 0) {
-    const baseGold = serverCharacter.gold != null ? serverCharacter.gold : (character.gold || 0);
-    merged.gold = Math.max(0, baseGold + pendingState.goldDelta);
-  }
-  if (serverCharacter.hd != null || pendingState.hdDelta !== 0) {
-    const baseHd = serverCharacter.hd != null ? serverCharacter.hd : (character.hd || 0);
-    merged.hd = Math.max(0, baseHd + pendingState.hdDelta);
-  }
-  if (!Array.isArray(merged.inventory)) merged.inventory = [];
-  if (pendingState.inventoryAdds.length) {
-    merged.inventory = [...merged.inventory, ...pendingState.inventoryAdds];
-  }
-  character = merged;
-}
-
-// ── Music ──
-const hallMusic = new Audio('concrete-omen.mp3');
-hallMusic.loop = true; hallMusic.volume = 0;
-const adventureMusic = new Audio('lead-drip-psalm.mp3');
-adventureMusic.loop = true; adventureMusic.volume = 0;
-let bgMusic = hallMusic; // start with hall music
-
-function switchMusic(track) {
-  if (bgMusic === track) return;
-  const oldMusic = bgMusic;
-  bgMusic = track;
-  // Crossfade
-  const fadeOut = setInterval(() => {
-    oldMusic.volume = Math.max(0, oldMusic.volume - 0.02);
-    if (oldMusic.volume <= 0) { oldMusic.pause(); clearInterval(fadeOut); }
-  }, 50);
-  if (musicEnabled) {
-    track.volume = 0;
-    track.play().catch(()=>{});
-    let vol2 = 0;
-    const fadeIn = setInterval(() => {
-      vol2 = Math.min(vol2 + 0.008, 0.3);
-      track.volume = vol2;
-      if (vol2 >= 0.3) clearInterval(fadeIn);
-    }, 50);
-  }
-}
-function startMusic() {
-  if (!musicEnabled) return;
-  bgMusic.play().catch(()=>{});
-  let vol = 0;
-  const fade = setInterval(() => { vol = Math.min(vol + 0.008, 0.3); bgMusic.volume = vol; if (vol >= 0.3) clearInterval(fade); }, 50);
-}
-document.getElementById('hud-music-btn').addEventListener('click', () => {
-  musicEnabled = !musicEnabled;
-  const btn = document.getElementById('hud-music-btn');
-  btn.classList.toggle('active', musicEnabled);
-  btn.textContent = musicEnabled ? '🎵' : '🔇';
-  if (musicEnabled) { bgMusic.play().catch(()=>{}); bgMusic.volume = 0.3; } else { hallMusic.pause(); adventureMusic.pause(); }
-});
-
-// ── Voice (ElevenLabs) ──
-let ttsAudio = null;
-function speakBrowserTTS(text) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 0.88; utter.pitch = 0.85; utter.volume = 0.9;
-  // Try to pick a deep male voice
-  const voices = window.speechSynthesis.getVoices();
-  const pref = voices.find(v => /daniel|james|thomas|aaron/i.test(v.name) && /en/i.test(v.lang))
-    || voices.find(v => /male/i.test(v.name) && /en/i.test(v.lang))
-    || voices.find(v => /en-/i.test(v.lang));
-  if (pref) utter.voice = pref;
-  window.speechSynthesis.speak(utter);
-}
-// Preload voices
-if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
-
-async function speakElevenLabs(text, voiceId) {
-  if (!voiceEnabled || !text) return;
-  try {
-    if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
-    const res = await fetch('/api/tts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voiceId }),
-    });
-    if (!res.ok) {
-      console.warn('ElevenLabs failed, falling back to browser TTS');
-      speakBrowserTTS(text);
-      return;
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    ttsAudio = new Audio(url);
-    ttsAudio.volume = 0.9;
-    ttsAudio.play().catch(()=>{});
-    ttsAudio.onended = () => { URL.revokeObjectURL(url); ttsAudio = null; };
-  } catch (e) {
-    console.warn('TTS error, falling back to browser:', e);
-    speakBrowserTTS(text);
-  }
-}
-document.getElementById('hud-voice-btn').addEventListener('click', () => {
-  voiceEnabled = !voiceEnabled;
-  const btn = document.getElementById('hud-voice-btn');
-  btn.classList.toggle('active', voiceEnabled);
-  btn.textContent = voiceEnabled ? '🔊' : '🔇';
-  if (!voiceEnabled && ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
-});
-
-// ── Location Title ──
-let lastBgLocation = '';
-const bgCache = {};
-
-function setLocation(name) {
-  const el = document.getElementById('location-title');
-  el.textContent = name;
-  el.classList.remove('visible', 'reveal');
-  void el.offsetWidth;
-  el.classList.add('visible', 'reveal');
-  // Switch music based on location
-  const lowerName = name.toLowerCase();
-  const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn');
-  switchMusic(isHall ? hallMusic : adventureMusic);
-  // Generate background image for new locations
-  if (name !== lastBgLocation) {
-    lastBgLocation = name;
-    generateSceneBg(name);
-  }
-}
-
-async function generateSceneBg(location) {
-  // Map location names to local scene images
-  const sceneMap = {
-    'The Great Hall': 'scenes/great-hall.png',
-    "Marcos Cavielli's Weapon Shop": 'scenes/weapon-shop.jpg',
-    "Hokas Tokas' Magic Emporium": 'scenes/magic-shop.jpg',
-    "Shylock McFenney's Bank": 'scenes/bank.jpg',
-    "Sam Slicker's Pawn Shop": 'scenes/pawn-shop.jpg'
-  };
-  
-  if (sceneMap[location]) {
-    crossfadeBg(sceneMap[location]);
-    return;
-  }
-  
-  // Check local cache
-  if (bgCache[location]) {
-    crossfadeBg(bgCache[location]);
-    return;
-  }
-  const indicator = document.getElementById('img-generating');
-  indicator.classList.add('active');
-  try {
-    const res = await fetch('/api/scene-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ location }),
-    });
-    const data = await res.json();
-    if (data.url) {
-      bgCache[location] = data.url;
-      crossfadeBg(data.url);
-    }
-  } catch (e) { console.error('Scene image error:', e); }
-  finally { indicator.classList.remove('active'); }
-}
-
-function crossfadeBg(url) {
-  const current = document.getElementById('scene-bg');
-  const next = document.getElementById('scene-bg-next');
-  // Preload
-  const img = new Image();
-  img.onload = () => {
-    next.style.backgroundImage = `url('${url}')`;
-    next.style.opacity = '1';
-    setTimeout(() => {
-      current.style.backgroundImage = `url('${url}')`;
-      next.style.opacity = '0';
-    }, 1600);
-  };
-  img.src = url;
-}
-
-// Portrait system
-const portraitCache = {};
-async function showPortrait(name, desc, kind) {
-  const frame = document.getElementById('portrait-frame');
-  const cacheKey = kind + ':' + name;
-  let url = portraitCache[cacheKey];
-  if (!url) {
-    try {
-      const res = await fetch('/api/portrait', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description: desc, type: kind }),
-      });
-      const data = await res.json();
-      if (data.url) { url = data.url; portraitCache[cacheKey] = url; }
-    } catch (e) { console.error('Portrait error:', e); }
-  }
-  if (url) {
-    document.getElementById('portrait-img').src = url;
-    document.getElementById('portrait-name').textContent = name;
-    document.getElementById('portrait-stats').textContent = kind === 'monster' ? '⚔ Hostile' : '✦ Friendly';
-    frame.classList.add('visible');
-    // Auto-hide after 20s if no new portrait
-    clearTimeout(frame._hideTimer);
-    frame._hideTimer = setTimeout(() => frame.classList.remove('visible'), 20000);
-  }
-}
-
-function hidePortrait() {
-  document.getElementById('portrait-frame').classList.remove('visible');
-}
-
-// ── Choices ──
-const choicesArea = document.getElementById('choices-area');
-let pendingChoices = [];
-function renderChoices() {
-  choicesArea.innerHTML = '';
-  if (pendingChoices.length === 0) { choicesArea.classList.remove('visible'); return; }
-  for (const text of pendingChoices) {
-    const card = document.createElement('div');
-    card.className = 'choice-card';
-    card.textContent = text;
-    card.addEventListener('click', () => {
-      choicesArea.classList.remove('visible');
-      pendingChoices = [];
-      inputEl.value = text;
-      sendMessage();
-    });
-    choicesArea.appendChild(card);
-  }
-  choicesArea.classList.add('visible');
-}
-
-// ── Narrative ──
-const scroll = document.getElementById('narrative-scroll');
-function addPlayerLine(text) {
-  const div = document.createElement('div');
-  div.className = 'narrative-line player-line line-enter';
-  div.textContent = text;
-  scroll.appendChild(div);
-  scroll.scrollTop = scroll.scrollHeight;
-}
-
-let activeStreamLine = null;
-function startStreamLine() {
-  activeStreamLine = document.createElement('div');
-  activeStreamLine.className = 'narrative-line line-enter';
-  const cursor = document.createElement('span');
-  cursor.className = 'cursor'; cursor.id = 'stream-cursor';
-  activeStreamLine.appendChild(cursor);
-  scroll.appendChild(activeStreamLine);
-  scroll.scrollTop = scroll.scrollHeight;
-}
-function appendStreamToken(token) {
-  const cursor = document.getElementById('stream-cursor');
-  if (cursor) cursor.before(document.createTextNode(token));
-  scroll.scrollTop = scroll.scrollHeight;
-}
-function appendActionText(text) {
-  const cursor = document.getElementById('stream-cursor');
-  if (!cursor) return;
-  const span = document.createElement('span');
-  span.className = 'action-highlight';
-  span.textContent = text;
-  cursor.before(span);
-  scroll.scrollTop = scroll.scrollHeight;
-}
-function finishStreamLine() {
-  const cursor = document.getElementById('stream-cursor');
-  if (cursor) cursor.remove();
-  activeStreamLine = null;
-}
-
-// ── Input state ──
-const inputEl = document.getElementById('player-input');
-const inputBox = document.getElementById('input-box');
-const inputLabel = document.getElementById('input-label');
-const sendBtn = document.getElementById('send-btn');
-
-const INPUT_SKINS = {
-  name:   { placeholder: 'Sign thy name here...', label: '✒ SIGN THE BOOK', skin: 'skin-name', arrow: '✒' },
-  choice: { placeholder: 'Choose your path...', label: 'YOUR CHOICE', skin: '', arrow: '›' },
-  action: { placeholder: 'What do you do?', label: '', skin: '', arrow: '›' },
-  shop:   { placeholder: 'What catches your eye?', label: '⚖ BROWSE THE WARES', skin: 'skin-shop', arrow: '⚖' },
-};
-function setInputState(hint, enabled) {
-  const cfg = INPUT_SKINS[hint] || INPUT_SKINS.action;
-  inputEl.placeholder = cfg.placeholder;
-  inputLabel.textContent = cfg.label;
-  inputLabel.classList.toggle('visible', !!cfg.label);
-  document.getElementById('prompt-arrow').textContent = cfg.arrow;
-  inputBox.classList.remove('skin-name', 'skin-shop');
-  if (cfg.skin) inputBox.classList.add(cfg.skin);
-  inputEl.disabled = !enabled;
-  sendBtn.disabled = !enabled;
-  if (enabled) { inputBox.classList.add('glow', 'pulse'); setTimeout(() => inputEl.focus(), 100); }
-  else { inputBox.classList.remove('glow', 'pulse'); }
-}
-
-// ── Stream API ──
-async function streamMessage(endpoint, body) {
-  if (isStreaming) return;
-  isStreaming = true;
-  setInputState('action', false);
-  pendingChoices = [];
-  choicesArea.classList.remove('visible');
-  document.getElementById('thinking').style.display = 'flex';
-
-  let ttsText = '';
-  let doneVoiceId = null;
-  let doneInputHint = 'action';
-
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    document.getElementById('thinking').style.display = 'none';
-    startStreamLine();
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        try {
-          const evt = JSON.parse(line.slice(6));
-          if (evt.type === 'token') { appendStreamToken(evt.text); ttsText += evt.text; }
-          if (evt.type === 'action_text') { appendActionText(evt.text); ttsText += evt.text; }
-          if (evt.type === 'location') setLocation(evt.text);
-          if (evt.type === 'voice') currentVoiceId = evt.voice;
-          if (evt.type === 'choice') pendingChoices.push(evt.text);
-          if (evt.type === 'input_hint') doneInputHint = evt.hint;
-          if (evt.type === 'shop') { if (evt.shop === 'close') closeShop(); else openShop(evt.shop); }
-          if (evt.type === 'portrait') showPortrait(evt.name, evt.desc, evt.kind);
-          if (evt.type === 'done') {
-            finishStreamLine();
-            doneVoiceId = evt.voiceId;
-            if (evt.phaseUpdate?.character) {
-              mergeServerCharacter(evt.phaseUpdate.character);
-              updateHUD(true);
-            }
-          }
-        } catch (_) {}
-      }
-    }
-  } catch (err) {
-    document.getElementById('thinking').style.display = 'none';
-    addPlayerLine('[Connection error — try refreshing]');
-  } finally {
-    isStreaming = false;
-    renderChoices();
-    setInputState(doneInputHint, true);
-    if (ttsText.trim() && doneVoiceId) speakElevenLabs(ttsText.trim(), doneVoiceId);
-  }
-}
-
-// ── Send ──
-async function sendMessage() {
-  const text = inputEl.value.trim();
-  if (!text || isStreaming) return;
-  inputEl.value = '';
-
-  if (gamePhase === 'intro') {
-    character.name = text.split(' ').slice(0, 3).join(' ');
-    document.getElementById('hud-name').textContent = character.name;
-    gamePhase = 'named';
-  } else if (gamePhase === 'named') {
-    gamePhase = 'classed';
-  }
-  if (gamePhase === 'classed') gamePhase = 'playing';
-
-  addPlayerLine(text);
-  await streamMessage('/api/chat', { sessionId: SESSION_ID, message: text });
-}
-
-// ── HUD ──
-function updateHUD(animate) {
-  document.getElementById('hud-name').textContent = character.name || '—';
-  const stats = { 'stat-hd': character.hd, 'stat-ag': character.ag, 'stat-ch': character.ch, 'stat-gold': character.gold };
-  for (const [id, val] of Object.entries(stats)) {
-    const el = document.getElementById(id);
-    if (val != null) {
-      el.textContent = val;
-      if (animate) { el.classList.remove('stat-reveal'); void el.offsetWidth; el.classList.add('stat-reveal'); }
-    }
-  }
-}
-
-// ── Boot ──
-document.getElementById('enter-btn').addEventListener('click', async () => {
-  document.getElementById('game-screen').classList.add('active');
-  startMusic();
-  document.getElementById('title-screen').classList.add('fade-out');
-  setTimeout(() => document.getElementById('title-screen').style.display = 'none', 1200);
-  await streamMessage('/api/start', { sessionId: SESSION_ID });
-});
-
-sendBtn.addEventListener('click', sendMessage);
-inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
-</script>
 </body>
 </html>

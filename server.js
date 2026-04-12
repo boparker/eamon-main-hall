@@ -193,6 +193,24 @@ When the player enters an adventure, shift to cinematic narrator voice.
 - Present choices for movement/action.
 - Track combat logically. Enemies have HP. The player can die.
 
+STAT CHANGE TAGS (CRITICAL — always include when stats change):
+Whenever gold, HP, or other stats change, you MUST include the appropriate tag:
+[GOLD: -30] — player spent 30 gold (buying items, paying fees, etc.)
+[GOLD: +15] — player gained 15 gold (found treasure, looted, rewarded, etc.)
+[DAMAGE: 5] — player took 5 points of damage (combat hit, trap, fall, etc.)
+[HEAL: 10] — player healed 10 HP (potion, spell, healing spring, etc.)
+
+ALWAYS include these tags when the narrative describes:
+- Buying/selling anything → [GOLD: -price] or [GOLD: +price]
+- Finding treasure or gold → [GOLD: +amount]
+- Taking damage in combat → [DAMAGE: amount]
+- Healing from any source → [HEAL: amount]
+- Trap damage → [DAMAGE: amount]
+These tags are NOT visible to the player. They update the HUD automatically.
+If a player buys something from a shop, ALWAYS emit [GOLD: -price].
+If a player picks up gold, ALWAYS emit [GOLD: +amount].
+If an enemy hits the player, ALWAYS emit [DAMAGE: amount].
+
 MONSTER/NPC PORTRAIT TAGS:
 When the player encounters a monster or notable NPC for the first time, include:
 [MONSTER: Goblin | snarling green-skinned creature with jagged teeth and rusty dagger]
@@ -300,6 +318,9 @@ async function streamAI(messages, res, session) {
             const shopMatch = tagBuffer.match(/\[SHOP:\s*(.+?)\]/);
             const monsterMatch = tagBuffer.match(/\[MONSTER:\s*(.+?)(?:\s*\|\s*(.+?))?\]/);
             const npcMatch = tagBuffer.match(/\[NPC:\s*(.+?)(?:\s*\|\s*(.+?))?\]/);
+            const goldMatch = tagBuffer.match(/\[GOLD:\s*([+-]?\d+)\]/);
+            const damageMatch = tagBuffer.match(/\[DAMAGE:\s*(\d+)\]/);
+            const healMatch = tagBuffer.match(/\[HEAL:\s*(\d+)\]/);
             if (locMatch) res.write(`data: ${JSON.stringify({ type: 'location', text: locMatch[1] })}\n\n`);
             else if (voiceMatch) res.write(`data: ${JSON.stringify({ type: 'voice', voice: voiceMatch[1] })}\n\n`);
             else if (choiceMatch) res.write(`data: ${JSON.stringify({ type: 'choice', text: choiceMatch[1] })}\n\n`);
@@ -307,6 +328,30 @@ async function streamAI(messages, res, session) {
             else if (shopMatch) res.write(`data: ${JSON.stringify({ type: 'shop', shop: shopMatch[1] })}\n\n`);
             else if (monsterMatch) res.write(`data: ${JSON.stringify({ type: 'portrait', name: monsterMatch[1], desc: monsterMatch[2] || '', kind: 'monster' })}\n\n`);
             else if (npcMatch) res.write(`data: ${JSON.stringify({ type: 'portrait', name: npcMatch[1], desc: npcMatch[2] || '', kind: 'npc' })}\n\n`);
+            else if (goldMatch) {
+              const delta = parseInt(goldMatch[1], 10);
+              if (session.character) {
+                session.character.gold = Math.max(0, (session.character.gold || 0) + delta);
+                console.log(`[STAT] Gold ${delta > 0 ? '+' : ''}${delta} → ${session.character.gold}`);
+              }
+              res.write(`data: ${JSON.stringify({ type: 'stat_change', stat: 'gold', delta, value: session.character?.gold })}\n\n`);
+            }
+            else if (damageMatch) {
+              const dmg = parseInt(damageMatch[1], 10);
+              if (session.character) {
+                session.character.hd = Math.max(0, (session.character.hd || 0) - dmg);
+                console.log(`[STAT] Damage ${dmg} → HD ${session.character.hd}`);
+              }
+              res.write(`data: ${JSON.stringify({ type: 'stat_change', stat: 'hd', delta: -dmg, value: session.character?.hd })}\n\n`);
+            }
+            else if (healMatch) {
+              const heal = parseInt(healMatch[1], 10);
+              if (session.character) {
+                session.character.hd = (session.character.hd || 0) + heal;
+                console.log(`[STAT] Heal ${heal} → HD ${session.character.hd}`);
+              }
+              res.write(`data: ${JSON.stringify({ type: 'stat_change', stat: 'hd', delta: heal, value: session.character?.hd })}\n\n`);
+            }
             tagBuffer = '';
           }
           continue;
@@ -325,12 +370,17 @@ async function streamAI(messages, res, session) {
     const clean = full
       .replace(/\[LOCATION:.*?\]\n?/g, '').replace(/\[VOICE:.*?\]\n?/g, '')
       .replace(/\[INPUT:.*?\]\n?/g, '').replace(/\[CHOICE:.*?\]\n?/g, '')
+      .replace(/\[GOLD:\s*[+-]?\d+\]\n?/g, '').replace(/\[DAMAGE:\s*\d+\]\n?/g, '')
+      .replace(/\[HEAL:\s*\d+\]\n?/g, '')
       .replace(/[{}]/g, '').trim();
 
     const voiceKey = full.match(/\[VOICE:\s*(.+?)\]/)?.[1] || 'narrator';
     const voiceId = VOICES[voiceKey] || VOICES.narrator;
 
-    res.write(`data: ${JSON.stringify({ type: 'done', full: clean, phaseUpdate, voiceId, ttsText: clean })}\n\n`);
+    // Always send current character state so client can sync
+    const characterState = session.character || null;
+
+    res.write(`data: ${JSON.stringify({ type: 'done', full: clean, phaseUpdate, voiceId, ttsText: clean, characterState })}\n\n`);
     res.end();
   } catch (err) {
     console.error(err);
