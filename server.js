@@ -240,6 +240,26 @@ STATS (reference):
 - Mystic: Hardiness 12, Agility 14, Charisma 22, Gold 250
 `;
 
+// ── Shop Price Table (server-authoritative) ─────────────────────────────────
+const SHOP_PRICES = {
+  'Short Sword': 30, 'Broadsword': 60, 'Battle Axe': 80, 'Mace': 50,
+  'Spear': 40, 'War Hammer': 90, 'Leather Armor': 50, 'Chain Mail': 120,
+  'Plate Armor': 200, 'Shield': 40,
+  'Blast Spell': 100, 'Heal Spell': 80, 'Speed Spell': 120, 'Power Spell': 150,
+  'Healing Potion': 25, 'Scroll of Protection': 60,
+};
+
+function processPurchase(session, itemName) {
+  const price = SHOP_PRICES[itemName];
+  if (!price || !session.character) return null;
+  if ((session.character.gold || 0) < price) return { success: false, reason: 'not enough gold', gold: session.character.gold };
+  session.character.gold -= price;
+  if (!session.character.inventory) session.character.inventory = [];
+  session.character.inventory.push(itemName);
+  console.log(`[SHOP] ${itemName} purchased for ${price}g → ${session.character.gold}g remaining`);
+  return { success: true, item: itemName, price, gold: session.character.gold };
+}
+
 // ── Session store ─────────────────────────────────────────────────────────────
 const sessions = new Map();
 
@@ -330,11 +350,14 @@ async function streamAI(messages, res, session) {
             else if (npcMatch) res.write(`data: ${JSON.stringify({ type: 'portrait', name: npcMatch[1], desc: npcMatch[2] || '', kind: 'npc' })}\n\n`);
             else if (goldMatch) {
               const delta = parseInt(goldMatch[1], 10);
-              if (session.character) {
+              // Skip AI-generated gold tags when server already handled a purchase
+              if (session._purchaseHandled && delta < 0) {
+                console.log(`[STAT] Skipping AI [GOLD: ${delta}] — purchase already handled server-side`);
+              } else if (session.character) {
                 session.character.gold = Math.max(0, (session.character.gold || 0) + delta);
                 console.log(`[STAT] Gold ${delta > 0 ? '+' : ''}${delta} → ${session.character.gold}`);
+                res.write(`data: ${JSON.stringify({ type: 'stat_change', stat: 'gold', delta, value: session.character.gold })}\n\n`);
               }
-              res.write(`data: ${JSON.stringify({ type: 'stat_change', stat: 'gold', delta, value: session.character?.gold })}\n\n`);
             }
             else if (damageMatch) {
               const dmg = parseInt(damageMatch[1], 10);
@@ -381,6 +404,8 @@ async function streamAI(messages, res, session) {
     const characterState = session.character || null;
 
     res.write(`data: ${JSON.stringify({ type: 'done', full: clean, phaseUpdate, voiceId, ttsText: clean, characterState })}\n\n`);
+    // Clear per-turn flags
+    session._purchaseHandled = false;
     res.end();
   } catch (err) {
     console.error(err);
@@ -654,6 +679,24 @@ app.post('/api/chat', async (req, res) => {
     });
   } else {
     session.history.push({ role: 'user', content: message });
+
+    // ── Server-side purchase handling ──
+    const buyMatch = message.match(/^Buy\s+(.+)$/i);
+    if (buyMatch) {
+      const result = processPurchase(session, buyMatch[1]);
+      if (result?.success) {
+        session._purchaseHandled = true; // Flag to skip AI [GOLD:] tags this turn
+        session.history.push({
+          role: 'system',
+          content: `[PURCHASE COMPLETE: Player bought ${result.item} for ${result.price} gold. They now have ${result.gold} gold. Narrate the purchase briefly. Do NOT emit a [GOLD:] tag — the purchase is already handled server-side. Include [VOICE: shopkeep].]`
+        });
+      } else if (result && !result.success) {
+        session.history.push({
+          role: 'system',
+          content: `[PURCHASE FAILED: Player tried to buy ${buyMatch[1]} but only has ${result.gold} gold. Tell them they can't afford it. Do NOT emit a [GOLD:] tag.]`
+        });
+      }
+    }
   }
 
   await streamAI(session.history, res, session);
