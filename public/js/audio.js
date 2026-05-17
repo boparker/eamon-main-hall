@@ -94,6 +94,13 @@ export async function speakElevenLabs(text, voiceId) {
 
 // ── Control Buttons ──
 export function initAudioControls() {
+  const musicBtn = document.getElementById('hud-music-btn');
+  const voiceBtn = document.getElementById('hud-voice-btn');
+  musicBtn.classList.toggle('active', state.musicEnabled);
+  musicBtn.textContent = state.musicEnabled ? '\u{1F3B5}' : '\u{1F507}';
+  voiceBtn.classList.toggle('active', state.voiceEnabled);
+  voiceBtn.textContent = state.voiceEnabled ? '\u{1F50A}' : '\u{1F507}';
+
   document.getElementById('hud-music-btn').addEventListener('click', () => {
     state.musicEnabled = !state.musicEnabled;
     const btn = document.getElementById('hud-music-btn');

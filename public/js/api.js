@@ -4,7 +4,16 @@ export async function gameFetch(path, { method = 'GET', body } = {}) {
     headers: body ? { 'content-type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
-  const payload = await response.json();
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    let fallback = '';
+    try { fallback = await response.text(); } catch { fallback = ''; }
+    payload = { ok: false, text: fallback || `Game API request failed: ${response.status}` };
+  }
+
   if (!response.ok || payload.ok === false) {
     const error = new Error(payload.text || payload.error || `Game API request failed: ${response.status}`);
     error.status = response.status;

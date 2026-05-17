@@ -1,13 +1,39 @@
 // main.js — Boot sequence, wires everything together
 // This is the only file imported by index.html.
 
-import { SESSION_ID, state } from './state.js';
+import { PLAYER_ID, state } from './state.js';
 import { updateHUD } from './hud.js';
-import { addPlayerLine } from './narrative.js';
-import { inputEl, sendBtn, setInputState, registerSendFn } from './input.js';
-import { streamMessage } from './stream.js';
+import { addPlayerLine, startStreamLine, appendStreamToken, finishStreamLine } from './narrative.js';
+import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
 import { startMusic, initAudioControls } from './audio.js';
 import { registerPurchaseHandler } from './shop.js';
+import * as gameApi from './api.js';
+import { applyGameResponse, isActiveGameResponse, sendPhase1Command, startPhase1Game } from './game-client.js';
+
+function renderGameText(text) {
+  startStreamLine();
+  appendStreamToken(text);
+  finishStreamLine();
+}
+
+function renderResponse(response) {
+  applyGameResponse(response, {
+    state,
+    renderText: renderGameText,
+    clearChoices,
+    addChoice,
+    renderChoices,
+    updateHUD,
+    setInputState,
+    // Intentionally do not pass setLocation in Phase 1: deterministic room names
+    // should not trigger scene-image generation.
+  });
+}
+
+function showError(message, enableInput = false) {
+  addPlayerLine(message || '[Connection error — try refreshing]');
+  setInputState('action', enableInput);
+}
 
 // ── Send Message ──
 async function sendMessage() {
@@ -15,17 +41,27 @@ async function sendMessage() {
   if (!text || state.isStreaming) return;
   inputEl.value = '';
 
-  if (state.gamePhase === 'intro') {
-    state.character.name = text.split(' ').slice(0, 3).join(' ');
-    document.getElementById('hud-name').textContent = state.character.name;
-    state.gamePhase = 'named';
-  } else if (state.gamePhase === 'named') {
-    state.gamePhase = 'classed';
-  }
-  if (state.gamePhase === 'classed') state.gamePhase = 'playing';
-
   addPlayerLine(text);
-  await streamMessage('/api/chat', { sessionId: SESSION_ID, message: text });
+  state.isStreaming = true;
+  setInputState('action', false);
+  clearChoices();
+  renderChoices();
+  document.getElementById('thinking').style.display = 'flex';
+
+  try {
+    await sendPhase1Command({
+      playerId: PLAYER_ID,
+      input: text,
+      api: gameApi,
+      state,
+      renderResponse,
+    });
+  } catch (err) {
+    showError(err.message, isActiveGameResponse({ state: { character: state.character, adventureRun: state.gameSession?.adventureRun } }));
+  } finally {
+    document.getElementById('thinking').style.display = 'none';
+    state.isStreaming = false;
+  }
 }
 
 // ── Wire up cross-module callbacks ──
@@ -40,12 +76,36 @@ registerPurchaseHandler((text) => {
 initAudioControls();
 
 // ── Boot ──
-document.getElementById('enter-btn').addEventListener('click', async () => {
-  document.getElementById('game-screen').classList.add('active');
-  startMusic();
-  document.getElementById('title-screen').classList.add('fade-out');
-  setTimeout(() => document.getElementById('title-screen').style.display = 'none', 1200);
-  await streamMessage('/api/start', { sessionId: SESSION_ID });
+const enterBtn = document.getElementById('enter-btn');
+enterBtn.addEventListener('click', async () => {
+  if (state.isStreaming || state.gamePhase === 'playing') return;
+  enterBtn.disabled = true;
+
+  state.isStreaming = true;
+  setInputState('name', false);
+  document.getElementById('thinking').style.display = 'flex';
+
+  try {
+    await startPhase1Game({
+      playerId: PLAYER_ID,
+      promptName: () => window.prompt('What is your adventurer\'s name?', 'Adventurer'),
+      api: gameApi,
+      state,
+      renderResponse,
+    });
+
+    document.getElementById('game-screen').classList.add('active');
+    if (state.musicEnabled) startMusic();
+    document.getElementById('title-screen').classList.add('fade-out');
+    setTimeout(() => document.getElementById('title-screen').style.display = 'none', 1200);
+    state.gamePhase = 'playing';
+  } catch (err) {
+    showError(err.message, false);
+    enterBtn.disabled = false;
+  } finally {
+    document.getElementById('thinking').style.display = 'none';
+    state.isStreaming = false;
+  }
 });
 
 sendBtn.addEventListener('click', sendMessage);

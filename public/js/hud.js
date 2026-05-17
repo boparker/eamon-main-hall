@@ -6,8 +6,8 @@ export function updateHUD(animate) {
   document.getElementById('hud-name').textContent = state.character.name || '—';
   const stats = {
     'stat-hd': state.character.hd,
-    'stat-ag': state.character.ag,
-    'stat-ch': state.character.ch,
+    'stat-ag': state.character.agility ?? state.character.ag,
+    'stat-ch': state.character.charisma ?? state.character.ch,
     'stat-gold': state.character.gold,
   };
   for (const [id, val] of Object.entries(stats)) {

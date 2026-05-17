@@ -1,7 +1,6 @@
 // shop.js — Shop panel, inventory display, purchase flow
 
-import { state, applyLocalPurchase } from './state.js';
-import { updateHUD } from './hud.js';
+import { state } from './state.js';
 import { generateSceneBg, getLastBgLocation, setLastBgLocation } from './scene.js';
 
 // ── Shop Data ──
@@ -65,9 +64,9 @@ export function openShop(shopKey) {
   const shop = SHOP_DATA[shopKey];
   if (!shop) return;
 
-  // Generate shop-specific background
+  // Generate shop-specific background outside Phase 1 deterministic mode.
   const shopLocation = SHOP_LOCATIONS[shopKey];
-  if (shopLocation && shopLocation !== getLastBgLocation()) {
+  if (!state.phase1Mode && shopLocation && shopLocation !== getLastBgLocation()) {
     setLastBgLocation(shopLocation);
     generateSceneBg(shopLocation);
   }
@@ -143,10 +142,6 @@ export function openShop(shopKey) {
 
       if (canAfford && item.price > 0) {
         div.addEventListener('click', () => {
-          applyLocalPurchase(item);
-          updateHUD(true);
-          const shopGold = document.getElementById('shop-gold');
-          if (shopGold) shopGold.textContent = `Your gold: ${state.character.gold}`;
           const currentShopKey = document.getElementById('shop-title').dataset.shopKey;
           if (_onPurchase) _onPurchase(`Buy ${item.name}`);
           setTimeout(() => { if (currentShopKey) openShop(currentShopKey); }, 300);
