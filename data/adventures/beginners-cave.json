@@ -9,235 +9,795 @@
     "music_track": "cave-static-teeth.mp3",
     "difficulty": 1,
     "author": "Donald Brown",
-    "image_preference": "generate"
+    "image_preference": "upload",
+    "intro": "You stand at the entrance to a cave. A sign over the entrance reads \"Beginners Only!\" Your heart quickens as you grip your weapon. Whatever lies within, fame and fortune await the brave — or a quick death awaits the foolish.",
+    "start_room": 1
   },
-  
   "locations": [
     {
       "id": "beginners-cave-1",
       "room_number": 1,
       "name": "Cave Entrance",
-      "narration_text": "You stand at the mouth of a damp cave. The walls glisten with moisture. Flickering torches cast dancing shadows on rough stone. A narrow tunnel leads north into darkness.",
-      "background_description": "Rocky cave entrance, moss-covered stone walls, flickering torchlight casting warm orange glow, damp ground with puddles, angular Gothic rock formations, dark tunnel mouth leading north",
+      "narration_text": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
+      "background_description": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
       "light_level": "dim",
-      "is_combat_zone": false
+      "is_combat_zone": false,
+      "exits": {
+        "north": "main-hall",
+        "south": 2,
+        "east": null,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
-      "id": "beginners-cave-2", 
+      "id": "beginners-cave-2",
       "room_number": 2,
-      "name": "Damp Corridor",
-      "narration_text": "The corridor stretches east and west. Water drips steadily from the ceiling, creating a rhythmic tapping echo.",
-      "background_description": "Narrow stone corridor, water dripping from ceiling, wet stone floor with reflections, distant torchlight glow, angular stone arches, damp atmosphere",
+      "name": "Dark North/South Tunnel",
+      "narration_text": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
+      "background_description": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
       "light_level": "dim",
-      "is_combat_zone": false
+      "is_combat_zone": false,
+      "exits": {
+        "north": 1,
+        "south": 4,
+        "east": null,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-3",
       "room_number": 3,
-      "name": "Goblin Den",
-      "narration_text": "A foul stench fills this chamber. Bones litter the floor. In the shadows, something moves. A goblin shrieks and attacks!",
-      "background_description": "Cave chamber with bones scattered on floor, dark corners with shadows, rough stone walls, ominous red glow from unseen source, debris and filth, threatening atmosphere",
-      "light_level": "dark",
-      "is_combat_zone": true
+      "name": "West Side Chamber",
+      "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
+      "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
+      "light_level": "dim",
+      "is_combat_zone": true,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 4,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-4",
       "room_number": 4,
-      "name": "Underground River",
-      "narration_text": "An underground river rushes past, its waters black as obsidian. The sound is deafening. A rickety bridge crosses to the east bank.",
-      "background_description": "Underground cavern with rushing river, black water with reflections, rickety wooden bridge, stalactites hanging from ceiling, blue-green bioluminescent glow from water, dramatic perspective",
+      "name": "Large Chamber",
+      "narration_text": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
+      "background_description": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
       "light_level": "dim",
-      "is_combat_zone": false
+      "is_combat_zone": false,
+      "exits": {
+        "north": 2,
+        "south": 7,
+        "east": 5,
+        "west": 3,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-5",
       "room_number": 5,
-      "name": "Hidden Cache",
-      "narration_text": "Behind a false wall, you discover a small chamber. Dusty chests and forgotten sacks sit undisturbed. Someone's treasure, left unguarded.",
-      "background_description": "Small secret chamber behind stone wall, dusty wooden chests, cloth sacks, cobwebs, single shaft of light from above, treasure scattered on stone floor, mysterious atmosphere",
-      "light_level": "bright",
-      "is_combat_zone": false
+      "name": "East Side Chamber",
+      "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
+      "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 4,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-6",
       "room_number": 6,
-      "name": "Chamber of Rest",
-      "narration_text": "A surprisingly clean chamber with a stone bench. Old campfire ashes suggest other adventurers have rested here. You feel safe.",
-      "background_description": "Small clean cave chamber, stone bench carved from wall, cold campfire ashes in center, warm torchlight, welcoming atmosphere, evidence of past visitors",
-      "light_level": "bright",
-      "is_combat_zone": false
+      "name": "West Cell",
+      "narration_text": "You are in a small stark cell with a door on the east side of the room.",
+      "background_description": "You are in a small stark cell with a door on the east side of the room.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 7,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-7",
       "room_number": 7,
-      "name": "The Mimic's Lair",
-      "narration_text": "A tempting chest sits in the corner. As you approach, it sprouts legs and teeth! The mimic lunges!",
-      "background_description": "Dark cave chamber, treasure chest in corner that is actually a monster with teeth and legs, surprise attack moment, dramatic lighting, monster partially transformed",
-      "light_level": "dark",
-      "is_combat_zone": true
+      "name": "North End of Long Passage",
+      "narration_text": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?) In the dim light you can see that the hall goes south but you cannot make out any details.",
+      "background_description": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?) In the dim light you can see that the hall goes south but you cannot make out any details.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": 4,
+        "south": 10,
+        "east": 8,
+        "west": 6,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-8",
+      "room_number": 8,
+      "name": "East Cell",
+      "narration_text": "You are in a small stark cell with a door on the west side of the room.",
+      "background_description": "You are in a small stark cell with a door on the west side of the room.",
+      "light_level": "dim",
+      "is_combat_zone": true,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 7,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-9",
+      "room_number": 9,
+      "name": "West Cell",
+      "narration_text": "You are in a small stark cell with a door on the east side. An inscription on the wall reads: \"You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects.\"",
+      "background_description": "You are in a small stark cell with a door on the east side. An inscription on the wall reads: \"You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects.\"",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 10,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-10",
+      "room_number": 10,
+      "name": "Middle of Long Passage",
+      "narration_text": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
+      "background_description": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": 7,
+        "south": 13,
+        "east": 11,
+        "west": 9,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-11",
+      "room_number": 11,
+      "name": "East Cell",
+      "narration_text": "You are in a small stark cell with a door on the west side. An inscription reads: \"Most commands can be abbreviated. AT DR is the same as ATTACK DRAGON. Commands are not case sensitive.\"",
+      "background_description": "You are in a small stark cell with a door on the west side. An inscription reads: \"Most commands can be abbreviated. AT DR is the same as ATTACK DRAGON. Commands are not case sensitive.\"",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 10,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-12",
+      "room_number": 12,
+      "name": "West Cell",
+      "narration_text": "You are in a small stark cell with a door on the east side.",
+      "background_description": "You are in a small stark cell with a door on the east side.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 13,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-13",
+      "room_number": 13,
+      "name": "South End of Long Passage",
+      "narration_text": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
+      "background_description": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": 10,
+        "south": 15,
+        "east": 14,
+        "west": 12,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-14",
+      "room_number": 14,
+      "name": "East Cell",
+      "narration_text": "You are in a small stark cell with a door on the west side. A large chest sits in the center of the room.",
+      "background_description": "You are in a small stark cell with a door on the west side. A large chest sits in the center of the room.",
+      "light_level": "dim",
+      "is_combat_zone": true,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 13,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-15",
+      "room_number": 15,
+      "name": "Broken North/South Tunnel",
+      "narration_text": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
+      "background_description": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": 13,
+        "south": 20,
+        "east": 16,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-16",
+      "room_number": 16,
+      "name": "Secret East/West Tunnel",
+      "narration_text": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
+      "background_description": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 17,
+        "west": 15,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-17",
+      "room_number": 17,
+      "name": "East/West Tunnel with Loud Music",
+      "narration_text": "You can very clearly hear religious music being played and can smell incense from the east.",
+      "background_description": "You can very clearly hear religious music being played and can smell incense from the east.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 18,
+        "west": 16,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-18",
+      "room_number": 18,
+      "name": "The Temple",
+      "narration_text": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
+      "background_description": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
+      "light_level": "dim",
+      "is_combat_zone": true,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 17,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-19",
+      "room_number": 19,
+      "name": "The Library",
+      "narration_text": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
+      "background_description": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 20,
+        "west": null,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-20",
+      "room_number": 20,
+      "name": "T-Intersection",
+      "narration_text": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
+      "background_description": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": 15,
+        "south": null,
+        "east": 21,
+        "west": 19,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-21",
+      "room_number": 21,
+      "name": "East/West Tunnel",
+      "narration_text": "You are in an unremarkable tunnel. You can see torch light in both directions. Writing on the wall reads: \"To repeat the last command, just hit the Enter key. To recall previous commands, use the up and down arrow keys.\"",
+      "background_description": "You are in an unremarkable tunnel. You can see torch light in both directions. Writing on the wall reads: \"To repeat the last command, just hit the Enter key. To recall previous commands, use the up and down arrow keys.\"",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 22,
+        "west": 20,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-22",
+      "room_number": 22,
+      "name": "Top of Stairway",
+      "narration_text": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
+      "background_description": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 21,
+        "up": null,
+        "down": 23
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-23",
+      "room_number": 23,
+      "name": "Bottom of Stairway",
+      "narration_text": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
+      "background_description": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 24,
+        "west": null,
+        "up": 22,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-24",
+      "room_number": 24,
+      "name": "Rough Tunnel",
+      "narration_text": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions. An inscription reads: \"Interesting items are sometimes hidden within room descriptions. Try looking at unusual features — rough walls, cracks, bookshelves.\"",
+      "background_description": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions. An inscription reads: \"Interesting items are sometimes hidden within room descriptions. Try looking at unusual features — rough walls, cracks, bookshelves.\"",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 25,
+        "west": 23,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
+    },
+    {
+      "id": "beginners-cave-25",
+      "room_number": 25,
+      "name": "Tunnel Smelling of Salt",
+      "narration_text": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
+      "background_description": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
+      "light_level": "dim",
+      "is_combat_zone": false,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": 26,
+        "west": 24,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     },
     {
       "id": "beginners-cave-26",
       "room_number": 26,
-      "name": "Pirate's Cove",
-      "narration_text": "A hidden cove where pirates once stored their loot. The remains of a camp suggest recent occupation. A skull leers from atop a crate.",
-      "background_description": "Hidden underground cove, pirate camp remains, wooden crates and barrels, skull decoration, tattered pirate flag, scattered gold coins, torchlit with dramatic shadows",
+      "name": "The Pirate's Cove",
+      "narration_text": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
+      "background_description": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
       "light_level": "dim",
-      "is_combat_zone": true
+      "is_combat_zone": true,
+      "exits": {
+        "north": null,
+        "south": null,
+        "east": null,
+        "west": 25,
+        "up": null,
+        "down": null
+      },
+      "treasure": [],
+      "requires": null
     }
   ],
-
   "characters": [
+    {
+      "id": "beginners-cave-rat",
+      "name": "Rat",
+      "slug": "rat",
+      "type": "enemy",
+      "is_hostile": true,
+      "hostility": "hostile",
+      "friendliness": "hostile",
+      "description": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
+      "first_encounter_text": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
+      "hp": 2,
+      "current_hp_from": "hp",
+      "agility": 3,
+      "weapon": "claws",
+      "damage_dice": "1d4",
+      "gold": 0,
+      "location_room": 3,
+      "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style."
+    },
+    {
+      "id": "beginners-cave-priest",
+      "name": "Priest",
+      "slug": "priest",
+      "type": "enemy",
+      "is_hostile": true,
+      "hostility": "hostile",
+      "friendliness": "hostile",
+      "description": "A huge man in religious garb with an insane look on his face. In his right hand, he carries a heavy mace.",
+      "first_encounter_text": "A huge man in religious garb with an insane look on his face. In his right hand, he carries a heavy mace.",
+      "hp": 10,
+      "current_hp_from": "hp",
+      "agility": 6,
+      "weapon": "mace",
+      "damage_dice": "2d6",
+      "gold": 15,
+      "location_room": 18,
+      "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style."
+    },
     {
       "id": "beginners-cave-cynthia",
       "name": "Cynthia",
       "slug": "cynthia",
       "type": "npc",
       "is_hostile": false,
-      "description": "A fellow adventurer resting by the fire. She wears leather armor and carries a short sword.",
-      "portrait_description": "Young female adventurer, leather armor, kind face with warm smile, short brown hair, holding sword, Eyvind Earle flat graphic style with subtle shading, Celtic ornamental trim on armor",
-      "voice_role": "shopkeep",
-      "voice_id": "iP95p4xoKVk53GoZ742B",
+      "hostility": "friendly",
       "friendliness": "friendly",
-      "first_encounter_text": "Oh! Another brave soul. I'm Cynthia. Careful in the east tunnel — I heard growling.",
-      "hp": 15,
-      "location_room": 6
+      "description": "A beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+      "first_encounter_text": "A beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+      "hp": 5,
+      "current_hp_from": "hp",
+      "agility": 5,
+      "weapon": null,
+      "damage_dice": "0d0",
+      "gold": 0,
+      "location_room": 18,
+      "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style."
     },
     {
-      "id": "beginners-cave-goblin",
-      "name": "Cave Goblin",
-      "slug": "goblin",
+      "id": "beginners-cave-hermit",
+      "name": "Hermit",
+      "slug": "hermit",
+      "type": "npc",
+      "is_hostile": false,
+      "hostility": "neutral",
+      "friendliness": "neutral",
+      "description": "A grizzled old hermit who smells as if he hasn't taken a bath in forty years.",
+      "first_encounter_text": "A grizzled old hermit who smells as if he hasn't taken a bath in forty years.",
+      "hp": 13,
+      "current_hp_from": "hp",
+      "agility": 12,
+      "weapon": "axe",
+      "damage_dice": "2d8",
+      "gold": 10,
+      "location_room": 5,
+      "encounter_behavior": "random",
+      "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style."
+    },
+    {
+      "id": "beginners-cave-gorilla",
+      "name": "Gorilla",
+      "slug": "gorilla",
       "type": "enemy",
       "is_hostile": true,
-      "description": "A wiry green goblin with jagged teeth and rusty dagger.",
-      "portrait_description": "Green goblin, wiry build, jagged yellow teeth, rusty dagger in hand, aggressive snarl, ragged clothing, Eyvind Earle flat graphic style with angular features",
-      "voice_role": "narrator",
-      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "hostility": "hostile",
       "friendliness": "hostile",
-      "first_encounter_text": "The goblin shrieks and lunges at you with its dagger!",
-      "hp": 6,
-      "damage_dice": "1d4",
-      "armor_class": 3,
-      "loot_table": ["goblin-dagger", "goblin-coins"],
-      "location_room": 3
+      "description": "A huge, hairy, strong and angry gorilla!",
+      "first_encounter_text": "A huge, hairy, strong and angry gorilla!",
+      "hp": 12,
+      "current_hp_from": "hp",
+      "agility": 11,
+      "weapon": "fists",
+      "damage_dice": "2d6",
+      "gold": 0,
+      "location_room": 8,
+      "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style."
+    },
+    {
+      "id": "beginners-cave-heinrich",
+      "name": "Heinrich",
+      "slug": "heinrich",
+      "type": "npc",
+      "is_hostile": false,
+      "hostility": "neutral",
+      "friendliness": "neutral",
+      "description": "A human warrior armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+      "first_encounter_text": "A human warrior armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+      "hp": 15,
+      "current_hp_from": "hp",
+      "agility": 7,
+      "weapon": "sword",
+      "damage_dice": "2d8",
+      "gold": 25,
+      "location_room": 6,
+      "encounter_behavior": "random",
+      "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style."
     },
     {
       "id": "beginners-cave-mimic",
       "name": "Mimic",
       "slug": "mimic",
-      "type": "boss",
+      "type": "enemy",
       "is_hostile": true,
-      "description": "A predatory creature disguised as a treasure chest. Rows of teeth and grasping pseudopods.",
-      "portrait_description": "Mimic monster as treasure chest with teeth and tongue, wooden texture turning into flesh, grasping tentacle-legs, surprise attack pose, Eyvind Earle stylized horror",
-      "voice_role": "narrator",
-      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "hostility": "hostile",
       "friendliness": "hostile",
-      "first_encounter_text": "The chest sprouts legs and teeth! The mimic attacks!",
-      "hp": 20,
-      "damage_dice": "2d4",
-      "armor_class": 5,
-      "special_ability": "Surprise attack: first round attacks with advantage",
-      "loot_table": ["mimic-treasure"],
-      "location_room": 7
+      "description": "A chest-shaped monster holding you with two tentacles and attempting to disassemble you with a third one.",
+      "first_encounter_text": "A chest-shaped monster holding you with two tentacles and attempting to disassemble you with a third one.",
+      "hp": 7,
+      "current_hp_from": "hp",
+      "agility": 12,
+      "weapon": "tentacles",
+      "damage_dice": "1d8",
+      "gold": 0,
+      "location_room": 14,
+      "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style."
     },
     {
       "id": "beginners-cave-pirate",
-      "name": "Skeleton Pirate",
+      "name": "Pirate",
       "slug": "pirate",
       "type": "enemy",
       "is_hostile": true,
-      "description": "An undead pirate, bones held together by dark magic. Wields a rusted cutlass.",
-      "portrait_description": "Skeleton pirate, bones held by dark magic, rusted cutlass, tattered pirate hat, glowing eye sockets, menacing pose, Eyvind Earle stylized undead",
-      "voice_role": "narrator",
-      "voice_id": "nPczCjzI2devNBz1zQrb",
+      "hostility": "hostile",
       "friendliness": "hostile",
-      "first_encounter_text": "The skeleton pirate rattles its bones and raises its cutlass!",
-      "hp": 12,
-      "damage_dice": "1d6",
-      "armor_class": 4,
-      "loot_table": ["pirate-cutlass", "trollsfire"],
-      "location_room": 26
-    },
-    {
-      "id": "beginners-cave-hermit",
-      "name": "Old Hermit",
-      "slug": "hermit",
-      "type": "npc",
-      "is_hostile": false,
-      "description": "An elderly hermit who dwells in the deeper caves. He may help or hinder.",
-      "portrait_description": "Elderly hermit, long white beard, tattered robes, wise but wary eyes, holding wooden staff, Eyvind Earle flat graphic style, Celtic ornamental details on staff",
-      "voice_role": "narrator",
-      "voice_id": "HAvvFKatz0uu0Fv55Riy",
-      "friendliness": "neutral",
-      "first_encounter_text": "The herit squints at you. 'Not many come this deep, traveler. What do you seek?'",
-      "hp": 8,
-      "location_room": 4
+      "description": "A man with a beard and a brass ring in his ear, wearing clothes made of silk, wielding a fancily engraved sword called TrollsFire.",
+      "first_encounter_text": "A man with a beard and a brass ring in his ear, wearing clothes made of silk, wielding a fancily engraved sword called TrollsFire.",
+      "hp": 5,
+      "current_hp_from": "hp",
+      "agility": 14,
+      "weapon": "TrollsFire",
+      "damage_dice": "2d10",
+      "gold": 50,
+      "location_room": 26,
+      "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style."
     }
   ],
-
   "items": [
     {
+      "id": "beginners-cave-diamonds",
+      "name": "diamonds",
+      "slug": "diamonds",
+      "type": "treasure",
+      "description": "A large pile of gleaming diamonds.",
+      "value": 200,
+      "weight": 3
+    },
+    {
+      "id": "beginners-cave-axe",
+      "name": "axe",
+      "slug": "axe",
+      "type": "weapon",
+      "description": "A standard Marcos axe.",
+      "value": 20,
+      "weight": 8,
+      "damage_dice": "2d8"
+    },
+    {
       "id": "beginners-cave-healing-potion",
-      "name": "Healing Potion",
+      "name": "healing potion",
       "slug": "healing-potion",
       "type": "potion",
-      "description": "A small vial of glowing red liquid. Smells of herbs and honey.",
+      "description": "A bottle with a strange potion inside. A label is stuck to it.",
       "value": 50,
-      "weight": 1,
-      "heal_amount": 10,
+      "weight": 2,
+      "heal_amount": 6,
+      "effect_description": "Drink to heal 6 hit points.",
       "uses": 1
     },
     {
-      "id": "beginners-cave-goblin-dagger",
-      "name": "Rusty Dagger",
-      "slug": "goblin-dagger",
+      "id": "beginners-cave-sword",
+      "name": "sword",
+      "slug": "sword",
       "type": "weapon",
-      "description": "A crude iron dagger, pitted with rust but still sharp.",
-      "value": 5,
-      "weight": 2,
-      "damage_dice": "1d4",
-      "hit_bonus": 0
+      "description": "A poor quality Marcos sword.",
+      "value": 15,
+      "weight": 6,
+      "damage_dice": "2d8"
     },
     {
-      "id": "beginners-cave-pirate-cutlass",
-      "name": "Rusted Cutlass",
-      "slug": "pirate-cutlass",
-      "type": "weapon",
-      "description": "A sailor's blade, corroded by salt and time.",
-      "value": 15,
-      "weight": 4,
-      "damage_dice": "1d6",
-      "hit_bonus": 0
+      "id": "beginners-cave-sack-of-coins",
+      "name": "sack of coins",
+      "slug": "sack-of-coins",
+      "type": "treasure",
+      "description": "A sack with 50 gold coins inside!",
+      "value": 50,
+      "weight": 5
+    },
+    {
+      "id": "beginners-cave-spices",
+      "name": "spices",
+      "slug": "spices",
+      "type": "treasure",
+      "description": "Several spices of a rare variety — quite valuable.",
+      "value": 30,
+      "weight": 3
+    },
+    {
+      "id": "beginners-cave-glowing-book",
+      "name": "glowing book",
+      "slug": "glowing-book",
+      "type": "misc",
+      "description": "An old book that glows in the darkness, remarkably well preserved.",
+      "value": 80,
+      "weight": 3,
+      "text": "The book contains ancient lore about the cave's history. It is of great scholarly value.",
+      "effect_description": "Readable lore item; contains ancient scholarship about the cave."
     },
     {
       "id": "beginners-cave-trollsfire",
-      "name": "Troll's Fire",
+      "name": "TrollsFire",
       "slug": "trollsfire",
       "type": "weapon",
-      "description": "A flaming blade that burns with cold fire. Rare and valuable.",
-      "value": 200,
-      "weight": 5,
-      "damage_dice": "2d6",
-      "hit_bonus": 2,
-      "special_ability": "Deals bonus fire damage"
-    },
-    {
-      "id": "beginners-cave-diamonds",
-      "name": "Bag of Diamonds",
-      "slug": "diamonds",
-      "type": "treasure",
-      "description": "A small leather bag containing uncut diamonds.",
-      "value": 200,
-      "weight": 1
+      "description": "A beautiful sword. Carved on the hilt, in intricate detail, is the sword's name: \"TrollsFire\".",
+      "value": 125,
+      "weight": 8,
+      "damage_dice": "2d10"
     },
     {
       "id": "beginners-cave-jewels",
-      "name": "Velvet Jewels",
+      "name": "jewels",
       "slug": "jewels",
       "type": "treasure",
-      "description": "A velvet pouch of assorted precious gems.",
+      "description": "A large pile of jewels!",
       "value": 168,
-      "weight": 1
+      "weight": 5
+    }
+  ],
+  "placements": [
+    {
+      "item_slug": "diamonds",
+      "room_number": 3,
+      "hidden": false
+    },
+    {
+      "item_slug": "axe",
+      "after_defeating": "hermit"
+    },
+    {
+      "item_slug": "healing-potion",
+      "room_number": 5,
+      "hidden": false
+    },
+    {
+      "item_slug": "sword",
+      "after_defeating": "heinrich"
+    },
+    {
+      "item_slug": "sack-of-coins",
+      "room_number": 8,
+      "hidden": false
+    },
+    {
+      "item_slug": "spices",
+      "room_number": 18,
+      "hidden": false
+    },
+    {
+      "item_slug": "glowing-book",
+      "room_number": 19,
+      "hidden": false
+    },
+    {
+      "item_slug": "trollsfire",
+      "after_defeating": "pirate"
+    },
+    {
+      "item_slug": "jewels",
+      "room_number": 26,
+      "hidden": false
     }
   ]
 }
