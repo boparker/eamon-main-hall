@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import crypto from 'crypto';
+import { buyItem } from './server/engine/economy.js';
 
 const { Pool } = pg;
 
@@ -241,23 +242,41 @@ STATS (reference):
 `;
 
 // ── Shop Price Table (server-authoritative) ─────────────────────────────────
-const SHOP_PRICES = {
-  'Short Sword': 30, 'Broadsword': 60, 'Battle Axe': 80, 'Mace': 50,
-  'Spear': 40, 'War Hammer': 90, 'Leather Armor': 50, 'Chain Mail': 120,
-  'Plate Armor': 200, 'Shield': 40,
-  'Blast Spell': 100, 'Heal Spell': 80, 'Speed Spell': 120, 'Power Spell': 150,
-  'Healing Potion': 25, 'Scroll of Protection': 60,
+const SHOP_ITEMS = {
+  'Short Sword': { slug: 'short-sword', name: 'Short Sword', type: 'weapon', value: 30, price: 30 },
+  'Broadsword': { slug: 'broadsword', name: 'Broadsword', type: 'weapon', value: 60, price: 60 },
+  'Battle Axe': { slug: 'battle-axe', name: 'Battle Axe', type: 'weapon', value: 80, price: 80 },
+  'Mace': { slug: 'mace', name: 'Mace', type: 'weapon', value: 50, price: 50 },
+  'Spear': { slug: 'spear', name: 'Spear', type: 'weapon', value: 40, price: 40 },
+  'War Hammer': { slug: 'war-hammer', name: 'War Hammer', type: 'weapon', value: 90, price: 90 },
+  'Leather Armor': { slug: 'leather-armor', name: 'Leather Armor', type: 'armor', value: 50, price: 50 },
+  'Chain Mail': { slug: 'chain-mail', name: 'Chain Mail', type: 'armor', value: 120, price: 120 },
+  'Plate Armor': { slug: 'plate-armor', name: 'Plate Armor', type: 'armor', value: 200, price: 200 },
+  'Shield': { slug: 'shield', name: 'Shield', type: 'armor', value: 40, price: 40 },
+  'Blast Spell': { slug: 'blast-spell', name: 'Blast Spell', type: 'spell', value: 100, price: 100 },
+  'Heal Spell': { slug: 'heal-spell', name: 'Heal Spell', type: 'spell', value: 80, price: 80 },
+  'Speed Spell': { slug: 'speed-spell', name: 'Speed Spell', type: 'spell', value: 120, price: 120 },
+  'Power Spell': { slug: 'power-spell', name: 'Power Spell', type: 'spell', value: 150, price: 150 },
+  'Healing Potion': { slug: 'healing-potion', name: 'Healing Potion', type: 'consumable', value: 25, price: 25 },
+  'Scroll of Protection': { slug: 'scroll-of-protection', name: 'Scroll of Protection', type: 'consumable', value: 60, price: 60 },
 };
 
 function processPurchase(session, itemName) {
-  const price = SHOP_PRICES[itemName];
-  if (!price || !session.character) return null;
-  if ((session.character.gold || 0) < price) return { success: false, reason: 'not enough gold', gold: session.character.gold };
-  session.character.gold -= price;
-  if (!session.character.inventory) session.character.inventory = [];
-  session.character.inventory.push(itemName);
-  console.log(`[SHOP] ${itemName} purchased for ${price}g → ${session.character.gold}g remaining`);
-  return { success: true, item: itemName, price, gold: session.character.gold };
+  const item = SHOP_ITEMS[itemName];
+  if (!item || !session.character) return null;
+
+  const result = buyItem(session.character, item);
+  if (!result.ok) {
+    return {
+      success: false,
+      reason: result.reason,
+      gold: session.character.gold,
+    };
+  }
+
+  session.character = result.character;
+  console.log(`[SHOP] ${item.name} purchased for ${item.price}g → ${session.character.gold}g remaining`);
+  return { success: true, item: item.name, price: item.price, gold: session.character.gold };
 }
 
 // ── Session store ─────────────────────────────────────────────────────────────
@@ -693,7 +712,7 @@ app.post('/api/chat', async (req, res) => {
       } else if (result && !result.success) {
         session.history.push({
           role: 'system',
-          content: `[PURCHASE FAILED: Player tried to buy ${buyMatch[1]} but only has ${result.gold} gold. Tell them they can't afford it. Do NOT emit a [GOLD:] tag.]`
+          content: `[PURCHASE FAILED: Player tried to buy ${buyMatch[1]}. Failure reason: ${result.reason}. Current gold: ${result.gold}. Narrate the failure accurately and briefly. If reason is insufficient-gold, say they can't afford it. If reason is already-owned, say they already have it. Do NOT emit a [GOLD:] tag.]`
         });
       }
     }
