@@ -9,6 +9,7 @@ import { existsSync } from 'fs';
 import crypto from 'crypto';
 import { buyItem } from './server/engine/economy.js';
 import { ensureGameSchema } from './server/db/schema.js';
+import { createGameRouter } from './server/routes/game.js';
 
 const { Pool } = pg;
 
@@ -437,6 +438,9 @@ async function streamAI(messages, res, session) {
     res.end();
   }
 }
+
+// ── Deterministic Game API ────────────────────────────────────────────────────
+app.use('/api/game', createGameRouter({ db: pool }));
 
 // ── ElevenLabs TTS endpoint ───────────────────────────────────────────────────
 app.post('/api/tts', async (req, res) => {
