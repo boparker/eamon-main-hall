@@ -8,6 +8,7 @@ import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import crypto from 'crypto';
 import { buyItem } from './server/engine/economy.js';
+import { ensureGameSchema } from './server/db/schema.js';
 
 const { Pool } = pg;
 
@@ -32,8 +33,11 @@ async function initDatabase() {
     console.log('[DB] Checking connection...');
     await pool.query('SELECT NOW()');
     console.log('[DB] Connected successfully');
+
+    await ensureGameSchema(pool);
+    console.log('[DB] Game persistence schema ready');
     
-    // Check if schema is already initialized
+    // Check if legacy content schema is already initialized
     const tableCheck = await pool.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -97,6 +101,7 @@ async function initDatabase() {
     
   } catch (err) {
     console.error('[DB] Initialization error:', err.message);
+    throw err;
   }
 }
 
