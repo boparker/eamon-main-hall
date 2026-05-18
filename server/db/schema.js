@@ -104,6 +104,38 @@ CREATE UNIQUE INDEX IF NOT EXISTS players_auth_identity_idx
 CREATE UNIQUE INDEX IF NOT EXISTS players_email_idx
   ON players(lower(email))
   WHERE email IS NOT NULL;
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  email TEXT UNIQUE,
+  password_hash TEXT NOT NULL,
+  display_name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_login_at TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_idx ON users(lower(username));
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_idx
+  ON users(lower(email))
+  WHERE email IS NOT NULL;
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS user_sessions_user_id_idx ON user_sessions(user_id);
+CREATE TABLE IF NOT EXISTS player_profiles (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  selected_character_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS player_profiles_user_id_idx ON player_profiles(user_id);
 CREATE TABLE IF NOT EXISTS player_characters (
   id TEXT PRIMARY KEY,
   player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -125,6 +157,10 @@ CREATE TABLE IF NOT EXISTS player_characters (
   last_played_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS player_characters_player_id_idx ON player_characters(player_id);
+ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS profile_id TEXT REFERENCES player_profiles(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS player_characters_user_id_idx ON player_characters(user_id);
+CREATE INDEX IF NOT EXISTS player_characters_profile_id_idx ON player_characters(profile_id);
 CREATE TABLE IF NOT EXISTS adventure_runs (
   id TEXT PRIMARY KEY,
   player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -143,6 +179,10 @@ CREATE TABLE IF NOT EXISTS adventure_runs (
 );
 CREATE INDEX IF NOT EXISTS adventure_runs_player_id_idx ON adventure_runs(player_id);
 CREATE INDEX IF NOT EXISTS adventure_runs_character_id_idx ON adventure_runs(character_id);
+ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS profile_id TEXT REFERENCES player_profiles(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS adventure_runs_user_id_idx ON adventure_runs(user_id);
+CREATE INDEX IF NOT EXISTS adventure_runs_profile_id_idx ON adventure_runs(profile_id);
 CREATE UNIQUE INDEX IF NOT EXISTS adventure_runs_one_active_per_character_idx
   ON adventure_runs(character_id)
   WHERE status = 'active';

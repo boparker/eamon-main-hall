@@ -31,8 +31,15 @@ test('ensureGameSchema creates account persistence tables and indexes without ad
   const sql = combinedSql(pool);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS schema_migrations/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS players/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS users/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS user_sessions/);
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS player_profiles/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS player_characters/);
   assert.match(sql, /CREATE TABLE IF NOT EXISTS adventure_runs/);
+  assert.match(sql, /ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS user_id/);
+  assert.match(sql, /ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS profile_id/);
+  assert.match(sql, /ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS user_id/);
+  assert.match(sql, /ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS profile_id/);
   assert.match(sql, /players_auth_identity_idx/);
   assert.match(sql, /players_email_idx/);
   assert.match(sql, /adventure_runs_one_active_per_character_idx/);
