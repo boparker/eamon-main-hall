@@ -259,10 +259,10 @@ function hallText({ player, character, unlockedAdventures, lockedAdventures, pre
   if (!character) {
     lines.push('Create a new adventurer: choose a name and gender, roll prime attributes, start with 200 gold, then buy equipment. You may also register or upgrade your account.');
   } else {
-    lines.push(`${character.name} the ${character.className}: HD ${character.hd}/${character.maxHd}, Hardiness ${character.hardiness}, Agility ${character.agility}, Charisma ${character.charisma}, Gold ${character.gold}, Bank ${character.bankGold}.`);
+    lines.push(`${character.name} is present in the Guild roster and ready for the next expedition.`);
     const inventory = character.inventory?.length ? character.inventory.map((item) => item.name ?? item.slug).join(', ') : 'none';
-    lines.push(`Inventory: ${inventory}. Equipment: ${JSON.stringify(character.equipment ?? {})}.`);
-    lines.push('You may shop for weapons or armor, review equipment, or explicitly begin The Beginner\'s Cave.');
+    lines.push(`Inventory summary: ${inventory}. Use View Equipment or the HUD for full character details.`);
+    lines.push('You may shop for weapons or armor, review equipment, create another character, or explicitly begin The Beginner\'s Cave.');
   }
   if (unlockedAdventures?.length) lines.push(`Unlocked adventures: ${unlockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
   if (lockedAdventures?.length) lines.push(`Locked adventures: ${lockedAdventures.map((adventure) => adventure.name).join(', ')}.`);

@@ -299,7 +299,8 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
   assert.match(response.body.text, /Mara/);
-  assert.match(response.body.text, /gold/i);
+  assert.doesNotMatch(response.body.text, /HD \d+\/\d+/i);
+  assert.doesNotMatch(response.body.text, /Hardiness|Agility|Charisma|Gold \d+|Bank \d+|Equipment: \{/i);
 });
 
 test('POST /api/game/characters returns to Great Hall and preserves explicit class/stats without auto-starting', async () => {
