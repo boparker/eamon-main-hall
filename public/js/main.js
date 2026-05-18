@@ -8,6 +8,8 @@ import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoic
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler } from './shop.js';
 import { createPhase1GameClient } from './game-client.js';
+import { createAuthController } from './auth-controller.js';
+import { createTitleGateway } from './title-gateway.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -22,12 +24,18 @@ function renderGameResponse(response = {}) {
   renderChoices();
 }
 
-const gameClient = createPhase1GameClient({
-  playerId: PLAYER_ID,
-  render: renderGameResponse,
-  renderPlayer: addPlayerLine,
-  updateHUD: () => updateHUD(true),
-});
+function buildGameClient(identity = null) {
+  return createPhase1GameClient({
+    playerId: PLAYER_ID,
+    ...(identity ?? {}),
+    render: renderGameResponse,
+    renderPlayer: addPlayerLine,
+    updateHUD: () => updateHUD(true),
+  });
+}
+
+let gameClient = buildGameClient();
+const authController = createAuthController();
 
 // ── Send Message ──
 async function sendMessage() {
@@ -57,27 +65,36 @@ registerPurchaseHandler((text) => {
 // ── Audio controls ──
 initAudioControls();
 
-// ── Boot ──
-document.getElementById('enter-btn').addEventListener('click', async () => {
-  const enterBtn = document.getElementById('enter-btn');
-  if (state.isStreaming) return;
-  enterBtn.disabled = true;
-  state.isStreaming = true;
-  setInputState('action', false);
-  try {
-    const response = await gameClient.startPhase1Game();
-    document.getElementById('game-screen').classList.add('active');
-    document.getElementById('title-screen').classList.add('fade-out');
-    setTimeout(() => { document.getElementById('title-screen').style.display = 'none'; }, 1200);
-    setInputState(response?.state?.character ? 'action' : 'name', true);
-  } catch (err) {
-    enterBtn.disabled = false;
+// ── Boot / Title gateway ──
+const titleGateway = createTitleGateway({
+  elements: {
+    titleScreen: document.getElementById('title-screen'),
+    gameScreen: document.getElementById('game-screen'),
+    guestButton: document.getElementById('enter-btn'),
+    loginButton: document.getElementById('login-toggle-btn'),
+    registerButton: document.getElementById('register-toggle-btn'),
+    loginForm: document.getElementById('login-form'),
+    registerForm: document.getElementById('register-form'),
+    status: document.getElementById('title-auth-status'),
+    loginUsername: document.getElementById('login-username'),
+    loginPassword: document.getElementById('login-password'),
+    registerUsername: document.getElementById('register-username'),
+    registerEmail: document.getElementById('register-email'),
+    registerPassword: document.getElementById('register-password'),
+  },
+  gameClient,
+  authController,
+  rebuildGameClient(identity) {
+    gameClient = buildGameClient(identity);
+    return gameClient;
+  },
+  setStreaming(value) { state.isStreaming = value; },
+  setInputState,
+  renderError(err) {
     renderGameResponse({ text: err.message || 'The Great Hall is unavailable right now.', choices: [], state: { phase: 'great-hall' } });
-    setInputState('action', true);
-  } finally {
-    state.isStreaming = false;
-  }
+  },
 });
+titleGateway.mount();
 
 sendBtn.addEventListener('click', sendMessage);
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });

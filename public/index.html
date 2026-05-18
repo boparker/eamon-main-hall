@@ -46,8 +46,15 @@
     @keyframes breathe { 0%,100%{box-shadow:0 0 20px rgba(200,168,75,0.1)} 50%{box-shadow:0 0 40px rgba(200,168,75,0.25),0 0 80px rgba(200,168,75,0.08)} }
     .title-main { font-family: var(--font-head); font-size: clamp(2.8rem,8vw,5rem); font-weight: 400; color: var(--gold); letter-spacing: 0.12em; text-align: center; line-height: 1; }
     .title-sub { font-family: var(--font-head); font-style: normal; color: #8b6914; font-size: clamp(1.4rem, 4vw, 2.2rem); letter-spacing: 0.18em; text-transform: uppercase; }
-    .enter-btn { margin-top: 16px; padding: 14px 56px; font-family: var(--font-head); font-size: 1rem; letter-spacing: 0.15em; color: var(--gold); background: transparent; border: 1px solid var(--gold-dim); border-radius: 2px; cursor: pointer; transition: all 0.3s; }
+    .title-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 8px; }
+    .enter-btn { padding: 14px 32px; font-family: var(--font-head); font-size: 0.9rem; letter-spacing: 0.15em; color: var(--gold); background: transparent; border: 1px solid var(--gold-dim); border-radius: 2px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; }
     .enter-btn:hover { background: rgba(200,168,75,0.06); border-color: var(--gold); box-shadow: 0 0 30px rgba(200,168,75,0.12); }
+    .enter-btn.secondary { color: var(--text); border-color: var(--border); }
+    .auth-panel { width: min(420px, calc(100vw - 40px)); display: grid; gap: 10px; padding: 16px; border: 1px solid var(--border); background: rgba(12,10,8,0.72); backdrop-filter: blur(12px); }
+    .auth-panel[hidden] { display: none; }
+    .auth-panel input { width: 100%; padding: 11px 12px; background: rgba(5,4,4,0.85); border: 1px solid var(--border); color: var(--text); font-family: var(--font-body); font-size: 1rem; }
+    .auth-panel input:focus { outline: none; border-color: var(--gold-dim); box-shadow: 0 0 18px var(--gold-glow); }
+    .title-status { min-height: 1.2em; color: var(--text-dim); font-size: 0.92rem; text-align: center; }
 
     /* ═══ GAME SCREEN ═══ */
     #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
@@ -239,7 +246,23 @@
   <div class="title-dragon"></div>
   <h1 class="title-main">EAMON</h1>
   <p class="title-sub">THE SECOND AGE</p>
-  <button class="enter-btn" id="enter-btn">ENTER THE HALL</button>
+  <div class="title-actions" aria-label="Choose how to enter Eamon">
+    <button class="enter-btn" id="enter-btn">CONTINUE AS GUEST</button>
+    <button class="enter-btn secondary" id="login-toggle-btn">LOG IN</button>
+    <button class="enter-btn secondary" id="register-toggle-btn">CREATE ACCOUNT</button>
+  </div>
+  <p class="title-status" id="title-auth-status" aria-live="polite"></p>
+  <form class="auth-panel" id="login-form" hidden>
+    <input id="login-username" name="username" type="text" autocomplete="username" placeholder="Username" required>
+    <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Password" required>
+    <button class="enter-btn" type="submit">ENTER YOUR ACCOUNT</button>
+  </form>
+  <form class="auth-panel" id="register-form" hidden>
+    <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose username" required>
+    <input id="register-email" name="email" type="email" autocomplete="email" placeholder="Email optional">
+    <input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Choose password" required>
+    <button class="enter-btn" type="submit">CREATE ACCOUNT</button>
+  </form>
 </div>
 
 <!-- ═ GAME ═ -->
