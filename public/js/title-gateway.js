@@ -61,7 +61,25 @@ export function createTitleGateway({
     return start(identity);
   }
 
+  function displayNameForSession(session) {
+    const name = session?.user?.displayName ?? session?.user?.display_name ?? session?.user?.username ?? 'ACCOUNT';
+    return String(name).trim().toUpperCase() || 'ACCOUNT';
+  }
+
+  function mountStoredSession() {
+    const session = authController.getSession?.();
+    if (!elements.existingSessionButton) return;
+    if (!session?.sessionToken || !session?.profileId) {
+      elements.existingSessionButton.hidden = true;
+      return;
+    }
+    elements.existingSessionButton.hidden = false;
+    elements.existingSessionButton.textContent = `CONTINUE AS ${displayNameForSession(session)}`;
+    elements.existingSessionButton.addEventListener('click', () => start(authController.gameIdentity()));
+  }
+
   function mount() {
+    mountStoredSession();
     elements.guestButton?.addEventListener('click', () => start(null));
     elements.loginButton?.addEventListener('click', () => showForm('login'));
     elements.registerButton?.addEventListener('click', () => showForm('register'));

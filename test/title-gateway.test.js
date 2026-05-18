@@ -34,6 +34,7 @@ function makeHarness({ session = null } = {}) {
     loginForm: element(),
     registerForm: element(),
     status: element(),
+    existingSessionButton: element(),
     loginUsername: element({ value: 'bo' }),
     loginPassword: element({ value: 'secret-pass' }),
     registerUsername: element({ value: 'newbo' }),
@@ -118,4 +119,25 @@ test('title screen toggles login and register forms in place', async () => {
   await elements.registerButton.click();
   assert.equal(elements.loginForm.hidden, true);
   assert.equal(elements.registerForm.hidden, false);
+});
+
+test('stored account session shows continue account choice and enters with account identity', async () => {
+  const session = {
+    sessionToken: 'stored-token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+  };
+  const { gateway, elements, calls } = makeHarness({ session });
+  gateway.mount();
+
+  assert.equal(elements.existingSessionButton.hidden, false);
+  assert.equal(elements.existingSessionButton.textContent, 'CONTINUE AS BO');
+
+  await elements.existingSessionButton.click();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'rebuildGameClient'), [{
+    type: 'rebuildGameClient',
+    identity: { sessionToken: 'stored-token', profileId: 'profile-1' },
+  }]);
+  assert.equal(elements.gameScreen.classList.contains('active'), true);
 });
