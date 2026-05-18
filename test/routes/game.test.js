@@ -23,9 +23,11 @@ const beginner = {
   ],
   items: [
     { id: 'gem-1', slug: 'gem', name: 'Gem', type: 'treasure', value: 5, weight: 1 },
+    { id: 'inscription-1', slug: 'inscription', name: 'inscription', type: 'misc', description: 'An inscription reads: "Original tutorial text."', value: 0, weight: -999, collectible: false },
   ],
   placements: [
     { item_slug: 'gem', room_number: 2, hidden: false },
+    { item_slug: 'inscription', room_number: 2, hidden: false },
   ],
 };
 
@@ -545,6 +547,27 @@ test('POST /api/game/command handles take, inventory, and return-to-hall without
   assert.equal(leave.body.state.phase, 'great-hall');
   assert.equal(leave.body.state.unlockedAdventures.some((adventure) => adventure.id === 'beginners-cave'), true);
   assert.equal(leave.body.choices.some((choice) => /shop|begin|character/i.test(choice)), true);
+});
+
+test('POST /api/game/command reads original noncollectible artifacts without collecting them', async () => {
+  const { app, deps } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'south');
+
+  const read = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'read inscription');
+  assert.equal(read.status, 200);
+  assert.equal(read.body.intent.type, 'read_item');
+  assert.equal(read.body.events[0].type, 'read_item');
+  assert.equal(read.body.text, 'An inscription reads: "Original tutorial text."');
+
+  const take = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'take inscription');
+  assert.equal(take.status, 200);
+  assert.equal(take.body.events[0].type, 'take_failed');
+  assert.equal(take.body.events[0].reason, 'not-collectible');
+  assert.match(take.body.text, /cannot take/i);
+  assert.equal(take.body.state.character.inventory.some((item) => item.slug === 'inscription'), false);
+  assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.collectedItems?.includes('inscription')), false);
 });
 
 test('authenticated leave command abandons only the requested profile run', async () => {

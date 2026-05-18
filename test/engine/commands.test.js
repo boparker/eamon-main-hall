@@ -34,6 +34,12 @@ test('parseCommand parses exact informational commands', () => {
   assert.deepEqual(parseCommand('help'), { type: 'help', source: 'rules' });
 });
 
+test('parseCommand parses read and look-at targets for readable artifacts', () => {
+  assert.deepEqual(parseCommand('read inscription'), { type: 'read_item', target: 'inscription', source: 'rules' });
+  assert.deepEqual(parseCommand('look at writing'), { type: 'read_item', target: 'writing', source: 'rules' });
+  assert.deepEqual(parseCommand('examine glowing book'), { type: 'read_item', target: 'glowing book', source: 'rules' });
+});
+
 test('parseCommand parses required attack examples and variants', () => {
   assert.deepEqual(parseCommand('attack goblin'), { type: 'attack', target: 'goblin', source: 'rules' });
   assert.deepEqual(parseCommand('hit goblin with sword'), { type: 'attack', target: 'goblin', weapon: 'sword', source: 'rules' });

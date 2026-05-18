@@ -17,6 +17,7 @@ const MOVEMENT_VERBS = new Set(['go', 'move', 'walk', 'head']);
 const ATTACK_VERBS = new Set(['attack', 'fight', 'kill', 'hit', 'smack']);
 const TAKE_VERBS = new Set(['get', 'take', 'grab']);
 const USE_VERBS = new Set(['use', 'cast', 'open']);
+const READ_VERBS = new Set(['read', 'examine', 'inspect']);
 const LEAVE_COMMANDS = new Set(['leave', 'quit', 'exit', 'back', 'return']);
 
 function normalizeInput(input) {
@@ -85,6 +86,13 @@ export function parseCommand(input) {
     return { type: 'leave', source: 'rules' };
   }
 
+  if (command.startsWith('look at ')) {
+    const target = command.slice('look at '.length).trim();
+    if (target) {
+      return { type: 'read_item', target, source: 'rules' };
+    }
+  }
+
   const [verb, ...rest] = command.split(' ');
   const objectText = rest.join(' ').trim();
 
@@ -105,6 +113,10 @@ export function parseCommand(input) {
 
   if (USE_VERBS.has(verb) && objectText) {
     return { type: 'use_item', target: objectText, source: 'rules' };
+  }
+
+  if (READ_VERBS.has(verb) && objectText) {
+    return { type: 'read_item', target: objectText, source: 'rules' };
   }
 
   if (verb === 'talk' && objectText) {

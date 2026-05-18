@@ -103,6 +103,10 @@ function findVisibleItem(adventure, run, target) {
   return item && visibleSlugs.has(item.slug) ? item : null;
 }
 
+function isCollectible(item) {
+  return item?.collectible !== false && item?.weight !== -999;
+}
+
 function findVisibleEnemy(adventure, run, target) {
   const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
@@ -695,10 +699,21 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(roomResponse({ adventure, run: rowRun(updatedRun), character, event: { type: 'move', command }, intent: command }));
       }
 
+      if (command.type === 'read_item') {
+        const item = findVisibleItem(adventure, run, command.target);
+        if (!item) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+        }
+        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item }, text: item.text ?? item.description ?? `There is nothing written on ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+      }
+
       if (command.type === 'take') {
         const item = findVisibleItem(adventure, run, command.target);
         if (!item) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to take.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+        }
+        if (!isCollectible(item)) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'not-collectible' }, text: `You cannot take ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
         }
         const taken = takeTreasure(character, item);
         if (!taken.ok) {

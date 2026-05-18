@@ -970,6 +970,36 @@
       "item_slug": "jewels",
       "room_number": 26,
       "hidden": false
+    },
+    {
+      "item_slug": "inscription-get-all",
+      "room_number": 9,
+      "hidden": false
+    },
+    {
+      "item_slug": "inscription-case-sensitive",
+      "room_number": 11,
+      "hidden": false
+    },
+    {
+      "item_slug": "inscription-abbreviations",
+      "room_number": 11,
+      "hidden": false
+    },
+    {
+      "item_slug": "writing-command-history",
+      "room_number": 21,
+      "hidden": false
+    },
+    {
+      "item_slug": "inscription-hidden-items",
+      "room_number": 24,
+      "hidden": false
+    },
+    {
+      "item_slug": "writing-ready-wear",
+      "room_number": 7,
+      "hidden": false
     }
   ]
 }

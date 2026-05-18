@@ -140,6 +140,19 @@ test('getVisibleRoomEntities excludes hidden room placements by default', () => 
   assert.equal(visible.placements.some((placement) => placement.item_slug === 'hidden-test-item'), false);
 });
 
+test('getVisibleRoomEntities includes original noncollectible inscriptions in their source rooms', () => {
+  const adventure = loadBeginnersCave();
+
+  assert.deepEqual(
+    getVisibleRoomEntities(roomRun(adventure, 9), adventure).placements.map((placement) => placement.item_slug),
+    ['inscription-get-all'],
+  );
+  assert.deepEqual(
+    getVisibleRoomEntities(roomRun(adventure, 21), adventure).placements.map((placement) => placement.item_slug),
+    ['writing-command-history'],
+  );
+});
+
 test('after_defeating placement appears in defeated enemy room until collected', () => {
   const adventure = loadBeginnersCave();
   const run = roomRun(adventure, 26);
