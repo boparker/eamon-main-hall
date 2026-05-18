@@ -47,6 +47,16 @@ function resetGameplayState() {
   renderChoices();
 }
 
+async function switchToProfile(profileId) {
+  authController.selectProfile(profileId);
+  resetGameplayState();
+  gameClient = buildGameClient(authController.gameIdentity());
+  renderCurrentAccountStatus();
+  setInputState('action', false);
+  const response = await gameClient.startPhase1Game();
+  setInputState(response?.state?.character ? 'action' : 'name', true);
+}
+
 let gameClient = buildGameClient();
 const authController = createAuthController();
 renderCurrentAccountStatus();
@@ -122,8 +132,10 @@ const accountMenu = createAccountMenu({
     logoutButton: document.getElementById('account-logout-btn'),
     switchProfileButton: document.getElementById('account-switch-profile-btn'),
     switchCharacterButton: document.getElementById('account-switch-character-btn'),
+    profileList: document.getElementById('account-profile-list'),
   },
   authController,
+  onSwitchProfile: switchToProfile,
   onLogout() {
     resetGameplayState();
     gameClient = buildGameClient();

@@ -60,6 +60,15 @@ export function createAuthController({
       return persist(sessionFromAuthPayload(payload, session));
     },
 
+    selectProfile(profileId) {
+      if (!session?.sessionToken) throw new Error('No account session is active.');
+      const profiles = Array.isArray(session.profiles) ? session.profiles : [];
+      if (!profiles.some((profile) => profile?.id === profileId)) {
+        throw new Error('Profile is not available for this account session.');
+      }
+      return persist({ ...session, profileId });
+    },
+
     async logout() {
       const token = session?.sessionToken;
       if (token) await api.logoutAccount(token);

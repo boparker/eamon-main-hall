@@ -69,6 +69,31 @@ test('refreshCurrentAccount preserves token while updating user/profile metadata
   assert.deepEqual(controller.gameIdentity(), { sessionToken: 'login-token', profileId: 'profile-2' });
 });
 
+test('selectProfile persists active profile and updates game identity', async () => {
+  const { controller } = makeController({
+    loginPayload: {
+      ok: true,
+      token: 'login-token',
+      user: { id: 'user-1' },
+      profiles: [{ id: 'profile-1' }, { id: 'profile-2' }],
+    },
+  });
+  await controller.login({ username: 'bo', password: 'secret-pass' });
+
+  const selected = controller.selectProfile('profile-2');
+
+  assert.equal(selected.profileId, 'profile-2');
+  assert.deepEqual(controller.gameIdentity(), { sessionToken: 'login-token', profileId: 'profile-2' });
+});
+
+test('selectProfile rejects profiles outside the current account session', async () => {
+  const { controller } = makeController();
+  await controller.login({ username: 'bo', password: 'secret-pass' });
+
+  assert.throws(() => controller.selectProfile('profile-other'), /Profile is not available/);
+  assert.deepEqual(controller.gameIdentity(), { sessionToken: 'login-token', profileId: 'profile-1' });
+});
+
 test('logout calls server when token exists and clears local session', async () => {
   const { controller, calls } = makeController();
   await controller.login({ username: 'bo', password: 'secret-pass' });

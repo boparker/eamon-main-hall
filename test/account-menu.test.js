@@ -5,11 +5,16 @@ import { createAccountMenu } from '../public/js/account-menu.js';
 
 function element() {
   const listeners = new Map();
+  const children = [];
   return {
     hidden: true,
     disabled: false,
     textContent: '',
     dataset: {},
+    children,
+    innerHTML: '',
+    appendChild(child) { children.push(child); return child; },
+    replaceChildren(...newChildren) { children.splice(0, children.length, ...newChildren); },
     classList: {
       values: new Set(),
       add(value) { this.values.add(value); },
@@ -31,15 +36,25 @@ function makeHarness({ session = null } = {}) {
     logoutButton: element(),
     switchProfileButton: element(),
     switchCharacterButton: element(),
+    profileList: element(),
   };
   const authController = {
     getSession() { return session; },
     async logout() { calls.push({ type: 'logout' }); session = null; },
   };
+  const document = {
+    createElement(tagName) {
+      const node = element();
+      node.tagName = tagName.toUpperCase();
+      return node;
+    },
+  };
   const menu = createAccountMenu({
     elements,
     authController,
+    document,
     onLogout() { calls.push({ type: 'onLogout' }); },
+    async onSwitchProfile(profileId) { calls.push({ type: 'onSwitchProfile', profileId }); },
   });
   return { menu, elements, calls };
 }
@@ -94,4 +109,30 @@ test('gameplay logout clears session and returns to title gateway', async () => 
   assert.deepEqual(calls, [{ type: 'logout' }, { type: 'onLogout' }]);
   assert.equal(elements.panel.hidden, true);
   assert.equal(elements.toggleButton.disabled, false);
+});
+
+test('switch profile renders account profiles and invokes profile switch callback', async () => {
+  const session = {
+    sessionToken: 'token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+    profiles: [
+      { id: 'profile-1', name: 'Main Adventurers' },
+      { id: 'profile-2', name: 'Testing Party' },
+    ],
+  };
+  const { menu, elements, calls } = makeHarness({ session });
+
+  menu.mount();
+  await elements.toggleButton.click();
+  await elements.switchProfileButton.click();
+
+  assert.equal(elements.profileList.hidden, false);
+  assert.equal(elements.profileList.children.length, 2);
+  assert.equal(elements.profileList.children[0].textContent, '✓ Main Adventurers');
+  assert.equal(elements.profileList.children[1].textContent, 'Testing Party');
+
+  await elements.profileList.children[1].click();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'onSwitchProfile'), [{ type: 'onSwitchProfile', profileId: 'profile-2' }]);
 });

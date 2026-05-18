@@ -13,7 +13,9 @@ function activeProfileName(session) {
 export function createAccountMenu({
   elements,
   authController,
+  document = globalThis.document,
   onLogout = () => {},
+  onSwitchProfile = () => {},
 }) {
   function render() {
     const session = authController.getSession?.();
@@ -32,6 +34,31 @@ export function createAccountMenu({
     if (elements.switchCharacterButton) elements.switchCharacterButton.hidden = !isAccount;
   }
 
+  function renderProfileList() {
+    const session = authController.getSession?.();
+    const profiles = Array.isArray(session?.profiles) ? session.profiles : [];
+    if (!elements.profileList) return;
+    elements.profileList.replaceChildren();
+    for (const profile of profiles) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'account-menu-action';
+      button.dataset.profileId = profile.id;
+      button.textContent = `${profile.id === session.profileId ? '✓ ' : ''}${profile.name ?? profile.id}`;
+      button.addEventListener('click', async () => {
+        await onSwitchProfile(profile.id);
+        closeProfileList();
+        render();
+      });
+      elements.profileList.appendChild(button);
+    }
+    elements.profileList.hidden = false;
+  }
+
+  function closeProfileList() {
+    if (elements.profileList) elements.profileList.hidden = true;
+  }
+
   function open() {
     render();
     elements.panel.hidden = false;
@@ -40,6 +67,7 @@ export function createAccountMenu({
 
   function close() {
     elements.panel.hidden = true;
+    closeProfileList();
     elements.toggleButton?.classList?.remove('active');
   }
 
@@ -63,8 +91,9 @@ export function createAccountMenu({
   function mount() {
     close();
     elements.toggleButton?.addEventListener('click', toggle);
+    elements.switchProfileButton?.addEventListener('click', renderProfileList);
     elements.logoutButton?.addEventListener('click', logout);
   }
 
-  return { mount, render, open, close, toggle, logout };
+  return { mount, render, open, close, toggle, logout, renderProfileList };
 }
