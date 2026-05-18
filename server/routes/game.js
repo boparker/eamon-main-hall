@@ -241,7 +241,7 @@ function hallChoices(character, unlockedAdventures = []) {
   if (!character) return ['Create Character', 'Register / Upgrade Account'];
   if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Register / Upgrade Account'];
   const adventureChoices = unlockedAdventures.map((adventure) => `Begin ${String(adventure.name).replace(/^The\s+/i, '')}`);
-  return ['Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
+  return ['Create Character', 'Register / Upgrade Account', 'Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {

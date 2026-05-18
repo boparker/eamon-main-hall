@@ -8,7 +8,7 @@ export function updateHUD(animate) {
     'stat-hd': state.character.hd,
     'stat-ag': state.character.agility ?? state.character.ag,
     'stat-ch': state.character.charisma ?? state.character.ch,
-    'stat-gold': state.character.gold,
+    'stat-gold': state.character.name ? (state.character.gold ?? 0) : null,
   };
   for (const [id, val] of Object.entries(stats)) {
     const el = document.getElementById(id);

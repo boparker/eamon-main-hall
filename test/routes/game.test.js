@@ -231,6 +231,8 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
   assert.equal(response.body.state.phase, 'great-hall');
   assert.equal(response.body.state.character.id, character.body.state.character.id);
   assert.equal(response.body.state.character.className, 'rogue');
+  assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /account|register/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /weapon|shop/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /armor|equipment/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /begin beginner/i.test(choice)), true);

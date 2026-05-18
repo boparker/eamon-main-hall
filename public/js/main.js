@@ -5,7 +5,7 @@ import { PLAYER_ID, state } from './state.js';
 import { updateHUD } from './hud.js';
 import { addPlayerLine, startStreamLine, appendStreamToken, finishStreamLine } from './narrative.js';
 import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
-import { startMusic, initAudioControls } from './audio.js';
+import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler } from './shop.js';
 import { createPhase1GameClient } from './game-client.js';
 
@@ -67,7 +67,6 @@ document.getElementById('enter-btn').addEventListener('click', async () => {
   try {
     const response = await gameClient.startPhase1Game();
     document.getElementById('game-screen').classList.add('active');
-    startMusic();
     document.getElementById('title-screen').classList.add('fade-out');
     setTimeout(() => { document.getElementById('title-screen').style.display = 'none'; }, 1200);
     setInputState(response?.state?.character ? 'action' : 'name', true);
