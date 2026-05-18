@@ -69,6 +69,16 @@ export function createAuthController({
       return persist({ ...session, profileId });
     },
 
+    selectCharacter(characterId) {
+      if (!session?.sessionToken || !session?.profileId) throw new Error('No account profile is active.');
+      const profiles = (Array.isArray(session.profiles) ? session.profiles : []).map((profile) => (
+        profile?.id === session.profileId
+          ? { ...profile, selected_character_id: characterId, selectedCharacterId: characterId }
+          : profile
+      ));
+      return persist({ ...session, profiles });
+    },
+
     async logout() {
       const token = session?.sessionToken;
       if (token) await api.logoutAccount(token);

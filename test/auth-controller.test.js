@@ -86,6 +86,28 @@ test('selectProfile persists active profile and updates game identity', async ()
   assert.deepEqual(controller.gameIdentity(), { sessionToken: 'login-token', profileId: 'profile-2' });
 });
 
+test('selectCharacter persists selected character metadata on the active profile', async () => {
+  const { controller } = makeController({
+    loginPayload: {
+      ok: true,
+      token: 'login-token',
+      user: { id: 'user-1', username: 'bo' },
+      profiles: [
+        { id: 'profile-1', name: 'Main', selected_character_id: null },
+        { id: 'profile-2', name: 'Alt', selected_character_id: null },
+      ],
+      profileId: 'profile-1',
+    },
+  });
+  await controller.login({ username: 'bo', password: 'secret12' });
+
+  const session = controller.selectCharacter('char-2');
+
+  assert.equal(session.profiles[0].selected_character_id, 'char-2');
+  assert.equal(session.profiles[0].selectedCharacterId, 'char-2');
+  assert.equal(session.profiles[1].selected_character_id, null);
+});
+
 test('selectProfile rejects profiles outside the current account session', async () => {
   const { controller } = makeController();
   await controller.login({ username: 'bo', password: 'secret-pass' });

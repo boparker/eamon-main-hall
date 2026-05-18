@@ -10,12 +10,19 @@ function activeProfileName(session) {
   return profiles.find((profile) => profile?.id === session?.profileId)?.name ?? null;
 }
 
+function activeProfile(session) {
+  const profiles = Array.isArray(session?.profiles) ? session.profiles : [];
+  return profiles.find((profile) => profile?.id === session?.profileId) ?? null;
+}
+
 export function createAccountMenu({
   elements,
   authController,
   document = globalThis.document,
   onLogout = () => {},
   onSwitchProfile = () => {},
+  onListCharacters = () => [],
+  onSwitchCharacter = () => {},
 }) {
   function render() {
     const session = authController.getSession?.();
@@ -55,8 +62,34 @@ export function createAccountMenu({
     elements.profileList.hidden = false;
   }
 
+  async function renderCharacterList() {
+    const session = authController.getSession?.();
+    const selectedCharacterId = activeProfile(session)?.selected_character_id ?? activeProfile(session)?.selectedCharacterId ?? null;
+    const characters = await onListCharacters();
+    if (!elements.characterList) return;
+    elements.characterList.replaceChildren();
+    for (const character of characters) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'account-menu-action';
+      button.dataset.characterId = character.id;
+      button.textContent = `${character.id === selectedCharacterId ? '✓ ' : ''}${character.name ?? character.id}`;
+      button.addEventListener('click', async () => {
+        await onSwitchCharacter(character.id);
+        closeCharacterList();
+        render();
+      });
+      elements.characterList.appendChild(button);
+    }
+    elements.characterList.hidden = false;
+  }
+
   function closeProfileList() {
     if (elements.profileList) elements.profileList.hidden = true;
+  }
+
+  function closeCharacterList() {
+    if (elements.characterList) elements.characterList.hidden = true;
   }
 
   function open() {
@@ -68,6 +101,7 @@ export function createAccountMenu({
   function close() {
     elements.panel.hidden = true;
     closeProfileList();
+    closeCharacterList();
     elements.toggleButton?.classList?.remove('active');
   }
 
@@ -92,8 +126,9 @@ export function createAccountMenu({
     close();
     elements.toggleButton?.addEventListener('click', toggle);
     elements.switchProfileButton?.addEventListener('click', renderProfileList);
+    elements.switchCharacterButton?.addEventListener('click', renderCharacterList);
     elements.logoutButton?.addEventListener('click', logout);
   }
 
-  return { mount, render, open, close, toggle, logout, renderProfileList };
+  return { mount, render, open, close, toggle, logout, renderProfileList, renderCharacterList };
 }

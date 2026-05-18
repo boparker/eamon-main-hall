@@ -12,6 +12,8 @@ import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
 import { renderAccountStatus } from './account-status.js';
 import { createAccountMenu } from './account-menu.js';
+import { listGameCharacters } from './api.js';
+import { selectProfileCharacter } from './profile-api.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -51,6 +53,24 @@ async function switchToProfile(profileId) {
   authController.selectProfile(profileId);
   resetGameplayState();
   gameClient = buildGameClient(authController.gameIdentity());
+  renderCurrentAccountStatus();
+  setInputState('action', false);
+  const response = await gameClient.startPhase1Game();
+  setInputState(response?.state?.character ? 'action' : 'name', true);
+}
+
+async function listActiveProfileCharacters() {
+  const identity = authController.gameIdentity();
+  const response = await listGameCharacters(identity);
+  return response.characters ?? [];
+}
+
+async function switchToCharacter(characterId) {
+  const identity = authController.gameIdentity();
+  await selectProfileCharacter({ ...identity, characterId });
+  authController.selectCharacter(characterId);
+  resetGameplayState();
+  gameClient = buildGameClient(identity);
   renderCurrentAccountStatus();
   setInputState('action', false);
   const response = await gameClient.startPhase1Game();
@@ -133,9 +153,12 @@ const accountMenu = createAccountMenu({
     switchProfileButton: document.getElementById('account-switch-profile-btn'),
     switchCharacterButton: document.getElementById('account-switch-character-btn'),
     profileList: document.getElementById('account-profile-list'),
+    characterList: document.getElementById('account-character-list'),
   },
   authController,
   onSwitchProfile: switchToProfile,
+  onListCharacters: listActiveProfileCharacters,
+  onSwitchCharacter: switchToCharacter,
   onLogout() {
     resetGameplayState();
     gameClient = buildGameClient();

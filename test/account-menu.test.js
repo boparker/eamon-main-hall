@@ -37,6 +37,7 @@ function makeHarness({ session = null } = {}) {
     switchProfileButton: element(),
     switchCharacterButton: element(),
     profileList: element(),
+    characterList: element(),
   };
   const authController = {
     getSession() { return session; },
@@ -55,6 +56,8 @@ function makeHarness({ session = null } = {}) {
     document,
     onLogout() { calls.push({ type: 'onLogout' }); },
     async onSwitchProfile(profileId) { calls.push({ type: 'onSwitchProfile', profileId }); },
+    async onListCharacters() { calls.push({ type: 'onListCharacters' }); return session?.characters ?? []; },
+    async onSwitchCharacter(characterId) { calls.push({ type: 'onSwitchCharacter', characterId }); },
   });
   return { menu, elements, calls };
 }
@@ -135,4 +138,32 @@ test('switch profile renders account profiles and invokes profile switch callbac
   await elements.profileList.children[1].click();
 
   assert.deepEqual(calls.filter((call) => call.type === 'onSwitchProfile'), [{ type: 'onSwitchProfile', profileId: 'profile-2' }]);
+});
+
+test('switch character renders current profile characters and invokes character switch callback', async () => {
+  const session = {
+    sessionToken: 'token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+    profiles: [{ id: 'profile-1', name: 'Main Adventurers', selected_character_id: 'char-2' }],
+    characters: [
+      { id: 'char-1', name: 'Mara' },
+      { id: 'char-2', name: 'Talon' },
+    ],
+  };
+  const { menu, elements, calls } = makeHarness({ session });
+
+  menu.mount();
+  await elements.toggleButton.click();
+  await elements.switchCharacterButton.click();
+
+  assert.equal(elements.characterList.hidden, false);
+  assert.equal(elements.characterList.children.length, 2);
+  assert.equal(elements.characterList.children[0].textContent, 'Mara');
+  assert.equal(elements.characterList.children[1].textContent, '✓ Talon');
+
+  await elements.characterList.children[0].click();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'onListCharacters'), [{ type: 'onListCharacters' }]);
+  assert.deepEqual(calls.filter((call) => call.type === 'onSwitchCharacter'), [{ type: 'onSwitchCharacter', characterId: 'char-1' }]);
 });
