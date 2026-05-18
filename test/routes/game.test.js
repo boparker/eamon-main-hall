@@ -301,31 +301,6 @@ test('POST /api/game/command returns clear errors for bad ownership or unknown c
   assert.match(unknown.body.text, /did not understand/i);
 });
 
-test('POST /api/game/command handles server-authoritative shop buy', async () => {
-  const { app } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7, gold: 100,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
-
-  const buy = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'buy short sword',
-  });
-
-  assert.equal(buy.status, 200);
-  assert.equal(buy.body.events[0].type, 'buy');
-  assert.equal(buy.body.state.character.gold, 70);
-  assert.equal(buy.body.state.character.inventory[0].slug, 'short-sword');
-
-  const duplicate = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'buy short sword',
-  });
-  assert.equal(duplicate.body.events[0].type, 'buy_failed');
-  assert.match(duplicate.body.text, /already-owned/i);
-});
-
 test('POST /api/game/command rejects mutation after run is completed', async () => {
   const { app, deps } = makeApp();
   const character = await request(app, 'POST', '/api/game/characters', {

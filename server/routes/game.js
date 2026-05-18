@@ -12,7 +12,7 @@ import {
   move,
 } from '../engine/adventures.js';
 import { resolveCombatRound } from '../engine/combat.js';
-import { buyItem, convertTreasuresOnReturn, takeTreasure } from '../engine/economy.js';
+import { convertTreasuresOnReturn, takeTreasure } from '../engine/economy.js';
 import {
   renderCombatResult,
   renderInventory,
@@ -38,19 +38,6 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ADVENTURES_DIR = join(__dirname, '../../data/adventures');
 const DIRECTIONS = ['north', 'south', 'east', 'west', 'up', 'down'];
-const SHOP_CATALOG = [
-  { slug: 'short-sword', name: 'Short Sword', type: 'weapon', price: 30, damageDice: '1d6' },
-  { slug: 'broadsword', name: 'Broadsword', type: 'weapon', price: 60, damageDice: '2d6' },
-  { slug: 'battle-axe', name: 'Battle Axe', type: 'weapon', price: 80, damageDice: '2d8' },
-  { slug: 'mace', name: 'Mace', type: 'weapon', price: 50, damageDice: '2d4' },
-  { slug: 'spear', name: 'Spear', type: 'weapon', price: 40, damageDice: '1d8' },
-  { slug: 'war-hammer', name: 'War Hammer', type: 'weapon', price: 90, damageDice: '3d6' },
-  { slug: 'leather-armor', name: 'Leather Armor', type: 'armor', price: 50, defense: 2 },
-  { slug: 'chain-mail', name: 'Chain Mail', type: 'armor', price: 120, defense: 5 },
-  { slug: 'plate-armor', name: 'Plate Armor', type: 'armor', price: 200, defense: 8 },
-  { slug: 'shield', name: 'Shield', type: 'shield', price: 40, defense: 2 },
-];
-
 const DEFAULT_CLASS_STATS = {
   warrior: { hardiness: 12, agility: 9, charisma: 8 },
   rogue: { hardiness: 10, agility: 12, charisma: 9 },
@@ -95,10 +82,6 @@ function findVisibleItem(adventure, run, target) {
   const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
   const item = findItem(adventure, target);
   return item && visibleSlugs.has(item.slug) ? item : null;
-}
-
-function findShopItem(target) {
-  return findItem({ items: SHOP_CATALOG }, target);
 }
 
 function findVisibleEnemy(adventure, run, target) {
@@ -498,20 +481,6 @@ export function createGameRouter(rawDeps = {}) {
           choices: combat.characterDefeated ? [] : choicesForRoom(getCurrentRoom(run, adventure)),
           state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat },
         }));
-      }
-
-      if (command.type === 'buy') {
-        const item = findShopItem(command.target);
-        if (!item) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'buy_failed', command, reason: 'missing-item' }, text: `The shop does not carry ${command.target}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
-        }
-        const purchase = buyItem(character, item);
-        if (!purchase.ok) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'buy_failed', command, reason: purchase.reason }, text: `You cannot buy ${item.name}: ${purchase.reason}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
-        }
-        character = purchase.character;
-        const updatedCharacter = await deps.updateCharacter(deps.db, character.playerId, character.id, characterPatch(character));
-        return res.json(canonicalResponse({ intent: command, event: { type: 'buy', command, item }, text: purchase.text, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character: rowCharacter(updatedCharacter), adventureRun: run } }));
       }
 
       if (command.type === 'leave') {

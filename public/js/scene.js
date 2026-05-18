@@ -1,7 +1,6 @@
 // scene.js — Background crossfade, portrait system, location management
 
 import { switchMusic, hallMusic, adventureMusic } from './audio.js';
-import { state } from './state.js';
 
 // ── Location & Background ──
 let lastBgLocation = '';
@@ -43,9 +42,6 @@ export async function generateSceneBg(location) {
     crossfadeBg(sceneMap[location]);
     return;
   }
-
-  // Phase 1 deterministic gameplay should not call image-generation endpoints.
-  if (state.phase1Mode) return;
 
   // Check local cache
   if (bgCache[location]) {
@@ -92,9 +88,6 @@ function crossfadeBg(url) {
 const portraitCache = {};
 
 export async function showPortrait(name, desc, kind) {
-  // Phase 1 deterministic gameplay should not call portrait-generation endpoints.
-  if (state.phase1Mode) return;
-
   const frame = document.getElementById('portrait-frame');
   const cacheKey = kind + ':' + name;
   let url = portraitCache[cacheKey];
