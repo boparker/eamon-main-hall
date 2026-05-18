@@ -2,7 +2,7 @@
   "adventure": {
     "id": "beginners-cave",
     "name": "The Beginner's Cave",
-    "description": "A simple cavern for new adventurers to test their mettle. Many have entered. Some have returned.",
+    "description": "The Beginner's Cave has been set up by the Warlord as a service to all Free Adventurers, giving them a chance to try their skills in a not-too-dangerous setting.",
     "artist_style": "Eyvind Earle",
     "inspiration_artist": "Eyvind Earle Sleeping Beauty 1959",
     "style_prompt_prefix": "Eyvind Earle Sleeping Beauty 1959 style, geometric angular Gothic architecture, jewel-tone palette of deep purples and midnight blues with burnished gold accents, Byzantine and Persian miniature influence, architectural depth with layered planes, painterly backgrounds with light-defined detail, flat graphic characters with subtle shading, Celtic ornamental details",
@@ -11,7 +11,9 @@
     "author": "Donald Brown",
     "image_preference": "upload",
     "intro": "You stand at the entrance to a cave. A sign over the entrance reads \"Beginners Only!\" Your heart quickens as you grip your weapon. Whatever lies within, fame and fortune await the brave — or a quick death awaits the foolish.",
-    "start_room": 1
+    "start_room": 1,
+    "full_description": "Let us all toast the Warlord for restocking the cave daily!\r\n\r\nOnly beginners are supposed to enter the cave (but any character can). Knight Marshall William Misslefire is on duty to prevent inexperienced adventurers from doing anything really foolish (like entering the cave with no weapon at all!).\r\n\r\nTo return to the Main Hall, just leave the cave (by getting to the cave entrance and moving north). Once you have done so, Sam Slicker, the local dealer for treasures and booty, will pay you in gold for any items that you have collected (with the price adjusted slightly depending upon your charisma).\r\n\r\nCONVERSION NOTES:\r\n\r\nThis is the true and original Beginner's Cave and actually the first Classic Eamon adventure, written by Donald Brown nearly three decades ago. In an attempt to preserve the flavor of the Classic Eamon experience, very little new content was added upon conversion to Eamon Deluxe conversion. Just the standard Eamon Deluxe enhancements and the addition of a few embedded artifacts which were  already hinted at in the descriptions. Although designed as a simple outing for new characters, the Beginner's Cave captures the unique experience of Eamon very well and is, in many ways, one of the best adventures ever written for it.",
+    "text_source": "kdechant/eamon adventure/data/001-the-beginners-cave.json"
   },
   "locations": [
     {
@@ -31,7 +33,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the cave entrance. (N/S)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-2",
@@ -50,7 +54,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a dark north/south tunnel.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-3",
@@ -69,7 +75,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in the west side chamber. (E)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-4",
@@ -88,7 +96,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a large chamber. (N/S/E/W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-5",
@@ -107,7 +117,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in the east side chamber. (W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-6",
@@ -126,14 +138,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a west cell. (E)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-7",
       "room_number": 7,
       "name": "North End of Long Passage",
-      "narration_text": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?) In the dim light you can see that the hall goes south but you cannot make out any details.",
-      "background_description": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?) In the dim light you can see that the hall goes south but you cannot make out any details.",
+      "narration_text": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
+      "background_description": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
       "light_level": "dim",
       "is_combat_zone": false,
       "exits": {
@@ -145,7 +159,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the north end of a long passage. (N/S/E/W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-8",
@@ -164,14 +180,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east cell. (W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-9",
       "room_number": 9,
       "name": "West Cell",
-      "narration_text": "You are in a small stark cell with a door on the east side. An inscription on the wall reads: \"You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects.\"",
-      "background_description": "You are in a small stark cell with a door on the east side. An inscription on the wall reads: \"You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects.\"",
+      "narration_text": "You are in a small stark cell with a door on the east side.",
+      "background_description": "You are in a small stark cell with a door on the east side.",
       "light_level": "dim",
       "is_combat_zone": false,
       "exits": {
@@ -183,7 +201,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a west cell. (E)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-10",
@@ -202,14 +222,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the middle of a long passage. (N/S/E/W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-11",
       "room_number": 11,
       "name": "East Cell",
-      "narration_text": "You are in a small stark cell with a door on the west side. An inscription reads: \"Most commands can be abbreviated. AT DR is the same as ATTACK DRAGON. Commands are not case sensitive.\"",
-      "background_description": "You are in a small stark cell with a door on the west side. An inscription reads: \"Most commands can be abbreviated. AT DR is the same as ATTACK DRAGON. Commands are not case sensitive.\"",
+      "narration_text": "You are in a small stark cell with a door on the west side.",
+      "background_description": "You are in a small stark cell with a door on the west side.",
       "light_level": "dim",
       "is_combat_zone": false,
       "exits": {
@@ -221,7 +243,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east cell. (W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-12",
@@ -240,7 +264,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a west cell. (E)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-13",
@@ -259,14 +285,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the south end of a long passage. (N/S/E/W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-14",
       "room_number": 14,
       "name": "East Cell",
-      "narration_text": "You are in a small stark cell with a door on the west side. A large chest sits in the center of the room.",
-      "background_description": "You are in a small stark cell with a door on the west side. A large chest sits in the center of the room.",
+      "narration_text": "You are in a small stark cell with a door on the west side.",
+      "background_description": "You are in a small stark cell with a door on the west side.",
       "light_level": "dim",
       "is_combat_zone": true,
       "exits": {
@@ -278,7 +306,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east cell. (W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-15",
@@ -297,7 +327,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in a broken north/south tunnel.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-16",
@@ -316,7 +348,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east/west tunnel with faint music.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-17",
@@ -335,7 +369,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east/west tunnel with loud music.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-18",
@@ -354,7 +390,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the temple. (W)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-19",
@@ -373,7 +411,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in the library. (E)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-20",
@@ -392,14 +432,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at a T-intersection; North by E/W.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-21",
       "room_number": 21,
       "name": "East/West Tunnel",
-      "narration_text": "You are in an unremarkable tunnel. You can see torch light in both directions. Writing on the wall reads: \"To repeat the last command, just hit the Enter key. To recall previous commands, use the up and down arrow keys.\"",
-      "background_description": "You are in an unremarkable tunnel. You can see torch light in both directions. Writing on the wall reads: \"To repeat the last command, just hit the Enter key. To recall previous commands, use the up and down arrow keys.\"",
+      "narration_text": "You are in an unremarkable tunnel. You can see torch light in both directions.",
+      "background_description": "You are in an unremarkable tunnel. You can see torch light in both directions.",
       "light_level": "dim",
       "is_combat_zone": false,
       "exits": {
@@ -411,7 +453,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east/west tunnel.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-22",
@@ -430,7 +474,9 @@
         "down": 23
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the top of a stairway. (W/D)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-23",
@@ -449,14 +495,16 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are at the bottom of a stairway. (E/U)",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-24",
       "room_number": 24,
       "name": "Rough Tunnel",
-      "narration_text": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions. An inscription reads: \"Interesting items are sometimes hidden within room descriptions. Try looking at unusual features — rough walls, cracks, bookshelves.\"",
-      "background_description": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions. An inscription reads: \"Interesting items are sometimes hidden within room descriptions. Try looking at unusual features — rough walls, cracks, bookshelves.\"",
+      "narration_text": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
+      "background_description": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
       "light_level": "dim",
       "is_combat_zone": false,
       "exits": {
@@ -468,7 +516,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east/west tunnel.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-25",
@@ -487,7 +537,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in an east/west tunnel smelling of salt.",
+      "text_source": "kdechant/eamon room.description"
     },
     {
       "id": "beginners-cave-26",
@@ -506,7 +558,9 @@
         "down": null
       },
       "treasure": [],
-      "requires": null
+      "requires": null,
+      "canonical_name": "You are in the Pirate's Cove. (E/W)",
+      "text_source": "kdechant/eamon room.description"
     }
   ],
   "characters": [
@@ -527,7 +581,9 @@
       "damage_dice": "1d4",
       "gold": 0,
       "location_room": 3,
-      "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style."
+      "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style.",
+      "canonical_name": "Rat",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-priest",
@@ -537,8 +593,8 @@
       "is_hostile": true,
       "hostility": "hostile",
       "friendliness": "hostile",
-      "description": "A huge man in religious garb with an insane look on his face. In his right hand, he carries a heavy mace.",
-      "first_encounter_text": "A huge man in religious garb with an insane look on his face. In his right hand, he carries a heavy mace.",
+      "description": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
+      "first_encounter_text": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
       "hp": 10,
       "current_hp_from": "hp",
       "agility": 6,
@@ -546,7 +602,9 @@
       "damage_dice": "2d6",
       "gold": 15,
       "location_room": 18,
-      "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style."
+      "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style.",
+      "canonical_name": "Priest",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-cynthia",
@@ -556,8 +614,8 @@
       "is_hostile": false,
       "hostility": "friendly",
       "friendliness": "friendly",
-      "description": "A beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
-      "first_encounter_text": "A beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+      "description": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+      "first_encounter_text": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
       "hp": 5,
       "current_hp_from": "hp",
       "agility": 5,
@@ -565,7 +623,9 @@
       "damage_dice": "0d0",
       "gold": 0,
       "location_room": 18,
-      "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style."
+      "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style.",
+      "canonical_name": "Cynthia",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-hermit",
@@ -575,8 +635,8 @@
       "is_hostile": false,
       "hostility": "neutral",
       "friendliness": "neutral",
-      "description": "A grizzled old hermit who smells as if he hasn't taken a bath in forty years.",
-      "first_encounter_text": "A grizzled old hermit who smells as if he hasn't taken a bath in forty years.",
+      "description": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
+      "first_encounter_text": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
       "hp": 13,
       "current_hp_from": "hp",
       "agility": 12,
@@ -585,7 +645,9 @@
       "gold": 10,
       "location_room": 5,
       "encounter_behavior": "random",
-      "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style."
+      "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style.",
+      "canonical_name": "Hermit",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-gorilla",
@@ -595,8 +657,8 @@
       "is_hostile": true,
       "hostility": "hostile",
       "friendliness": "hostile",
-      "description": "A huge, hairy, strong and angry gorilla!",
-      "first_encounter_text": "A huge, hairy, strong and angry gorilla!",
+      "description": "There is a huge, hairy, strong and angry gorilla in the room with you!",
+      "first_encounter_text": "There is a huge, hairy, strong and angry gorilla in the room with you!",
       "hp": 12,
       "current_hp_from": "hp",
       "agility": 11,
@@ -604,7 +666,9 @@
       "damage_dice": "2d6",
       "gold": 0,
       "location_room": 8,
-      "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style."
+      "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style.",
+      "canonical_name": "Gorilla",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-heinrich",
@@ -614,8 +678,8 @@
       "is_hostile": false,
       "hostility": "neutral",
       "friendliness": "neutral",
-      "description": "A human warrior armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
-      "first_encounter_text": "A human warrior armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+      "description": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+      "first_encounter_text": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
       "hp": 15,
       "current_hp_from": "hp",
       "agility": 7,
@@ -624,7 +688,9 @@
       "gold": 25,
       "location_room": 6,
       "encounter_behavior": "random",
-      "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style."
+      "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style.",
+      "canonical_name": "Heinrich",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-mimic",
@@ -634,8 +700,8 @@
       "is_hostile": true,
       "hostility": "hostile",
       "friendliness": "hostile",
-      "description": "A chest-shaped monster holding you with two tentacles and attempting to disassemble you with a third one.",
-      "first_encounter_text": "A chest-shaped monster holding you with two tentacles and attempting to disassemble you with a third one.",
+      "description": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
+      "first_encounter_text": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
       "hp": 7,
       "current_hp_from": "hp",
       "agility": 12,
@@ -643,7 +709,9 @@
       "damage_dice": "1d8",
       "gold": 0,
       "location_room": 14,
-      "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style."
+      "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style.",
+      "canonical_name": "Mimic",
+      "text_source": "kdechant/eamon monster.description"
     },
     {
       "id": "beginners-cave-pirate",
@@ -653,8 +721,8 @@
       "is_hostile": true,
       "hostility": "hostile",
       "friendliness": "hostile",
-      "description": "A man with a beard and a brass ring in his ear, wearing clothes made of silk, wielding a fancily engraved sword called TrollsFire.",
-      "first_encounter_text": "A man with a beard and a brass ring in his ear, wearing clothes made of silk, wielding a fancily engraved sword called TrollsFire.",
+      "description": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
+      "first_encounter_text": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
       "hp": 5,
       "current_hp_from": "hp",
       "agility": 14,
@@ -662,7 +730,9 @@
       "damage_dice": "2d10",
       "gold": 50,
       "location_room": 26,
-      "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style."
+      "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style.",
+      "canonical_name": "Pirate",
+      "text_source": "kdechant/eamon monster.description"
     }
   ],
   "items": [
@@ -671,89 +741,191 @@
       "name": "diamonds",
       "slug": "diamonds",
       "type": "treasure",
-      "description": "A large pile of gleaming diamonds.",
+      "description": "You see a large pile of gleaming diamonds here!",
       "value": 200,
-      "weight": 3
+      "weight": 3,
+      "canonical_name": "diamonds",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 3
     },
     {
       "id": "beginners-cave-axe",
       "name": "axe",
       "slug": "axe",
       "type": "weapon",
-      "description": "A standard Marcos axe.",
+      "description": "You see a standard Marcos axe here.",
       "value": 20,
       "weight": 8,
-      "damage_dice": "2d8"
+      "damage_dice": "2d8",
+      "canonical_name": "axe",
+      "text_source": "kdechant/eamon artifact.description"
     },
     {
       "id": "beginners-cave-healing-potion",
       "name": "healing potion",
       "slug": "healing-potion",
       "type": "potion",
-      "description": "A bottle with a strange potion inside. A label is stuck to it.",
+      "description": "There is a bottle with a strange potion inside of it here! It has a label stuck to it that you could READ.",
       "value": 50,
       "weight": 2,
       "heal_amount": 6,
       "effect_description": "Drink to heal 6 hit points.",
-      "uses": 1
+      "uses": 1,
+      "canonical_name": "bottle",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 5
     },
     {
       "id": "beginners-cave-sword",
       "name": "sword",
       "slug": "sword",
       "type": "weapon",
-      "description": "A poor quality Marcos sword.",
+      "description": "There is a poor quality Marcos sword here.",
       "value": 15,
       "weight": 6,
-      "damage_dice": "2d8"
+      "damage_dice": "2d8",
+      "canonical_name": "sword",
+      "text_source": "kdechant/eamon artifact.description"
     },
     {
       "id": "beginners-cave-sack-of-coins",
       "name": "sack of coins",
       "slug": "sack-of-coins",
       "type": "treasure",
-      "description": "A sack with 50 gold coins inside!",
+      "description": "You find a sack with 50 gold coins inside!",
       "value": 50,
-      "weight": 5
+      "weight": 5,
+      "canonical_name": "sack of coins",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 8
     },
     {
       "id": "beginners-cave-spices",
       "name": "spices",
       "slug": "spices",
       "type": "treasure",
-      "description": "Several spices of a rare variety — quite valuable.",
+      "description": "You find several spices. They are of a rare variety and quite valuable.",
       "value": 30,
-      "weight": 3
+      "weight": 3,
+      "canonical_name": "spices",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 18
     },
     {
       "id": "beginners-cave-glowing-book",
       "name": "glowing book",
       "slug": "glowing-book",
       "type": "misc",
-      "description": "An old book that glows in the darkness, remarkably well preserved.",
+      "description": "There is an old book here. It glows in the darkness and is remarkably well preserved.",
       "value": 80,
       "weight": 3,
       "text": "The book contains ancient lore about the cave's history. It is of great scholarly value.",
-      "effect_description": "Readable lore item; contains ancient scholarship about the cave."
+      "effect_description": "Readable lore item; contains ancient scholarship about the cave.",
+      "canonical_name": "book",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 19
     },
     {
       "id": "beginners-cave-trollsfire",
       "name": "TrollsFire",
       "slug": "trollsfire",
       "type": "weapon",
-      "description": "A beautiful sword. Carved on the hilt, in intricate detail, is the sword's name: \"TrollsFire\".",
+      "description": "The Pirate was carrying a beautiful sword. Carved on the hilt, in intricate detail, is the sword's name, \"TrollsFire\".",
       "value": 125,
       "weight": 8,
-      "damage_dice": "2d10"
+      "damage_dice": "2d10",
+      "canonical_name": "TrollsFire",
+      "text_source": "kdechant/eamon artifact.description"
     },
     {
       "id": "beginners-cave-jewels",
       "name": "jewels",
       "slug": "jewels",
       "type": "treasure",
-      "description": "A large pile of jewels!",
+      "description": "There is a large pile of jewels here!",
       "value": 168,
-      "weight": 5
+      "weight": 5,
+      "canonical_name": "jewels",
+      "text_source": "kdechant/eamon artifact.description",
+      "source_room_number": 26
+    },
+    {
+      "id": "beginners-cave-inscription-get-all",
+      "name": "inscription",
+      "slug": "inscription-get-all",
+      "type": "misc",
+      "description": "You see an inscription on the wall which reads, \"You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects like doors and inscriptions.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "inscription",
+      "source_room_number": 9,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-inscription-case-sensitive",
+      "name": "inscription",
+      "slug": "inscription-case-sensitive",
+      "type": "misc",
+      "description": "An inscription on the wall reads, \"The instructions often show commands in all caps for emphasis, but commands are not case sensitive.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "inscription",
+      "source_room_number": 11,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-inscription-abbreviations",
+      "name": "inscription",
+      "slug": "inscription-abbreviations",
+      "type": "misc",
+      "description": "Written on the wall are the words, \"Most commands can be abbreviated. For example, AT DR is the same as ATTACK DRAGON, and DR PO is the same as DRINK POTION.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "inscription",
+      "source_room_number": 11,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-writing-command-history",
+      "name": "writing",
+      "slug": "writing-command-history",
+      "type": "misc",
+      "description": "You see some words chiseled into the wall: \"To repeat the last command, just hit the Enter key again. To recall previous commands, use the up and down arrow keys.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "writing",
+      "source_room_number": 21,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-inscription-hidden-items",
+      "name": "inscription",
+      "slug": "inscription-hidden-items",
+      "type": "misc",
+      "description": "There are some words written here: \"Interesting items are sometimes hidden (embedded) within the description of the room. For example, try looking at the boat in the bay. You can also find secret doors by looking at unusual features in the room, like rough walls, cracks, bookshelves, etc.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "inscription",
+      "source_room_number": 24,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-writing-ready-wear",
+      "name": "writing",
+      "slug": "writing-ready-wear",
+      "type": "misc",
+      "description": "You see some words carved into the wall: \"You may change weapons by using the READY command, e.g., READY SWORD. You may wear armor and shields using the WEAR command (e.g., WEAR CHAIN MAIL) and take them off with the REMOVE command.\"",
+      "value": 0,
+      "weight": -999,
+      "canonical_name": "writing",
+      "source_room_number": 7,
+      "collectible": false,
+      "text_source": "kdechant/eamon artifact.description"
     }
   ],
   "placements": [

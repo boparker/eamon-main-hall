@@ -80,8 +80,8 @@ test('account menu opens with signed-in user and profile actions', async () => {
   await elements.toggleButton.click();
 
   assert.equal(elements.panel.hidden, false);
-  assert.equal(elements.summary.textContent, 'Signed in as bo');
-  assert.equal(elements.profile.textContent, 'Profile: Main Adventurers');
+  assert.equal(elements.summary.textContent, 'Entered in the Guild rolls as bo');
+  assert.equal(elements.profile.textContent, 'Roster: Main Adventurers');
   assert.equal(elements.logoutButton.hidden, false);
   assert.equal(elements.switchProfileButton.hidden, false);
   assert.equal(elements.createProfileButton.hidden, false);
@@ -95,8 +95,8 @@ test('account menu shows guest mode and hides account-only actions', async () =>
   await elements.toggleButton.click();
 
   assert.equal(elements.panel.hidden, false);
-  assert.equal(elements.summary.textContent, 'Playing as guest');
-  assert.equal(elements.profile.textContent, 'You can create and equip an adventurer here. Preserve the adventurer with an account before the first expedition.');
+  assert.equal(elements.summary.textContent, 'Visiting the Guild as a guest');
+  assert.equal(elements.profile.textContent, 'Create and equip an adventurer in the Main Hall. Enter their name in the Guild rolls before the first expedition.');
   assert.equal(elements.logoutButton.hidden, true);
   assert.equal(elements.switchProfileButton.hidden, true);
   assert.equal(elements.createProfileButton.hidden, true);

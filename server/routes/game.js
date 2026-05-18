@@ -246,10 +246,10 @@ function partitionAdventures(adventures, character) {
 }
 
 function hallChoices(character, unlockedAdventures = []) {
-  if (!character) return ['Create Character', 'Register / Upgrade Account'];
-  if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Register / Upgrade Account'];
+  if (!character) return ['Create Character', 'Sign the Guild Rolls'];
+  if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Sign the Guild Rolls'];
   const adventureChoices = unlockedAdventures.map((adventure) => `Begin ${String(adventure.name).replace(/^The\s+/i, '')}`);
-  return ['Create Character', 'Register / Upgrade Account', 'Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
+  return ['Create Character', 'Sign the Guild Rolls', 'Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
@@ -257,7 +257,7 @@ function hallText({ player, character, unlockedAdventures, lockedAdventures, pre
   const lines = [prefix || `You stand in the Great Hall, ${playerName}.`];
   lines.push('The Main Hall keeps your character, equipment, gold, and adventure choices before any expedition begins.');
   if (!character) {
-    lines.push('Create a new adventurer: choose a name and gender, roll prime attributes, start with 200 gold, then buy equipment. You may also register or upgrade your account.');
+    lines.push('Create a new adventurer: choose a name and gender, roll prime attributes, start with 200 gold, then buy equipment. You may also sign the Guild rolls to preserve an adventurer beyond the Main Hall.');
   } else {
     lines.push(`${character.name} is present in the Guild roster and ready for the next expedition.`);
     const inventory = character.inventory?.length ? character.inventory.map((item) => item.name ?? item.slug).join(', ') : 'none';

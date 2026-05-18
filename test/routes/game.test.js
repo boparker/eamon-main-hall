@@ -274,7 +274,7 @@ test('POST /api/game/bootstrap returns Great Hall with create/account choices an
   assert.match(response.body.text, /Great Hall/i);
   assert.equal(response.body.state.character, null);
   assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
-  assert.equal(response.body.choices.some((choice) => /account|register/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /guild rolls/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /begin|start/i.test(choice)), false);
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
@@ -325,7 +325,7 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
   assert.equal(response.body.state.character.id, character.body.state.character.id);
   assert.equal(response.body.state.character.className, 'rogue');
   assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
-  assert.equal(response.body.choices.some((choice) => /account|register/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /guild rolls/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /weapon|shop/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /armor|equipment/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /begin beginner/i.test(choice)), true);

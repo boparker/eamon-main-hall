@@ -30,11 +30,11 @@ export function createAccountMenu({
     const isAccount = Boolean(session?.sessionToken && session?.profileId);
 
     if (isAccount) {
-      elements.summary.textContent = `Signed in as ${userName(session) ?? 'account'}`;
-      elements.profile.textContent = `Profile: ${activeProfileName(session) ?? session.profileId}`;
+      elements.summary.textContent = `Entered in the Guild rolls as ${userName(session) ?? 'adventurer'}`;
+      elements.profile.textContent = `Roster: ${activeProfileName(session) ?? session.profileId}`;
     } else {
-      elements.summary.textContent = 'Playing as guest';
-      elements.profile.textContent = 'You can create and equip an adventurer here. Preserve the adventurer with an account before the first expedition.';
+      elements.summary.textContent = 'Visiting the Guild as a guest';
+      elements.profile.textContent = 'Create and equip an adventurer in the Main Hall. Enter their name in the Guild rolls before the first expedition.';
     }
 
     if (elements.logoutButton) elements.logoutButton.hidden = !isAccount;
