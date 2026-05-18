@@ -24,4 +24,9 @@ export function updateHUD(animate) {
       el.classList.remove('stat-reveal');
     }
   }
+
+  const shopGold = document.getElementById('shop-gold');
+  if (shopGold) {
+    shopGold.textContent = `Your gold: ${stats['stat-gold'] ?? '—'}`;
+  }
 }
