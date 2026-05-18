@@ -11,6 +11,7 @@ import { buyItem } from './server/engine/economy.js';
 import { ensureGameSchema } from './server/db/schema.js';
 import { createGameRouter } from './server/routes/game.js';
 import { createAuthRouter } from './server/routes/auth.js';
+import { createProfilesRouter } from './server/routes/profiles.js';
 
 const { Pool } = pg;
 
@@ -442,6 +443,7 @@ async function streamAI(messages, res, session) {
 
 // ── Deterministic Game API ────────────────────────────────────────────────────
 app.use('/api/auth', createAuthRouter({ db: pool }));
+app.use('/api/profiles', createProfilesRouter({ db: pool }));
 app.use('/api/game', createGameRouter({ db: pool }));
 
 // ── ElevenLabs TTS endpoint ───────────────────────────────────────────────────

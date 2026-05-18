@@ -1,5 +1,5 @@
-import { hashSessionToken } from './sessions.js';
-import { getUserBySessionTokenHash } from '../db/users.js';
+import { hashSessionToken as defaultHashSessionToken } from './sessions.js';
+import { getUserBySessionTokenHash as defaultGetUserBySessionTokenHash } from '../db/users.js';
 
 function extractBearerToken(req) {
   const header = req?.headers?.authorization ?? req?.headers?.Authorization;
@@ -8,12 +8,16 @@ function extractBearerToken(req) {
   return match ? match[1].trim() : null;
 }
 
-function resolveDb(options = {}) {
-  return options.db ?? options.pool;
+function resolveDeps(options = {}) {
+  return {
+    db: options.db ?? options.pool,
+    hashSessionToken: options.hashSessionToken ?? defaultHashSessionToken,
+    getUserBySessionTokenHash: options.getUserBySessionTokenHash ?? defaultGetUserBySessionTokenHash,
+  };
 }
 
 export function optionalAuth(options = {}) {
-  const db = resolveDb(options);
+  const deps = resolveDeps(options);
   return async function optionalAuthMiddleware(req, res, next) {
     const token = extractBearerToken(req);
     if (!token) {
@@ -21,8 +25,8 @@ export function optionalAuth(options = {}) {
       return next();
     }
 
-    const tokenHash = hashSessionToken(token);
-    const user = await getUserBySessionTokenHash(db, tokenHash);
+    const tokenHash = deps.hashSessionToken(token);
+    const user = await deps.getUserBySessionTokenHash(deps.db, tokenHash);
     if (!user) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
@@ -33,15 +37,15 @@ export function optionalAuth(options = {}) {
 }
 
 export function requireAuth(options = {}) {
-  const db = resolveDb(options);
+  const deps = resolveDeps(options);
   return async function requireAuthMiddleware(req, res, next) {
     const token = extractBearerToken(req);
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const tokenHash = hashSessionToken(token);
-    const user = await getUserBySessionTokenHash(db, tokenHash);
+    const tokenHash = deps.hashSessionToken(token);
+    const user = await deps.getUserBySessionTokenHash(deps.db, tokenHash);
     if (!user) {
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
