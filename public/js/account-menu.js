@@ -34,7 +34,7 @@ export function createAccountMenu({
       elements.profile.textContent = `Profile: ${activeProfileName(session) ?? session.profileId}`;
     } else {
       elements.summary.textContent = 'Playing as guest';
-      elements.profile.textContent = 'Progress is saved to this browser only.';
+      elements.profile.textContent = 'You can create and equip an adventurer here. Preserve the adventurer with an account before the first expedition.';
     }
 
     if (elements.logoutButton) elements.logoutButton.hidden = !isAccount;

@@ -13,7 +13,7 @@ import { createTitleGateway } from './title-gateway.js';
 import { renderAccountStatus } from './account-status.js';
 import { createAccountMenu } from './account-menu.js';
 import { listGameCharacters } from './api.js';
-import { createProfile, selectProfileCharacter } from './profile-api.js';
+import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -35,6 +35,7 @@ function buildGameClient(identity = null) {
     render: renderGameResponse,
     renderPlayer: addPlayerLine,
     updateHUD: () => updateHUD(true),
+    onAccountRequired: handleAccountRequired,
   });
 }
 
@@ -89,7 +90,42 @@ async function switchToCharacter(characterId) {
   setInputState(response?.state?.character ? 'action' : 'name', true);
 }
 
-let gameClient = buildGameClient();
+let gameClient;
+let titleGateway;
+let pendingGuestClaim = null;
+
+function handleAccountRequired(context) {
+  if (context?.playerId && context?.character?.id) {
+    pendingGuestClaim = {
+      guestPlayerId: context.playerId,
+      characterId: context.character.id,
+      adventureId: context.adventureId,
+    };
+  }
+  titleGateway?.showTitleGateway({ form: 'register' });
+}
+
+async function preservePendingGuestClaim(identity) {
+  if (!pendingGuestClaim || !identity?.sessionToken || !identity?.profileId) return undefined;
+  const claim = pendingGuestClaim;
+  pendingGuestClaim = null;
+  const payload = await claimGuestCharacter({
+    sessionToken: identity.sessionToken,
+    profileId: identity.profileId,
+    guestPlayerId: claim.guestPlayerId,
+    characterId: claim.characterId,
+  });
+  authController.selectCharacter(payload.character.id);
+  resetGameplayState();
+  gameClient = buildGameClient(authController.gameIdentity());
+  renderCurrentAccountStatus();
+  setInputState('action', false);
+  const response = await gameClient.startPhase1Game();
+  setInputState(response?.state?.character ? 'action' : 'name', true);
+  return response;
+}
+
+gameClient = buildGameClient();
 const authController = createAuthController();
 renderCurrentAccountStatus();
 
@@ -122,7 +158,7 @@ registerPurchaseHandler((text) => {
 initAudioControls();
 
 // ── Boot / Title gateway ──
-const titleGateway = createTitleGateway({
+titleGateway = createTitleGateway({
   elements: {
     titleScreen: document.getElementById('title-screen'),
     gameScreen: document.getElementById('game-screen'),
@@ -149,6 +185,9 @@ const titleGateway = createTitleGateway({
   },
   setStreaming(value) { state.isStreaming = value; },
   setInputState,
+  onAuthenticated({ identity }) {
+    return preservePendingGuestClaim(identity);
+  },
   renderError(err) {
     renderGameResponse({ text: err.message || 'The Great Hall is unavailable right now.', choices: [], state: { phase: 'great-hall' } });
   },

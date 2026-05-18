@@ -24,7 +24,7 @@ function element({ value = '' } = {}) {
   };
 }
 
-function makeHarness({ session = null } = {}) {
+function makeHarness({ session = null, onAuthenticated = null } = {}) {
   const elements = {
     titleScreen: element(),
     gameScreen: element(),
@@ -63,6 +63,7 @@ function makeHarness({ session = null } = {}) {
     setInputState(mode, enabled) { calls.push({ type: 'setInputState', mode, enabled }); },
     setStreaming(value) { calls.push({ type: 'setStreaming', value }); },
     rebuildGameClient(identity) { calls.push({ type: 'rebuildGameClient', identity }); return gameClient; },
+    onAuthenticated: onAuthenticated ? async (context) => onAuthenticated(context, calls) : undefined,
     hideDelayMs: 0,
   });
   return { gateway, elements, calls };
@@ -107,6 +108,27 @@ test('register path creates an account on the title screen and enters with accou
     type: 'register',
     input: { username: 'newbo', email: 'bo@example.com', password: 'secret-pass' },
   }]);
+  assert.equal(elements.gameScreen.classList.contains('active'), true);
+});
+
+test('authenticated hook can claim a pending guest character before entering account game', async () => {
+  const { gateway, elements, calls } = makeHarness({
+    async onAuthenticated({ kind, session, identity }, callLog) {
+      callLog.push({ type: 'onAuthenticated', kind, session, identity });
+      return { state: { character: { id: 'claimed-char' } } };
+    },
+  });
+  gateway.mount();
+
+  await elements.registerForm.submit();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'onAuthenticated'), [{
+    type: 'onAuthenticated',
+    kind: 'register',
+    session: { sessionToken: 'register-token', profileId: 'profile-1' },
+    identity: { sessionToken: 'register-token', profileId: 'profile-1' },
+  }]);
+  assert.equal(calls.some((call) => call.type === 'startPhase1Game'), false);
   assert.equal(elements.gameScreen.classList.contains('active'), true);
 });
 

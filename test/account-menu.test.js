@@ -96,7 +96,7 @@ test('account menu shows guest mode and hides account-only actions', async () =>
 
   assert.equal(elements.panel.hidden, false);
   assert.equal(elements.summary.textContent, 'Playing as guest');
-  assert.equal(elements.profile.textContent, 'Progress is saved to this browser only.');
+  assert.equal(elements.profile.textContent, 'You can create and equip an adventurer here. Preserve the adventurer with an account before the first expedition.');
   assert.equal(elements.logoutButton.hidden, true);
   assert.equal(elements.switchProfileButton.hidden, true);
   assert.equal(elements.createProfileButton.hidden, true);

@@ -5,6 +5,7 @@ export function createTitleGateway({
   setInputState,
   setStreaming,
   rebuildGameClient = () => gameClient,
+  onAuthenticated = null,
   renderError = () => {},
   hideDelayMs = 1200,
 } = {}) {
@@ -58,6 +59,13 @@ export function createTitleGateway({
       ? await authController.login(input)
       : await authController.register(input);
     const identity = authController.gameIdentity?.() ?? (session ? { sessionToken: session.sessionToken, profileId: session.profileId } : null);
+    if (onAuthenticated) {
+      const response = await onAuthenticated({ kind, session, identity });
+      if (response !== undefined) {
+        showGame(response);
+        return response;
+      }
+    }
     return start(identity);
   }
 
@@ -110,11 +118,11 @@ export function createTitleGateway({
     elements.registerButton?.addEventListener('click', () => showForm('register'));
     elements.loginForm?.addEventListener('submit', (event) => {
       event.preventDefault();
-      authenticate('login');
+      return authenticate('login');
     });
     elements.registerForm?.addEventListener('submit', (event) => {
       event.preventDefault();
-      authenticate('register');
+      return authenticate('register');
     });
   }
 

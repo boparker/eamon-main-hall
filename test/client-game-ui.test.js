@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createPhase1GameClient } from '../public/js/game-client.js';
 
-function makeHarness({ bootstrapResponse, startResponse, sessionToken = null, profileId = null } = {}) {
+function makeHarness({ bootstrapResponse, startResponse, sessionToken = null, profileId = null, onAccountRequired = () => {} } = {}) {
   const calls = [];
   const lines = [];
   const hudCharacters = [];
@@ -31,6 +31,7 @@ function makeHarness({ bootstrapResponse, startResponse, sessionToken = null, pr
     },
     async startGameAdventure(input) {
       calls.push({ type: 'startGameAdventure', input });
+      if (startResponse instanceof Error) throw startResponse;
       return startResponse ?? {
         ok: true,
         text: 'Entrance\nA cave mouth waits.',
@@ -56,6 +57,7 @@ function makeHarness({ bootstrapResponse, startResponse, sessionToken = null, pr
     render: (response) => lines.push(response.text),
     renderPlayer: (text) => lines.push(`> ${text}`),
     updateHUD: (character) => { if (character !== undefined) hudCharacters.push(character); },
+    onAccountRequired,
     statsGenerator: () => ({ hardiness: 15, agility: 12, charisma: 15, hd: 15, maxHd: 15, gold: 200 }),
   });
   return { client, calls, lines, hudCharacters };
@@ -154,6 +156,27 @@ test('explicit begin beginners cave starts adventure from Great Hall', async () 
   assert.equal(calls.at(-1).input.adventureId, 'beginners-cave');
   assert.match(lines.join('\n'), /Entrance/);
   assert.equal(client.getState().phase, 'adventure');
+});
+
+test('guest expedition account-required error renders preserve prompt and callback without entering adventure', async () => {
+  const required = [];
+  const accountRequired = new Error('Preserve this adventurer with an account before beginning an expedition.');
+  accountRequired.status = 403;
+  accountRequired.payload = { error: 'account-required' };
+  const { client, calls, lines } = makeHarness({
+    bootstrapResponse: existingCharacterHall,
+    startResponse: accountRequired,
+    async onAccountRequired(context) { required.push(context); },
+  });
+  await client.startPhase1Game();
+
+  await client.handleInput('begin beginners cave');
+
+  assert.equal(calls.at(-1).type, 'startGameAdventure');
+  assert.deepEqual(required, [{ playerId: 'p1', character: existingCharacterHall.state.character, adventureId: 'beginners-cave' }]);
+  assert.match(lines.join('\n'), /preserve this adventurer/i);
+  assert.match(lines.join('\n'), /create a free account/i);
+  assert.equal(client.getState().phase, 'great-hall');
 });
 
 test('generic begin adventure starts the single unlocked adventure', async () => {

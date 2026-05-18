@@ -73,6 +73,7 @@ export function createPhase1GameClient({
   render = () => {},
   renderPlayer = () => {},
   updateHUD = () => {},
+  onAccountRequired = () => {},
   statsGenerator = defaultStatsForAdventurer,
 } = {}) {
   const clientState = {
@@ -221,7 +222,21 @@ export function createPhase1GameClient({
         prompt('Create a character before beginning an adventure.');
         return null;
       }
-      const response = await api.startGameAdventure({ ...gameIdentity(), characterId: clientState.character.id, adventureId });
+      let response;
+      try {
+        response = await api.startGameAdventure({ ...gameIdentity(), characterId: clientState.character.id, adventureId });
+      } catch (err) {
+        if (err?.status === 403 && err?.payload?.error === 'account-required') {
+          await onAccountRequired({ playerId, character: clientState.character, adventureId });
+          return applyResponse({
+            ok: false,
+            text: 'Before an adventurer may leave the Guild Hall, their name must be entered in the rolls. Create a free account or log in to preserve this adventurer and begin the expedition.',
+            choices: ['Create Account', 'Log In', 'Not Now'],
+            state: { phase: 'great-hall', character: clientState.character },
+          });
+        }
+        throw err;
+      }
       return applyResponse(response);
     }
 
