@@ -123,6 +123,8 @@ function makeDeps(options = {}) {
       const row = {
         id: input.id ?? `run-${runs.size + 1}`,
         player_id: input.playerId,
+        user_id: input.userId ?? null,
+        profile_id: input.profileId ?? null,
         character_id: input.characterId,
         adventure_id: input.adventureId,
         current_room: input.currentRoom,
@@ -136,14 +138,18 @@ function makeDeps(options = {}) {
       runs.set(row.id, row);
       return row;
     },
-    async getAdventureRun(_db, playerId, runId) {
+    async getAdventureRun(_db, owner, runId) {
       const row = runs.get(runId);
-      return row?.player_id === playerId ? row : null;
+      if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
+      return row?.player_id === owner ? row : null;
     },
-    async updateAdventureRun(_db, playerId, runId, patch) {
-      calls.push({ type: 'updateRun', playerId, runId, patch });
+    async updateAdventureRun(_db, owner, runId, patch) {
+      calls.push({ type: 'updateRun', owner, runId, patch });
       const row = runs.get(runId);
-      if (!row || row.player_id !== playerId) return null;
+      const owns = typeof owner === 'object'
+        ? row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId
+        : row?.player_id === owner;
+      if (!row || !owns) return null;
       const updated = {
         ...row,
         current_room: patch.currentRoom ?? row.current_room,
@@ -157,16 +163,24 @@ function makeDeps(options = {}) {
       runs.set(runId, updated);
       return updated;
     },
-    async completeAdventureRun(_db, playerId, runId) {
+    async completeAdventureRun(_db, owner, runId) {
+      calls.push({ type: 'completeRun', owner, runId });
       const row = runs.get(runId);
-      if (!row || row.player_id !== playerId) return null;
+      const owns = typeof owner === 'object'
+        ? row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId
+        : row?.player_id === owner;
+      if (!row || !owns) return null;
       const updated = { ...row, status: 'completed', completed_at: new Date().toISOString() };
       runs.set(runId, updated);
       return updated;
     },
-    async abandonAdventureRun(_db, playerId, runId) {
+    async abandonAdventureRun(_db, owner, runId) {
+      calls.push({ type: 'abandonRun', owner, runId });
       const row = runs.get(runId);
-      if (!row || row.player_id !== playerId) return null;
+      const owns = typeof owner === 'object'
+        ? row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId
+        : row?.player_id === owner;
+      if (!row || !owns) return null;
       const updated = { ...row, status: 'abandoned', completed_at: new Date().toISOString() };
       runs.set(runId, updated);
       return updated;
@@ -412,6 +426,32 @@ test('POST /api/game/start-adventure creates persistent run and renders starting
   assert.deepEqual(started.body.choices, ['north', 'south']);
 });
 
+test('authenticated command scopes character and run mutations to the requested profile', async () => {
+  const { app, deps } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const headers = { authorization: 'Bearer raw-session-token' };
+
+  const created = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Command Hero', className: 'adventurer', hardiness: 15, agility: 12, charisma: 15,
+  }, headers);
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: created.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+
+  const blocked = await request(app, 'POST', '/api/game/command', {
+    profileId: 'profile-2', characterId: created.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'south',
+  }, headers);
+  const moved = await request(app, 'POST', '/api/game/command', {
+    profileId: 'profile-1', characterId: created.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'south',
+  }, headers);
+
+  assert.equal(blocked.status, 404);
+  assert.equal(moved.status, 200);
+  assert.equal(moved.body.state.adventureRun.currentRoom, 2);
+  assert.equal(moved.body.state.character.userId, 'user-1');
+  assert.equal(moved.body.state.character.profileId, 'profile-1');
+  assert.deepEqual(deps.calls.findLast((call) => call.type === 'updateRun').owner, { playerId: 'account:user-1', userId: 'user-1', profileId: 'profile-1' });
+});
+
 test('POST /api/game/command handles movement deterministically and persists run state', async () => {
   const { app, deps } = makeApp();
   const character = await request(app, 'POST', '/api/game/characters', {
@@ -474,6 +514,25 @@ test('POST /api/game/command handles take, inventory, and return-to-hall without
   assert.equal(leave.body.state.phase, 'great-hall');
   assert.equal(leave.body.state.unlockedAdventures.some((adventure) => adventure.id === 'beginners-cave'), true);
   assert.equal(leave.body.choices.some((choice) => /shop|begin|character/i.test(choice)), true);
+});
+
+test('authenticated leave command abandons only the requested profile run', async () => {
+  const { app, deps } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const headers = { authorization: 'Bearer raw-session-token' };
+
+  const created = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Leaving Hero', className: 'adventurer', hardiness: 15, agility: 12, charisma: 15,
+  }, headers);
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: created.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+  const left = await request(app, 'POST', '/api/game/command', {
+    profileId: 'profile-1', characterId: created.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'leave',
+  }, headers);
+
+  assert.equal(left.status, 200);
+  assert.equal(left.body.state.adventureRun.status, 'abandoned');
+  assert.deepEqual(deps.calls.findLast((call) => call.type === 'abandonRun').owner, { playerId: 'account:user-1', userId: 'user-1', profileId: 'profile-1' });
 });
 
 test('POST /api/game/command abandon returns full Great Hall response', async () => {

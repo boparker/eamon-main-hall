@@ -120,3 +120,17 @@ test('completeAdventureRun and abandonAdventureRun set terminal status and compl
   assert.match(pool.queries[1].sql, /completed_at = NOW\(\)/);
   assert.deepEqual(pool.queries[1].params, ['run-2', 'player-1']);
 });
+
+
+test('completeAdventureRun and abandonAdventureRun can scope by registered user/profile ownership', async () => {
+  const pool = makePool([{ id: 'run-1' }, { id: 'run-2' }]);
+  const owner = { playerId: 'account:user-1', userId: 'user-1', profileId: 'profile-1' };
+
+  await completeAdventureRun(pool, owner, 'run-1');
+  await abandonAdventureRun(pool, owner, 'run-2');
+
+  assert.match(pool.queries[0].sql, /WHERE id = \$1 AND player_id = \$2 AND user_id = \$3 AND profile_id = \$4/);
+  assert.deepEqual(pool.queries[0].params, ['run-1', 'account:user-1', 'user-1', 'profile-1']);
+  assert.match(pool.queries[1].sql, /WHERE id = \$1 AND player_id = \$2 AND user_id = \$3 AND profile_id = \$4/);
+  assert.deepEqual(pool.queries[1].params, ['run-2', 'account:user-1', 'user-1', 'profile-1']);
+});

@@ -128,26 +128,28 @@ export async function updateAdventureRun(db, owner, runId, patch = {}) {
   return result.rows[0] ?? null;
 }
 
-export async function completeAdventureRun(db, playerId, runId) {
+export async function completeAdventureRun(db, owner, runId) {
+  const scope = runOwnerWhere(owner, 2);
   const result = await db.query(`
     UPDATE adventure_runs SET
       status = 'completed',
       updated_at = NOW(),
       completed_at = NOW()
-    WHERE id = $1 AND player_id = $2
+    WHERE id = $1 AND ${scope.clause}
     RETURNING *
-  `, [runId, playerId]);
+  `, [runId, ...scope.params]);
   return result.rows[0] ?? null;
 }
 
-export async function abandonAdventureRun(db, playerId, runId) {
+export async function abandonAdventureRun(db, owner, runId) {
+  const scope = runOwnerWhere(owner, 2);
   const result = await db.query(`
     UPDATE adventure_runs SET
       status = 'abandoned',
       updated_at = NOW(),
       completed_at = NOW()
-    WHERE id = $1 AND player_id = $2
+    WHERE id = $1 AND ${scope.clause}
     RETURNING *
-  `, [runId, playerId]);
+  `, [runId, ...scope.params]);
   return result.rows[0] ?? null;
 }

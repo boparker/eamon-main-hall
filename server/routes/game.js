@@ -145,6 +145,8 @@ function rowRun(row) {
   return {
     id: row.id,
     playerId: row.player_id,
+    userId: row.user_id ?? null,
+    profileId: row.profile_id ?? null,
     characterId: row.character_id,
     adventureId: row.adventure_id,
     currentRoom: row.current_room,
@@ -393,15 +395,16 @@ function numberOr(value, fallback) {
 }
 
 async function loadSession(req, res, deps, adventures) {
-  const { playerId, characterId, adventureRunId } = req.body ?? {};
-  if (!playerId || !characterId || !adventureRunId) {
-    error(res, 400, 'playerId, characterId, and adventureRunId are required.', 'bad-request');
+  const { characterId, adventureRunId } = req.body ?? {};
+  const context = resolveGameContext(req);
+  if (context.error || !characterId || !adventureRunId) {
+    error(res, 400, context.error ? context.error : 'characterId and adventureRunId are required.', 'bad-request');
     return null;
   }
 
   const [characterRow, runRow] = await Promise.all([
-    deps.getCharacter(deps.db, playerId, characterId),
-    deps.getAdventureRun(deps.db, playerId, adventureRunId),
+    deps.getCharacter(deps.db, context.owner, characterId),
+    deps.getAdventureRun(deps.db, context.owner, adventureRunId),
   ]);
   if (!characterRow || !runRow || runRow.character_id !== characterId) {
     error(res, 404, 'No matching character/adventure run was found for this player.', 'not-found');
@@ -414,7 +417,7 @@ async function loadSession(req, res, deps, adventures) {
     return null;
   }
 
-  return { character: rowCharacter(characterRow), run: rowRun(runRow), adventure };
+  return { character: rowCharacter(characterRow), run: rowRun(runRow), adventure, context };
 }
 
 function resolveGameContext(req) {
@@ -424,7 +427,7 @@ function resolveGameContext(req) {
     const playerId = req.body?.playerId ?? req.query?.playerId ?? `account:${req.auth.user.id}`;
     return {
       playerId,
-      owner: { userId: req.auth.user.id, profileId },
+      owner: { playerId, userId: req.auth.user.id, profileId },
       userId: req.auth.user.id,
       profileId,
       player: { id: playerId, display_name: req.auth.user.display_name ?? req.auth.user.displayName ?? req.auth.user.username ?? null },
@@ -612,6 +615,8 @@ export function createGameRouter(rawDeps = {}) {
       const startRoom = adventure.adventure.start_room;
       const runRow = await deps.createAdventureRun(deps.db, {
         playerId: context.playerId,
+        userId: context.userId ?? null,
+        profileId: context.profileId ?? null,
         characterId,
         adventureId,
         currentRoom: startRoom,
@@ -634,7 +639,7 @@ export function createGameRouter(rawDeps = {}) {
       const adventures = deps.loadAdventures();
       const session = await loadSession(req, res, deps, adventures);
       if (!session) return undefined;
-      let { character, run, adventure } = session;
+      let { character, run, adventure, context } = session;
       const command = parseCommand(req.body.input);
 
       if (!character.isAlive || character.hd <= 0) {
@@ -667,8 +672,8 @@ export function createGameRouter(rawDeps = {}) {
           character = conversion.character;
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
           const [updatedCharacter, completedRun] = await Promise.all([
-            deps.updateCharacter(deps.db, character.playerId, character.id, characterPatch(character)),
-            deps.completeAdventureRun(deps.db, run.playerId, run.id),
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.completeAdventureRun(deps.db, context.owner, run.id),
           ]);
           const hall = hallResponse({
             player: { id: run.playerId },
@@ -683,7 +688,7 @@ export function createGameRouter(rawDeps = {}) {
           hall.state.adventureRun = rowRun(completedRun);
           return res.json(hall);
         }
-        const updatedRun = await deps.updateAdventureRun(deps.db, run.playerId, run.id, dbRunPatch(run));
+        const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
         return res.json(roomResponse({ adventure, run: rowRun(updatedRun), character, event: { type: 'move', command }, intent: command }));
       }
 
@@ -699,8 +704,8 @@ export function createGameRouter(rawDeps = {}) {
         character = taken.character;
         run = markItemCollected(run, item.slug);
         const [updatedCharacter, updatedRun] = await Promise.all([
-          deps.updateCharacter(deps.db, character.playerId, character.id, characterPatch(character)),
-          deps.updateAdventureRun(deps.db, run.playerId, run.id, dbRunPatch(run)),
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
         return res.json(canonicalResponse({ intent: command, event: { type: 'take', command, item }, text: `You take ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
       }
@@ -725,8 +730,8 @@ export function createGameRouter(rawDeps = {}) {
           events.push({ type: 'character_defeated', characterId: character.id });
         }
         const [updatedCharacter, updatedRun] = await Promise.all([
-          deps.updateCharacter(deps.db, character.playerId, character.id, characterPatch(character)),
-          deps.updateAdventureRun(deps.db, run.playerId, run.id, dbRunPatch(run)),
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
         return res.json(canonicalResponse({
           intent: command,
@@ -738,7 +743,7 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'leave') {
-        const abandoned = await deps.abandonAdventureRun(deps.db, run.playerId, run.id);
+        const abandoned = await deps.abandonAdventureRun(deps.db, context.owner, run.id);
         const hall = hallResponse({
           player: { id: run.playerId },
           characters: [],
