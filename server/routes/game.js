@@ -39,6 +39,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ADVENTURES_DIR = join(__dirname, '../../data/adventures');
 const DIRECTIONS = ['north', 'south', 'east', 'west', 'up', 'down'];
 const DEFAULT_CLASS_STATS = {
+  adventurer: { hardiness: 15, agility: 12, charisma: 15 },
   warrior: { hardiness: 12, agility: 9, charisma: 8 },
   rogue: { hardiness: 10, agility: 12, charisma: 9 },
   mystic: { hardiness: 8, agility: 9, charisma: 12 },
@@ -249,7 +250,7 @@ function hallText({ player, character, unlockedAdventures, lockedAdventures, pre
   const lines = [prefix || `You stand in the Great Hall, ${playerName}.`];
   lines.push('The Main Hall keeps your character, equipment, gold, and adventure choices before any expedition begins.');
   if (!character) {
-    lines.push('Create a character to choose a name, class, stats, starting gold, and equipment. You may also register or upgrade your account.');
+    lines.push('Create a new adventurer: choose a name and gender, roll prime attributes, start with 200 gold, then buy equipment. You may also register or upgrade your account.');
   } else {
     lines.push(`${character.name} the ${character.className}: HD ${character.hd}/${character.maxHd}, Hardiness ${character.hardiness}, Agility ${character.agility}, Charisma ${character.charisma}, Gold ${character.gold}, Bank ${character.bankGold}.`);
     const inventory = character.inventory?.length ? character.inventory.map((item) => item.name ?? item.slug).join(', ') : 'none';
@@ -473,7 +474,7 @@ export function createGameRouter(rawDeps = {}) {
   router.post('/characters', async (req, res, next) => {
     try {
       const { playerId, name } = req.body ?? {};
-      const className = req.body?.className ?? req.body?.class ?? 'warrior';
+      const className = req.body?.className ?? req.body?.class ?? 'adventurer';
       if (!playerId || !name) return error(res, 400, 'playerId and name are required.', 'bad-request');
       if (!DEFAULT_CLASS_STATS[className]) return error(res, 400, `Unknown className ${className}.`, 'bad-request');
       await deps.upsertPlayer(deps.db, { id: playerId });

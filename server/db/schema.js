@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS player_characters (
   id TEXT PRIMARY KEY,
   player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  class TEXT NOT NULL CHECK (class IN ('warrior', 'rogue', 'mystic')),
+  class TEXT NOT NULL CHECK (class IN ('adventurer', 'warrior', 'rogue', 'mystic')),
   hardiness INTEGER NOT NULL CHECK (hardiness > 0),
   agility INTEGER NOT NULL CHECK (agility > 0),
   charisma INTEGER NOT NULL CHECK (charisma > 0),
@@ -147,6 +147,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS adventure_runs_one_active_per_character_idx
   ON adventure_runs(character_id)
   WHERE status = 'active';
   `);
+
+    await client.query(`
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'player_characters_class_check'
+      AND conrelid = 'player_characters'::regclass
+  ) THEN
+    ALTER TABLE player_characters DROP CONSTRAINT player_characters_class_check;
+  END IF;
+  ALTER TABLE player_characters
+    ADD CONSTRAINT player_characters_class_check CHECK (class IN ('adventurer', 'warrior', 'rogue', 'mystic'));
+END $$;
+    `);
 
     await client.query(
       'INSERT INTO schema_migrations (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',

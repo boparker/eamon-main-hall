@@ -54,7 +54,7 @@ function makeHarness({ bootstrapResponse, startResponse } = {}) {
     render: (response) => lines.push(response.text),
     renderPlayer: (text) => lines.push(`> ${text}`),
     updateHUD: (character) => { if (character !== undefined) hudCharacters.push(character); },
-    statsGenerator: undefined,
+    statsGenerator: () => ({ hardiness: 15, agility: 12, charisma: 15, hd: 15, maxHd: 15, gold: 200 }),
   });
   return { client, calls, lines, hudCharacters };
 }
@@ -186,24 +186,25 @@ test('create character clears stale character before asking for the new name', a
   assert.equal(hudCharacters.at(-1), null);
 });
 
-test('character creation requires explicit name, class, stats confirmation, then returns Great Hall', async () => {
+test('character creation follows original port name/gender/rolled-stats flow, then returns Main Hall', async () => {
   const { client, calls, lines } = makeHarness({ bootstrapResponse: noCharacterHall });
   await client.startPhase1Game();
 
   await client.handleInput('create character');
   await client.handleInput('Ariana');
-  await client.handleInput('mystic');
+  await client.handleInput('female');
 
   assert.equal(calls.some((call) => call.type === 'createGameCharacter'), false);
-  assert.match(lines.join('\n'), /Hardiness 12/i);
-  assert.match(lines.join('\n'), /Gold 200/i);
+  assert.match(lines.join('\n'), /Hardiness 15/i);
+  assert.match(lines.join('\n'), /gold pieces/i);
 
   await client.handleInput('confirm');
 
   const createCall = calls.find((call) => call.type === 'createGameCharacter');
   assert.equal(createCall.input.name, 'Ariana');
-  assert.equal(createCall.input.className, 'mystic');
-  assert.equal(createCall.input.hardiness, 12);
+  assert.equal(createCall.input.className, 'adventurer');
+  assert.equal(createCall.input.gender, 'f');
+  assert.equal(createCall.input.hardiness, 15);
   assert.equal(createCall.input.gold, 200);
   assert.equal(client.getState().phase, 'great-hall');
 });
@@ -213,13 +214,14 @@ test('character creation can restart during confirmation', async () => {
   await client.startPhase1Game();
 
   await client.handleInput('Ariana');
-  await client.handleInput('mystic');
+  await client.handleInput('female');
   await client.handleInput('create character');
   await client.handleInput('Borin');
-  await client.handleInput('warrior');
+  await client.handleInput('male');
   await client.handleInput('confirm');
 
   const createCall = calls.find((call) => call.type === 'createGameCharacter');
   assert.equal(createCall.input.name, 'Borin');
-  assert.equal(createCall.input.className, 'warrior');
+  assert.equal(createCall.input.className, 'adventurer');
+  assert.equal(createCall.input.gender, 'm');
 });

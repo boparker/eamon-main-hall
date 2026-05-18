@@ -6,12 +6,24 @@ import {
   startGameAdventure,
 } from './api.js';
 
-const DEFAULT_CLASSES = new Set(['warrior', 'rogue', 'mystic']);
+function rollDie(sides, rng = Math.random) {
+  return Math.floor(rng() * sides) + 1;
+}
 
-function defaultStatsForClass(className) {
-  if (className === 'rogue') return { hardiness: 14, agility: 22, charisma: 12, hd: 14, maxHd: 14, gold: 200 };
-  if (className === 'mystic') return { hardiness: 12, agility: 14, charisma: 22, hd: 12, maxHd: 12, gold: 200 };
-  return { hardiness: 22, agility: 14, charisma: 10, hd: 22, maxHd: 22, gold: 200 };
+function roll3d7(rng = Math.random) {
+  return rollDie(7, rng) + rollDie(7, rng) + rollDie(7, rng);
+}
+
+function defaultStatsForAdventurer(_ignored, rng = Math.random) {
+  let hardiness = 0;
+  let agility = 0;
+  let charisma = 0;
+  while (hardiness < 15 || agility < 12 || hardiness + agility + charisma < 42) {
+    hardiness = roll3d7(rng);
+    agility = roll3d7(rng);
+    charisma = roll3d7(rng);
+  }
+  return { hardiness, agility, charisma, hd: hardiness, maxHd: hardiness, gold: 200 };
 }
 
 function normalizeText(value) {
@@ -59,7 +71,7 @@ export function createPhase1GameClient({
   render = () => {},
   renderPlayer = () => {},
   updateHUD = () => {},
-  statsGenerator = defaultStatsForClass,
+  statsGenerator = defaultStatsForAdventurer,
 } = {}) {
   const clientState = {
     phase: 'title',
@@ -127,20 +139,20 @@ export function createPhase1GameClient({
         return null;
       }
       creation.name = String(input ?? '').trim().split(/\s+/).slice(0, 3).join(' ');
-      creation.step = 'class';
-      prompt('Choose a class/type: warrior, rogue, or mystic.');
+      creation.step = 'gender';
+      prompt('Choose a gender: male or female.');
       return null;
     }
-    if (creation.step === 'class') {
-      const className = normalizeText(input).split(' ')[0];
-      if (!DEFAULT_CLASSES.has(className)) {
-        prompt('Choose warrior, rogue, or mystic.');
+    if (creation.step === 'gender') {
+      const normalizedGender = normalizeText(input);
+      if (!['m', 'male', 'f', 'female'].includes(normalizedGender)) {
+        prompt('Choose a gender: male or female.');
         return null;
       }
-      creation.className = className;
-      creation.stats = statsGenerator(className);
+      creation.gender = normalizedGender.startsWith('f') ? 'f' : 'm';
+      creation.stats = statsGenerator('adventurer');
       creation.step = 'confirm';
-      prompt(`Review stats for ${creation.name} the ${className}: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}, HD ${creation.stats.hd}/${creation.stats.maxHd}, Gold ${creation.stats.gold}. Type confirm to save.`);
+      prompt(`Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces. Type confirm to begin your adventuring career, reroll to roll again, or create character to restart.`);
       return null;
     }
     if (creation.step === 'confirm') {
@@ -148,14 +160,20 @@ export function createPhase1GameClient({
         beginCharacterCreation();
         return null;
       }
+      if (/^(reroll|roll again)$/i.test(String(input ?? '').trim())) {
+        creation.stats = statsGenerator('adventurer');
+        prompt(`Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces. Type confirm to begin your adventuring career, reroll to roll again, or create character to restart.`);
+        return null;
+      }
       if (!isConfirm(input)) {
-        prompt('Type confirm to create this character, or create character to restart.');
+        prompt('Type confirm to create this adventurer, reroll to roll again, or create character to restart.');
         return null;
       }
       const payload = {
         playerId,
         name: creation.name,
-        className: creation.className,
+        className: 'adventurer',
+        gender: creation.gender,
         hardiness: creation.stats.hardiness,
         agility: creation.stats.agility,
         charisma: creation.stats.charisma,
