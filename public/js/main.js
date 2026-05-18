@@ -10,6 +10,7 @@ import { registerPurchaseHandler } from './shop.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
+import { renderAccountStatus } from './account-status.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -34,8 +35,13 @@ function buildGameClient(identity = null) {
   });
 }
 
+function renderCurrentAccountStatus() {
+  renderAccountStatus(document.getElementById('account-status'), authController.getSession?.());
+}
+
 let gameClient = buildGameClient();
 const authController = createAuthController();
+renderCurrentAccountStatus();
 
 // ── Send Message ──
 async function sendMessage() {
@@ -88,6 +94,7 @@ const titleGateway = createTitleGateway({
   authController,
   rebuildGameClient(identity) {
     gameClient = buildGameClient(identity);
+    renderCurrentAccountStatus();
     return gameClient;
   },
   setStreaming(value) { state.isStreaming = value; },

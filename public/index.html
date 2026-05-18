@@ -83,6 +83,9 @@
       backdrop-filter: blur(8px); flex-shrink: 0;
     }
     #hud-name { font-family: var(--font-head); font-size: 1rem; color: var(--gold); letter-spacing: 0.06em; }
+    #hud-identity { display: flex; flex-direction: column; gap: 3px; min-width: 160px; }
+    #account-status { font-size: 0.68rem; letter-spacing: 0.08em; color: var(--text-dim); text-transform: uppercase; }
+    #account-status[data-mode="account"] { color: var(--gold-dim); }
     #hud-stats { display: flex; gap: 20px; }
     .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
     .hud-stat-label { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
@@ -280,7 +283,10 @@
   <div id="grain"></div>
 
   <div id="hud">
-    <div id="hud-name">&mdash;</div>
+    <div id="hud-identity">
+      <div id="hud-name">&mdash;</div>
+      <div id="account-status" data-mode="guest">Guest mode</div>
+    </div>
     <div id="hud-stats">
       <div class="hud-stat"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">&mdash;</span></div>
       <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">&mdash;</span></div>
