@@ -44,6 +44,21 @@ const DEFAULT_CLASS_STATS = {
   mystic: { hardiness: 8, agility: 9, charisma: 12 },
 };
 
+const BEGINNERS_CAVE_ID = 'beginners-cave';
+
+const HALL_SHOP_ITEMS = [
+  { slug: 'short-sword', name: 'Short Sword', price: 30, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d6', type: 'Sword' } },
+  { slug: 'broadsword', name: 'Broadsword', price: 60, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d6', type: 'Sword' } },
+  { slug: 'battle-axe', name: 'Battle Axe', price: 80, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d8', type: 'Axe' } },
+  { slug: 'mace', name: 'Mace', price: 50, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d4', type: 'Mace' } },
+  { slug: 'spear', name: 'Spear', price: 40, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d8', type: 'Spear' } },
+  { slug: 'war-hammer', name: 'War Hammer', price: 90, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '3d6', type: 'Hammer' } },
+  { slug: 'leather-armor', name: 'Leather Armor', price: 50, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+2', type: 'Armor' } },
+  { slug: 'chain-mail', name: 'Chain Mail', price: 120, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+5', agility: '-1', type: 'Armor' } },
+  { slug: 'plate-armor', name: 'Plate Armor', price: 200, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+8', agility: '-3', type: 'Armor' } },
+  { slug: 'shield', name: 'Shield', price: 40, category: 'armor', equipmentSlot: 'shield', stats: { defense: '+2', type: 'Shield' } },
+];
+
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
     .filter((file) => file.endsWith('.json'))
@@ -157,6 +172,7 @@ function characterPatch(character) {
     gold: character.gold,
     inventory: character.inventory ?? [],
     equipment: character.equipment ?? {},
+    adventuresCompleted: character.adventuresCompleted ?? [],
     isAlive: character.isAlive ?? ((character.hd ?? character.hp ?? 1) > 0),
   };
 }
@@ -191,6 +207,148 @@ function canonicalResponse({
     },
     media,
   };
+}
+
+function playerSummary(player) {
+  if (!player) return null;
+  return {
+    id: player.id,
+    displayName: player.display_name ?? player.displayName ?? null,
+    email: player.email ?? null,
+    authProvider: player.auth_provider ?? player.authProvider ?? null,
+    authSubject: player.auth_subject ?? player.authSubject ?? null,
+  };
+}
+
+function isBeginnerComplete(character) {
+  return Array.isArray(character?.adventuresCompleted) && character.adventuresCompleted.includes(BEGINNERS_CAVE_ID);
+}
+
+function partitionAdventures(adventures, character) {
+  const summaries = adventures.map(adventureSummary);
+  const beginner = summaries.find((adventure) => adventure.id === BEGINNERS_CAVE_ID);
+  const later = summaries.filter((adventure) => adventure.id !== BEGINNERS_CAVE_ID);
+  if (!character || !isBeginnerComplete(character)) {
+    return {
+      unlockedAdventures: beginner ? [beginner] : [],
+      lockedAdventures: later.map((adventure) => ({ ...adventure, lockedReason: "Complete The Beginner's Cave first." })),
+    };
+  }
+  return { unlockedAdventures: summaries, lockedAdventures: [] };
+}
+
+function hallChoices(character, unlockedAdventures = []) {
+  if (!character) return ['Create Character', 'Register / Upgrade Account'];
+  if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Register / Upgrade Account'];
+  const adventureChoices = unlockedAdventures.map((adventure) => `Begin ${String(adventure.name).replace(/^The\s+/i, '')}`);
+  return ['Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
+}
+
+function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
+  const playerName = player?.displayName || player?.id || 'wanderer';
+  const lines = [prefix || `You stand in the Great Hall, ${playerName}.`];
+  lines.push('The Main Hall keeps your character, equipment, gold, and adventure choices before any expedition begins.');
+  if (!character) {
+    lines.push('Create a character to choose a name, class, stats, starting gold, and equipment. You may also register or upgrade your account.');
+  } else {
+    lines.push(`${character.name} the ${character.className}: HD ${character.hd}/${character.maxHd}, Hardiness ${character.hardiness}, Agility ${character.agility}, Charisma ${character.charisma}, Gold ${character.gold}, Bank ${character.bankGold}.`);
+    const inventory = character.inventory?.length ? character.inventory.map((item) => item.name ?? item.slug).join(', ') : 'none';
+    lines.push(`Inventory: ${inventory}. Equipment: ${JSON.stringify(character.equipment ?? {})}.`);
+    lines.push('You may shop for weapons or armor, review equipment, or explicitly begin The Beginner\'s Cave.');
+  }
+  if (unlockedAdventures?.length) lines.push(`Unlocked adventures: ${unlockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
+  if (lockedAdventures?.length) lines.push(`Locked adventures: ${lockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
+  return lines.join('\n');
+}
+
+function hallResponse({ player, characters = [], adventures = [], character = null, prefix = '' }) {
+  const mappedCharacters = characters.map(rowCharacter);
+  const activeCharacter = character ?? mappedCharacters.find((candidate) => candidate?.isAlive && candidate.hd > 0) ?? mappedCharacters[0] ?? null;
+  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, activeCharacter);
+  const playerState = playerSummary(player);
+  return canonicalResponse({
+    intent: { type: 'hall' },
+    event: { type: 'enter_hall' },
+    text: hallText({ player: playerState, character: activeCharacter, unlockedAdventures, lockedAdventures, prefix }),
+    choices: hallChoices(activeCharacter, unlockedAdventures),
+    state: {
+      phase: 'great-hall',
+      player: playerState,
+      character: activeCharacter,
+      characters: mappedCharacters,
+      adventures: adventures.map(adventureSummary),
+      unlockedAdventures,
+      lockedAdventures,
+    },
+  });
+}
+
+function slugify(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function findShopItem(input) {
+  const normalized = slugify(String(input ?? '').replace(/^buy\s+/i, ''));
+  return HALL_SHOP_ITEMS.find((item) => item.slug === normalized || slugify(item.name) === normalized) ?? null;
+}
+
+function shopItemsForInput(input) {
+  const normalized = normalizeTarget(input);
+  if (/armor|shield|equipment/.test(normalized)) {
+    return HALL_SHOP_ITEMS.filter((item) => item.category === 'armor');
+  }
+  return HALL_SHOP_ITEMS.filter((item) => item.category === 'weapon');
+}
+
+function hallState({ player, character, characters, adventures, extra = {} }) {
+  return {
+    phase: 'great-hall',
+    player: playerSummary(player),
+    character,
+    characters: characters.map((row) => rowCharacter(row) ?? row),
+    adventures: adventures.map(adventureSummary),
+    ...partitionAdventures(adventures, character),
+    ...extra,
+  };
+}
+
+function equipmentText(character) {
+  const inventory = character.inventory?.length
+    ? character.inventory.map((item) => item.name ?? item.slug).join(', ')
+    : 'none';
+  const equipment = character.equipment ?? {};
+  const weapon = equipment.weapon?.name ?? equipment.weapon?.slug ?? 'unarmed';
+  const armor = equipment.armor?.name ?? equipment.armor?.slug ?? 'none';
+  const shield = equipment.shield?.name ?? equipment.shield?.slug ?? 'none';
+  return [
+    `${character.name}'s Equipment`,
+    `Gold: ${character.gold}. Bank: ${character.bankGold}.`,
+    `Weapon: ${weapon}. Armor: ${armor}. Shield: ${shield}.`,
+    `Inventory: ${inventory}.`,
+  ].join('\n');
+}
+
+function equipmentResponse({ player, character, characters, adventures }) {
+  return canonicalResponse({
+    intent: { type: 'hall_equipment' },
+    event: { type: 'hall_equipment' },
+    text: equipmentText(character),
+    choices: ['Visit Weapons Shop', 'Visit Armor Shop', 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures }),
+  });
+}
+
+function shopResponse({ player, character, characters, adventures, input }) {
+  const items = shopItemsForInput(input);
+  const title = items.some((item) => item.category === 'armor') ? 'Armor & Shields' : 'Weapons';
+  const catalog = items.map((item) => `${item.name} — ${item.price} gold`).join('\n');
+  return canonicalResponse({
+    intent: { type: 'hall_shop', input },
+    event: { type: 'hall_shop', input },
+    text: `${title} available in the Great Hall:\n${catalog}\nType buy followed by the item name to purchase.`,
+    choices: items.map((item) => `Buy ${item.name}`).concat(['Return to Great Hall']),
+    state: hallState({ player, character, characters, adventures, extra: { shop: { title, items } } }),
+  });
 }
 
 function roomResponse({ adventure, run, character, text = null, event = { type: 'look' }, intent = null, events = null }) {
@@ -295,15 +453,7 @@ export function createGameRouter(rawDeps = {}) {
         deps.listCharacters(deps.db, player.id),
         Promise.resolve(deps.loadAdventures()),
       ]);
-      return res.json(canonicalResponse({
-        text: 'Game bootstrap complete.',
-        choices: [],
-        state: {
-          player: { id: player.id, displayName: player.display_name, email: player.email },
-          characters: characters.map(rowCharacter),
-          adventures: adventures.map(adventureSummary),
-        },
-      }));
+      return res.json(hallResponse({ player, characters, adventures }));
     } catch (err) {
       return next(err);
     }
@@ -339,10 +489,67 @@ export function createGameRouter(rawDeps = {}) {
         hd: numberOr(req.body.hd, hardiness),
         maxHd: numberOr(req.body.maxHd, hardiness),
         gold: numberOr(req.body.gold, 0),
+        bankGold: numberOr(req.body.bankGold, 0),
         inventory: Array.isArray(req.body.inventory) ? req.body.inventory : [],
         equipment: req.body.equipment ?? {},
+        adventuresCompleted: Array.isArray(req.body.adventuresCompleted) ? req.body.adventuresCompleted : [],
       });
-      return res.status(201).json(canonicalResponse({ text: `${character.name} is ready.`, choices: [], state: { character: rowCharacter(character) } }));
+      const adventures = deps.loadAdventures();
+      return res.status(201).json(hallResponse({ player: { id: playerId }, characters: [character], adventures, character: rowCharacter(character), prefix: `${character.name} is ready in the Great Hall.` }));
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  router.post('/hall', async (req, res, next) => {
+    try {
+      const { playerId, characterId, input } = req.body ?? {};
+      if (!playerId || !characterId || !input) return error(res, 400, 'playerId, characterId, and input are required.', 'bad-request');
+      const [characterRow, adventures] = await Promise.all([
+        deps.getCharacter(deps.db, playerId, characterId),
+        Promise.resolve(deps.loadAdventures()),
+      ]);
+      if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');
+      const character = rowCharacter(characterRow);
+      const normalizedInput = normalizeTarget(input);
+      if (/register|account|upgrade|login|sign\s*in/.test(normalizedInput)) {
+        return res.json(hallResponse({
+          player: { id: playerId },
+          characters: [characterRow],
+          adventures,
+          character,
+          prefix: 'Account registration is reserved for the next account layer. This anonymous player profile is already being saved locally for now.',
+        }));
+      }
+      if (normalizedInput === 'view equipment' || normalizedInput === 'equipment') {
+        return res.json(equipmentResponse({ player: { id: playerId }, character, characters: [characterRow], adventures }));
+      }
+      if (/^(?:visit\s+)?(?:weapon|weapons|armor|shield|shields|equipment)(?:\s+shop)?$/.test(normalizedInput)
+        || /shop/.test(normalizedInput)) {
+        return res.json(shopResponse({ player: { id: playerId }, character, characters: [characterRow], adventures, input }));
+      }
+      const buyMatch = /^buy\s+/i.test(input);
+      if (!buyMatch) {
+        return res.json(hallResponse({ player: { id: playerId }, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
+      }
+      const item = findShopItem(input);
+      if (!item) return error(res, 400, `The Great Hall shop does not sell ${String(input).replace(/^buy\s+/i, '')}.`, 'invalid-purchase');
+      if ((character.inventory ?? []).some((owned) => owned?.slug === item.slug || normalizeTarget(owned?.name) === normalizeTarget(item.name))) {
+        return error(res, 409, `You already own ${item.name}.`, 'duplicate-purchase');
+      }
+      if ((character.gold ?? 0) < item.price) {
+        return error(res, 409, `Not enough gold to buy ${item.name}.`, 'insufficient-gold');
+      }
+      const ownedItem = { slug: item.slug, name: item.name, price: item.price, category: item.category, stats: item.stats };
+      const inventory = [...(character.inventory ?? []), ownedItem];
+      const equipment = { ...(character.equipment ?? {}), [item.equipmentSlot]: ownedItem };
+      const updated = await deps.updateCharacter(deps.db, playerId, characterId, {
+        gold: character.gold - item.price,
+        inventory,
+        equipment,
+      });
+      const updatedCharacter = rowCharacter(updated);
+      return res.json(hallResponse({ player: { id: playerId }, characters: [updated], adventures, character: updatedCharacter, prefix: `You buy ${item.name} and return to the Great Hall.` }));
     } catch (err) {
       return next(err);
     }
@@ -360,6 +567,9 @@ export function createGameRouter(rawDeps = {}) {
       const character = rowCharacter(characterRow);
       if (!character.isAlive || character.hd <= 0) {
         return error(res, 409, `${character.name} is dead or defeated and cannot start a new adventure.`, 'character-dead');
+      }
+      if (adventureId !== BEGINNERS_CAVE_ID && !isBeginnerComplete(character)) {
+        return error(res, 423, "Complete The Beginner's Cave before starting later adventures.", 'adventure-locked');
       }
       const startRoom = adventure.adventure.start_room;
       const runRow = await deps.createAdventureRun(deps.db, {
@@ -417,17 +627,23 @@ export function createGameRouter(rawDeps = {}) {
         if (result.destination === 'main-hall') {
           const conversion = convertTreasuresOnReturn(character);
           character = conversion.character;
+          character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
           const [updatedCharacter, completedRun] = await Promise.all([
             deps.updateCharacter(deps.db, character.playerId, character.id, characterPatch(character)),
             deps.completeAdventureRun(deps.db, run.playerId, run.id),
           ]);
-          return res.json(canonicalResponse({
-            intent: command,
-            event: { type: 'return_to_hall', command },
-            text: renderReturnToHall({ ...conversion, completed: true }),
-            choices: [],
-            state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(completedRun) },
-          }));
+          const hall = hallResponse({
+            player: { id: run.playerId },
+            characters: [updatedCharacter],
+            adventures,
+            character: rowCharacter(updatedCharacter),
+            prefix: renderReturnToHall({ ...conversion, completed: true }),
+          });
+          hall.intent = command;
+          hall.events = [{ type: 'return_to_hall', command }];
+          hall.event = hall.events[0];
+          hall.state.adventureRun = rowRun(completedRun);
+          return res.json(hall);
         }
         const updatedRun = await deps.updateAdventureRun(deps.db, run.playerId, run.id, dbRunPatch(run));
         return res.json(roomResponse({ adventure, run: rowRun(updatedRun), character, event: { type: 'move', command }, intent: command }));
@@ -485,7 +701,18 @@ export function createGameRouter(rawDeps = {}) {
 
       if (command.type === 'leave') {
         const abandoned = await deps.abandonAdventureRun(deps.db, run.playerId, run.id);
-        return res.json(canonicalResponse({ intent: command, event: { type: 'abandon', command }, text: 'You abandon the adventure and return to the Main Hall.', choices: [], state: { character, adventureRun: rowRun(abandoned) } }));
+        const hall = hallResponse({
+          player: { id: run.playerId },
+          characters: [],
+          adventures,
+          character,
+          prefix: 'You abandon the adventure and return to the Great Hall.',
+        });
+        hall.intent = command;
+        hall.events = [{ type: 'abandon', command }];
+        hall.event = hall.events[0];
+        hall.state.adventureRun = rowRun(abandoned);
+        return res.json(hall);
       }
 
       return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, or leave.', choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));

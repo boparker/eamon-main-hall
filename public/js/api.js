@@ -26,6 +26,10 @@ export function createGameCharacter(character) {
   return gameFetch('/characters', { method: 'POST', body: character });
 }
 
+export function sendHallCommand({ playerId, characterId, input }) {
+  return gameFetch('/hall', { method: 'POST', body: { playerId, characterId, input } });
+}
+
 export function startGameAdventure({ playerId, characterId, adventureId }) {
   return gameFetch('/start-adventure', { method: 'POST', body: { playerId, characterId, adventureId } });
 }

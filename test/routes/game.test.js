@@ -29,6 +29,22 @@ const beginner = {
   ],
 };
 
+const advanced = {
+  adventure: {
+    id: 'dragon-castle',
+    name: "The Dragon's Castle",
+    description: 'A dangerous second adventure.',
+    difficulty: 2,
+    start_room: 1,
+  },
+  locations: [
+    { id: 'd1', room_number: 1, name: 'Gatehouse', narration_text: 'A locked castle waits.', exits: { north: null, south: null, east: null, west: null, up: null, down: null }, treasure: [], requires: null },
+  ],
+  characters: [],
+  items: [],
+  placements: [],
+};
+
 function makeDeps(options = {}) {
   const players = new Map();
   const characters = new Map();
@@ -38,7 +54,7 @@ function makeDeps(options = {}) {
   return {
     calls,
     db: { ok: true },
-    loadAdventures: () => [beginner],
+    loadAdventures: () => options.adventures ?? [beginner],
     async upsertPlayer(_db, player) {
       const row = {
         id: player.id,
@@ -94,6 +110,7 @@ function makeDeps(options = {}) {
       return updated;
     },
     async createAdventureRun(_db, input) {
+      calls.push({ type: 'createRun', input });
       const row = {
         id: input.id ?? `run-${runs.size + 1}`,
         player_id: input.playerId,
@@ -181,6 +198,117 @@ test('POST /api/game/bootstrap upserts player and returns adventure/character li
   assert.equal(response.body.state.player.id, 'local-player-1');
   assert.equal(response.body.state.characters.length, 0);
   assert.equal(response.body.state.adventures[0].id, 'beginners-cave');
+});
+
+test('POST /api/game/bootstrap returns Great Hall with create/account choices and no adventure start when no character exists', async () => {
+  const { app, deps } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const response = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'local-player-1', displayName: 'Bo' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.ok, true);
+  assert.equal(response.body.intent.type, 'hall');
+  assert.equal(response.body.events[0].type, 'enter_hall');
+  assert.equal(response.body.state.phase, 'great-hall');
+  assert.match(response.body.text, /Great Hall/i);
+  assert.equal(response.body.state.character, null);
+  assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /account|register/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /begin|start/i.test(choice)), false);
+  assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
+  assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
+  assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('POST /api/game/bootstrap returns Great Hall with existing character, shop choices, and locked later adventures', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const character = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7, gold: 80,
+  });
+
+  const response = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'p1' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.state.phase, 'great-hall');
+  assert.equal(response.body.state.character.id, character.body.state.character.id);
+  assert.equal(response.body.state.character.className, 'rogue');
+  assert.equal(response.body.choices.some((choice) => /weapon|shop/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /armor|equipment/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /begin beginner/i.test(choice)), true);
+  assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
+  assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
+  assert.match(response.body.text, /Mara/);
+  assert.match(response.body.text, /gold/i);
+});
+
+test('POST /api/game/characters returns to Great Hall and preserves explicit class/stats without auto-starting', async () => {
+  const { app, deps } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Cedric', className: 'mystic', hardiness: 8, agility: 9, charisma: 13, hd: 8, maxHd: 8, gold: 75,
+  });
+
+  assert.equal(created.status, 201);
+  assert.equal(created.body.state.phase, 'great-hall');
+  assert.equal(created.body.state.character.className, 'mystic');
+  assert.equal(created.body.state.character.charisma, 13);
+  assert.equal(created.body.state.character.gold, 75);
+  assert.equal(created.body.choices.some((choice) => /begin beginner/i.test(choice)), true);
+  assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('POST /api/game/hall buys equipment server-side and blocks invalid or unaffordable purchases', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7, gold: 80,
+  });
+  const characterId = created.body.state.character.id;
+
+  const shop = await request(app, 'POST', '/api/game/hall', {
+    playerId: 'p1', characterId, input: 'visit weapons shop',
+  });
+  assert.equal(shop.status, 200);
+  assert.match(shop.body.text, /Short Sword/);
+  assert.equal(shop.body.choices.some((choice) => /buy short sword/i.test(choice)), true);
+
+  const equipment = await request(app, 'POST', '/api/game/hall', {
+    playerId: 'p1', characterId, input: 'view equipment',
+  });
+  assert.equal(equipment.status, 200);
+  assert.match(equipment.body.text, /Equipment/i);
+  assert.doesNotMatch(equipment.body.text, /Short Sword.*30 gold/);
+
+  const bought = await request(app, 'POST', '/api/game/hall', {
+    playerId: 'p1', characterId, input: 'buy short sword',
+  });
+  assert.equal(bought.status, 200);
+  assert.equal(bought.body.state.phase, 'great-hall');
+  assert.equal(bought.body.state.character.gold, 50);
+  assert.equal(bought.body.state.character.inventory.some((item) => item.slug === 'short-sword'), true);
+  assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
+
+  const duplicate = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy short sword' });
+  assert.equal(duplicate.status, 409);
+  assert.match(duplicate.body.text, /already own|already have/i);
+
+  const invalid = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy moon blade' });
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.body.ok, false);
+
+  const unaffordable = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy plate armor' });
+  assert.equal(unaffordable.status, 409);
+  assert.match(unaffordable.body.text, /not enough|insufficient/i);
+});
+
+test('Beginner completion unlocks later adventure metadata in Great Hall', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7, adventuresCompleted: ['beginners-cave'],
+  });
+
+  const response = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'p1' });
+
+  assert.equal(created.status, 201);
+  assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave', 'dragon-castle']);
+  assert.deepEqual(response.body.state.lockedAdventures, []);
 });
 
 test('POST and GET /api/game/characters create and list player-owned characters', async () => {
@@ -274,7 +402,28 @@ test('POST /api/game/command handles take, inventory, and return-to-hall without
   assert.equal(leave.body.events[0].type, 'return_to_hall');
   assert.equal(leave.body.state.character.gold, 5);
   assert.equal(leave.body.state.adventureRun.status, 'completed');
-  assert.equal(leave.body.state.phase, 'main-hall');
+  assert.equal(leave.body.state.phase, 'great-hall');
+  assert.equal(leave.body.state.unlockedAdventures.some((adventure) => adventure.id === 'beginners-cave'), true);
+  assert.equal(leave.body.choices.some((choice) => /shop|begin|character/i.test(choice)), true);
+});
+
+test('POST /api/game/command abandon returns full Great Hall response', async () => {
+  const { app } = makeApp();
+  const character = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
+  });
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
+  });
+
+  const abandon = await request(app, 'POST', '/api/game/command', {
+    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'leave',
+  });
+
+  assert.equal(abandon.status, 200);
+  assert.equal(abandon.body.state.phase, 'great-hall');
+  assert.equal(abandon.body.state.adventureRun.status, 'abandoned');
+  assert.equal(abandon.body.choices.some((choice) => /shop|begin|character/i.test(choice)), true);
 });
 
 test('POST /api/game/command returns clear errors for bad ownership or unknown commands', async () => {

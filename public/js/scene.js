@@ -49,6 +49,10 @@ export async function generateSceneBg(location) {
     return;
   }
 
+  if (typeof window === 'undefined' || window.EAMON_ENABLE_IMAGE_GENERATION !== true) {
+    return;
+  }
+
   const indicator = document.getElementById('img-generating');
   indicator.classList.add('active');
   try {
@@ -92,6 +96,7 @@ export async function showPortrait(name, desc, kind) {
   const cacheKey = kind + ':' + name;
   let url = portraitCache[cacheKey];
   if (!url) {
+    if (typeof window === 'undefined' || window.EAMON_ENABLE_IMAGE_GENERATION !== true) return;
     try {
       const res = await fetch('/api/portrait', {
         method: 'POST',
