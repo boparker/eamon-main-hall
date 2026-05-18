@@ -19,6 +19,9 @@ export function updateHUD(animate) {
         void el.offsetWidth;
         el.classList.add('stat-reveal');
       }
+    } else {
+      el.textContent = '—';
+      el.classList.remove('stat-reveal');
     }
   }
 }

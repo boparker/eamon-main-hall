@@ -6,6 +6,7 @@ import { createPhase1GameClient } from '../public/js/game-client.js';
 function makeHarness({ bootstrapResponse, startResponse } = {}) {
   const calls = [];
   const lines = [];
+  const hudCharacters = [];
   const api = {
     async bootstrapGame(input) {
       calls.push({ type: 'bootstrapGame', input });
@@ -52,10 +53,10 @@ function makeHarness({ bootstrapResponse, startResponse } = {}) {
     playerId: 'p1',
     render: (response) => lines.push(response.text),
     renderPlayer: (text) => lines.push(`> ${text}`),
-    updateHUD: () => {},
-    statsGenerator: () => ({ hardiness: 10, agility: 11, charisma: 12, hd: 10, maxHd: 10, gold: 75 }),
+    updateHUD: (character) => { if (character !== undefined) hudCharacters.push(character); },
+    statsGenerator: undefined,
   });
-  return { client, calls, lines };
+  return { client, calls, lines, hudCharacters };
 }
 
 const noCharacterHall = {
@@ -174,6 +175,17 @@ test('terminal or missing active run input is safe and stays in Great Hall/hall 
   assert.match(lines.join('\n'), /Great Hall/);
 });
 
+test('create character clears stale character before asking for the new name', async () => {
+  const { client, hudCharacters } = makeHarness({ bootstrapResponse: existingCharacterHall });
+  await client.startPhase1Game();
+
+  await client.handleInput('create character');
+
+  assert.equal(client.getState().character, null);
+  assert.equal(client.getState().creation.step, 'name');
+  assert.equal(hudCharacters.at(-1), null);
+});
+
 test('character creation requires explicit name, class, stats confirmation, then returns Great Hall', async () => {
   const { client, calls, lines } = makeHarness({ bootstrapResponse: noCharacterHall });
   await client.startPhase1Game();
@@ -183,14 +195,16 @@ test('character creation requires explicit name, class, stats confirmation, then
   await client.handleInput('mystic');
 
   assert.equal(calls.some((call) => call.type === 'createGameCharacter'), false);
-  assert.match(lines.join('\n'), /Hardiness 10/i);
+  assert.match(lines.join('\n'), /Hardiness 12/i);
+  assert.match(lines.join('\n'), /Gold 200/i);
 
   await client.handleInput('confirm');
 
   const createCall = calls.find((call) => call.type === 'createGameCharacter');
   assert.equal(createCall.input.name, 'Ariana');
   assert.equal(createCall.input.className, 'mystic');
-  assert.equal(createCall.input.hardiness, 10);
+  assert.equal(createCall.input.hardiness, 12);
+  assert.equal(createCall.input.gold, 200);
   assert.equal(client.getState().phase, 'great-hall');
 });
 

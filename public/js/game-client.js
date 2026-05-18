@@ -9,9 +9,9 @@ import {
 const DEFAULT_CLASSES = new Set(['warrior', 'rogue', 'mystic']);
 
 function defaultStatsForClass(className) {
-  if (className === 'rogue') return { hardiness: 10, agility: 12, charisma: 9, hd: 10, maxHd: 10, gold: 75 };
-  if (className === 'mystic') return { hardiness: 8, agility: 9, charisma: 12, hd: 8, maxHd: 8, gold: 75 };
-  return { hardiness: 12, agility: 9, charisma: 8, hd: 12, maxHd: 12, gold: 75 };
+  if (className === 'rogue') return { hardiness: 14, agility: 22, charisma: 12, hd: 14, maxHd: 14, gold: 200 };
+  if (className === 'mystic') return { hardiness: 12, agility: 14, charisma: 22, hd: 12, maxHd: 12, gold: 200 };
+  return { hardiness: 22, agility: 14, charisma: 10, hd: 22, maxHd: 22, gold: 200 };
 }
 
 function normalizeText(value) {
@@ -97,15 +97,22 @@ export function createPhase1GameClient({
     const response = await api.bootstrapGame({ playerId, displayName, email });
     const applied = applyResponse(response);
     if (!clientState.character) {
-      clientState.phase = 'great-hall';
-      clientState.creation = { step: 'name' };
-      prompt('Name your character.');
+      beginCharacterCreation();
     }
     return applied;
   }
 
-  function prompt(text) {
-    render({ ok: true, text, choices: [], state: { phase: 'great-hall', character: clientState.character } });
+  function prompt(text, character = clientState.character) {
+    updateHUD(character, { state: { phase: 'great-hall', character } });
+    render({ ok: true, text, choices: [], state: { phase: 'great-hall', character } });
+  }
+
+  function beginCharacterCreation() {
+    clientState.phase = 'great-hall';
+    clientState.character = null;
+    clientState.adventureRun = null;
+    clientState.creation = { step: 'name' };
+    prompt('Name your character.', null);
   }
 
   async function handleCreationInput(input) {
@@ -138,8 +145,7 @@ export function createPhase1GameClient({
     }
     if (creation.step === 'confirm') {
       if (isCreateCharacter(input)) {
-        clientState.creation = { step: 'name' };
-        prompt('Name your character.');
+        beginCharacterCreation();
         return null;
       }
       if (!isConfirm(input)) {
@@ -172,9 +178,7 @@ export function createPhase1GameClient({
     if (clientState.creation) return handleCreationInput(text);
 
     if (clientState.phase !== 'adventure' && isCreateCharacter(text)) {
-      clientState.phase = 'great-hall';
-      clientState.creation = { step: 'name' };
-      prompt('Name your character.');
+      beginCharacterCreation();
       return null;
     }
 

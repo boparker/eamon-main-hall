@@ -10,7 +10,7 @@ import { registerPurchaseHandler } from './shop.js';
 import { createPhase1GameClient } from './game-client.js';
 
 function renderGameResponse(response = {}) {
-  if (response.state?.character) state.character = response.state.character;
+  if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
   if (response.state?.phase) state.gamePhase = response.state.phase;
   updateHUD(true);
 
