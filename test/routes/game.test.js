@@ -218,6 +218,39 @@ function makeApp(deps = makeDeps()) {
   return { app, deps };
 }
 
+const accountHeaders = { authorization: 'Bearer raw-session-token' };
+
+async function createAccountCharacter(app, input = {}) {
+  return request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1',
+    name: 'Mara',
+    className: 'rogue',
+    hardiness: 10,
+    agility: 12,
+    charisma: 7,
+    ...input,
+  }, accountHeaders);
+}
+
+async function startAccountAdventure(app, characterId, input = {}) {
+  return request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1',
+    characterId,
+    adventureId: 'beginners-cave',
+    ...input,
+  }, accountHeaders);
+}
+
+function accountCommand(app, characterId, adventureRunId, input, body = {}) {
+  return request(app, 'POST', '/api/game/command', {
+    profileId: 'profile-1',
+    characterId,
+    adventureRunId,
+    input,
+    ...body,
+  }, accountHeaders);
+}
+
 test('POST /api/game/bootstrap upserts player and returns adventure/character lists', async () => {
   const { app } = makeApp();
   const response = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'local-player-1', displayName: 'Bo' });
@@ -411,8 +444,8 @@ test('authenticated start-adventure scopes character lookup to the requested pro
   assert.equal(started.body.state.adventureRun.playerId, 'account:user-1');
 });
 
-test('POST /api/game/start-adventure creates persistent run and renders starting room', async () => {
-  const { app } = makeApp();
+test('guest characters must be preserved to an account before starting Beginner\'s Cave', async () => {
+  const { app, deps } = makeApp();
   const character = await request(app, 'POST', '/api/game/characters', {
     playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
   });
@@ -420,6 +453,23 @@ test('POST /api/game/start-adventure creates persistent run and renders starting
   const started = await request(app, 'POST', '/api/game/start-adventure', {
     playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
   });
+
+  assert.equal(started.status, 403);
+  assert.equal(started.body.error, 'account-required');
+  assert.match(started.body.text, /preserve.*adventurer|account/i);
+  assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('POST /api/game/start-adventure creates persistent run and renders starting room for account characters', async () => {
+  const { app } = makeApp();
+  const headers = { authorization: 'Bearer raw-session-token' };
+  const character = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
+  }, headers);
+
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
 
   assert.equal(started.status, 201);
   assert.equal(started.body.state.run.currentRoom, 1);
@@ -455,16 +505,10 @@ test('authenticated command scopes character and run mutations to the requested 
 
 test('POST /api/game/command handles movement deterministically and persists run state', async () => {
   const { app, deps } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
 
-  const moved = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'go south',
-  });
+  const moved = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'go south');
 
   assert.equal(moved.status, 200);
   assert.equal(moved.body.intent.type, 'move');
@@ -478,34 +522,20 @@ test('POST /api/game/command handles movement deterministically and persists run
 
 test('POST /api/game/command handles take, inventory, and return-to-hall without AI tags', async () => {
   const { app } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
-  await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'south',
-  });
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'south');
 
-  const take = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'take gem',
-  });
+  const take = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'take gem');
   assert.equal(take.status, 200);
   assert.equal(take.body.state.character.inventory[0].slug, 'gem');
   assert.doesNotMatch(take.body.text, /\[[A-Za-z_-]+(?::[^\]]*)?\]/);
 
-  const inventory = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'inventory',
-  });
+  const inventory = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'inventory');
   assert.match(inventory.body.text, /Gem/);
 
-  await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'north',
-  });
-  const leave = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'north',
-  });
+  await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'north');
+  const leave = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'north');
 
   assert.equal(leave.status, 200);
   assert.equal(leave.body.intent.type, 'move');
@@ -538,16 +568,10 @@ test('authenticated leave command abandons only the requested profile run', asyn
 
 test('POST /api/game/command abandon returns full Great Hall response', async () => {
   const { app } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
 
-  const abandon = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'leave',
-  });
+  const abandon = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'leave');
 
   assert.equal(abandon.status, 200);
   assert.equal(abandon.body.state.phase, 'great-hall');
@@ -564,15 +588,9 @@ test('POST /api/game/command returns clear errors for bad ownership or unknown c
   assert.equal(missing.status, 404);
   assert.equal(missing.body.ok, false);
 
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
-  const unknown = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.run.id, input: 'dance wildly',
-  });
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  const unknown = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'dance wildly');
 
   assert.equal(unknown.status, 200);
   assert.equal(unknown.body.events[0].type, 'unknown');
@@ -581,42 +599,26 @@ test('POST /api/game/command returns clear errors for bad ownership or unknown c
 
 test('POST /api/game/command rejects mutation after run is completed', async () => {
   const { app, deps } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
-  await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'north',
-  });
-  const beforeCalls = deps.calls.length;
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'north');
+  const updateRunCallsBefore = deps.calls.filter((call) => call.type === 'updateRun').length;
 
-  const stale = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'south',
-  });
+  const stale = await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'south');
 
   assert.equal(stale.status, 409);
   assert.equal(stale.body.ok, false);
   assert.match(stale.body.text, /no longer active/i);
-  assert.equal(deps.calls.length, beforeCalls);
+  assert.equal(deps.calls.filter((call) => call.type === 'updateRun').length, updateRunCallsBefore);
 });
 
 test('POST /api/game/command marks dead characters and runs terminal', async () => {
   const { app } = makeApp(makeDeps({ rng: () => 0.99 }));
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 1, agility: 0, charisma: 7, hd: 1, maxHd: 1,
-  });
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
-  await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'south',
-  });
+  const character = await createAccountCharacter(app, { hardiness: 1, agility: 0, hd: 1, maxHd: 1 });
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'south');
 
-  const combat = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'attack rat',
-  });
+  const combat = await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'attack rat');
 
   assert.equal(combat.status, 200);
   assert.equal(combat.body.events.some((event) => event.type === 'character_defeated'), true);
@@ -624,22 +626,16 @@ test('POST /api/game/command marks dead characters and runs terminal', async () 
   assert.equal(combat.body.state.adventureRun.status, 'dead');
   assert.equal(combat.body.state.phase, 'main-hall');
 
-  const afterDeath = await request(app, 'POST', '/api/game/command', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureRunId: started.body.state.adventureRun.id, input: 'take gem',
-  });
+  const afterDeath = await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'take gem');
   assert.equal(afterDeath.status, 409);
   assert.match(afterDeath.body.text, /dead|defeated/i);
 });
 
 test('POST /api/game/start-adventure rejects dead characters', async () => {
   const { app } = makeApp();
-  const character = await request(app, 'POST', '/api/game/characters', {
-    playerId: 'p1', name: 'Mara', className: 'rogue', hardiness: 0, agility: 12, charisma: 7, hd: 0, maxHd: 1,
-  });
+  const character = await createAccountCharacter(app, { hardiness: 0, hd: 0, maxHd: 1 });
 
-  const started = await request(app, 'POST', '/api/game/start-adventure', {
-    playerId: 'p1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
-  });
+  const started = await startAccountAdventure(app, character.body.state.character.id);
 
   assert.equal(started.status, 409);
   assert.match(started.body.text, /dead|defeated/i);

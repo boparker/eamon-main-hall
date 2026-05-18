@@ -603,6 +603,9 @@ export function createGameRouter(rawDeps = {}) {
       const adventures = deps.loadAdventures();
       const adventure = findAdventure(adventures, adventureId);
       if (!adventure) return error(res, 404, `Adventure ${adventureId} is not available.`, 'adventure-not-found');
+      if (!context.isAuthenticated) {
+        return error(res, 403, 'Preserve this adventurer with an account before beginning an expedition.', 'account-required');
+      }
       const characterRow = await deps.getCharacter(deps.db, context.owner, characterId);
       if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');
       const character = rowCharacter(characterRow);
