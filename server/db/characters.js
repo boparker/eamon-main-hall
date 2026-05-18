@@ -20,9 +20,28 @@ const COLUMN_BY_FIELD = {
 
 const jsonParam = (value) => JSON.stringify(value);
 
+function ownerScope(owner) {
+  if (typeof owner === 'object' && owner?.userId && owner?.profileId) {
+    return { where: 'user_id = $1 AND profile_id = $2', params: [owner.userId, owner.profileId], userId: owner.userId, profileId: owner.profileId };
+  }
+  return { where: 'player_id = $1', params: [owner], playerId: owner };
+}
+
+function characterOwnerWhere(owner, startIndex = 2) {
+  if (typeof owner === 'object' && owner?.userId && owner?.profileId) {
+    return {
+      clause: `user_id = $${startIndex} AND profile_id = $${startIndex + 1}`,
+      params: [owner.userId, owner.profileId],
+    };
+  }
+  return { clause: `player_id = $${startIndex}`, params: [owner] };
+}
+
 export async function createCharacter(db, {
   id = crypto.randomUUID(),
   playerId,
+  userId = null,
+  profileId = null,
   name,
   className,
   hardiness,
@@ -39,35 +58,37 @@ export async function createCharacter(db, {
 }) {
   const result = await db.query(`
     INSERT INTO player_characters (
-      id, player_id, name, class, hardiness, agility, charisma, hd, max_hd,
+      id, player_id, user_id, profile_id, name, class, hardiness, agility, charisma, hd, max_hd,
       gold, bank_gold, inventory, equipment, adventures_completed, is_alive
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, $14::jsonb, $15)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15::jsonb, $16::jsonb, $17)
     RETURNING *
   `, [
-    id, playerId, name, className, hardiness, agility, charisma, hd, maxHd, gold, bankGold,
+    id, playerId, userId, profileId, name, className, hardiness, agility, charisma, hd, maxHd, gold, bankGold,
     jsonParam(inventory), jsonParam(equipment), jsonParam(adventuresCompleted), isAlive,
   ]);
   return result.rows[0] ?? null;
 }
 
-export async function listCharacters(db, playerId) {
+export async function listCharacters(db, owner) {
+  const scope = ownerScope(owner);
   const result = await db.query(
-    'SELECT * FROM player_characters WHERE player_id = $1 ORDER BY updated_at DESC',
-    [playerId],
+    `SELECT * FROM player_characters WHERE ${scope.where} ORDER BY updated_at DESC`,
+    scope.params,
   );
   return result.rows;
 }
 
-export async function getCharacter(db, playerId, characterId) {
+export async function getCharacter(db, owner, characterId) {
+  const scope = characterOwnerWhere(owner, 2);
   const result = await db.query(
-    'SELECT * FROM player_characters WHERE id = $1 AND player_id = $2',
-    [characterId, playerId],
+    `SELECT * FROM player_characters WHERE id = $1 AND ${scope.clause}`,
+    [characterId, ...scope.params],
   );
   return result.rows[0] ?? null;
 }
 
-export async function updateCharacter(db, playerId, characterId, patch = {}) {
+export async function updateCharacter(db, owner, characterId, patch = {}) {
   const assignments = [];
   const params = [];
 
@@ -79,14 +100,16 @@ export async function updateCharacter(db, playerId, characterId, patch = {}) {
     assignments.push(`${column} = $${params.length}${cast}`);
   }
 
-  if (assignments.length === 0) return getCharacter(db, playerId, characterId);
+  if (assignments.length === 0) return getCharacter(db, owner, characterId);
 
-  params.push(characterId, playerId);
+  params.push(characterId);
+  const ownerWhere = characterOwnerWhere(owner, params.length + 1);
+  params.push(...ownerWhere.params);
   const result = await db.query(`
     UPDATE player_characters SET
       ${assignments.join(',\n      ')},
       updated_at = NOW()
-    WHERE id = $${params.length - 1} AND player_id = $${params.length}
+    WHERE id = $${params.length - ownerWhere.params.length} AND ${ownerWhere.clause}
     RETURNING *
   `, params);
   return result.rows[0] ?? null;

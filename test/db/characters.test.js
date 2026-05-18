@@ -25,7 +25,23 @@ test('createCharacter inserts player-owned character with JSON defaults', async 
   const query = pool.queries[0];
   assert.match(query.sql, /INSERT INTO player_characters/);
   assert.deepEqual(query.params, [
-    'char-1', 'player-1', 'Aria', 'rogue', 14, 22, 12, 14, 14, 200, 0,
+    'char-1', 'player-1', null, null, 'Aria', 'rogue', 14, 22, 12, 14, 14, 200, 0,
+    '[]', '{}', '[]', true,
+  ]);
+});
+
+test('createCharacter can attach registered user and profile ownership while preserving guest player id', async () => {
+  const pool = makePool([{ id: 'char-1' }]);
+
+  await createCharacter(pool, {
+    id: 'char-1', playerId: 'player-1', userId: 'user-1', profileId: 'profile-1', name: 'Aria', className: 'adventurer',
+    hardiness: 15, agility: 12, charisma: 15, hd: 15, maxHd: 15, gold: 200,
+  });
+
+  const query = pool.queries[0];
+  assert.match(query.sql, /user_id, profile_id/);
+  assert.deepEqual(query.params, [
+    'char-1', 'player-1', 'user-1', 'profile-1', 'Aria', 'adventurer', 15, 12, 15, 15, 15, 200, 0,
     '[]', '{}', '[]', true,
   ]);
 });
@@ -40,6 +56,16 @@ test('listCharacters only lists a player owned characters ordered by updated tim
   assert.deepEqual(pool.queries[0].params, ['player-1']);
 });
 
+test('listCharacters can scope registered characters by user and profile', async () => {
+  const pool = makePool([{ id: 'char-1' }]);
+
+  await listCharacters(pool, { userId: 'user-1', profileId: 'profile-1' });
+
+  assert.match(pool.queries[0].sql, /WHERE user_id = \$1 AND profile_id = \$2/);
+  assert.match(pool.queries[0].sql, /ORDER BY updated_at DESC/);
+  assert.deepEqual(pool.queries[0].params, ['user-1', 'profile-1']);
+});
+
 test('getCharacter scopes lookup by character id and player id', async () => {
   const pool = makePool([{ id: 'char-1' }]);
 
@@ -47,6 +73,15 @@ test('getCharacter scopes lookup by character id and player id', async () => {
 
   assert.match(pool.queries[0].sql, /WHERE id = \$1 AND player_id = \$2/);
   assert.deepEqual(pool.queries[0].params, ['char-1', 'player-1']);
+});
+
+test('getCharacter can scope lookup by registered user/profile ownership', async () => {
+  const pool = makePool([{ id: 'char-1' }]);
+
+  await getCharacter(pool, { userId: 'user-1', profileId: 'profile-1' }, 'char-1');
+
+  assert.match(pool.queries[0].sql, /WHERE id = \$1 AND user_id = \$2 AND profile_id = \$3/);
+  assert.deepEqual(pool.queries[0].params, ['char-1', 'user-1', 'profile-1']);
 });
 
 test('updateCharacter updates only allowed fields and serializes JSON values', async () => {
@@ -65,4 +100,14 @@ test('updateCharacter updates only allowed fields and serializes JSON values', a
   assert.match(query.sql, /updated_at = NOW\(\)/);
   assert.doesNotMatch(query.sql, /ignored/);
   assert.deepEqual(query.params, [11, 25, '[{"slug":"sword"}]', '{"weapon":"sword"}', 'char-1', 'player-1']);
+});
+
+test('updateCharacter can scope updates by registered user/profile ownership', async () => {
+  const pool = makePool([{ id: 'char-1' }]);
+
+  await updateCharacter(pool, { userId: 'user-1', profileId: 'profile-1' }, 'char-1', { gold: 123 });
+
+  const query = pool.queries[0];
+  assert.match(query.sql, /WHERE id = \$2 AND user_id = \$3 AND profile_id = \$4/);
+  assert.deepEqual(query.params, [123, 'char-1', 'user-1', 'profile-1']);
 });
