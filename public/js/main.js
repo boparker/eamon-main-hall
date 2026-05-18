@@ -11,6 +11,7 @@ import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
 import { renderAccountStatus } from './account-status.js';
+import { createAccountMenu } from './account-menu.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -37,6 +38,13 @@ function buildGameClient(identity = null) {
 
 function renderCurrentAccountStatus() {
   renderAccountStatus(document.getElementById('account-status'), authController.getSession?.());
+}
+
+function resetGameplayState() {
+  state.character = {};
+  state.gamePhase = 'title';
+  clearChoices();
+  renderChoices();
 }
 
 let gameClient = buildGameClient();
@@ -104,6 +112,28 @@ const titleGateway = createTitleGateway({
   },
 });
 titleGateway.mount();
+
+const accountMenu = createAccountMenu({
+  elements: {
+    toggleButton: document.getElementById('hud-account-btn'),
+    panel: document.getElementById('account-menu-panel'),
+    summary: document.getElementById('account-menu-summary'),
+    profile: document.getElementById('account-menu-profile'),
+    logoutButton: document.getElementById('account-logout-btn'),
+    switchProfileButton: document.getElementById('account-switch-profile-btn'),
+    switchCharacterButton: document.getElementById('account-switch-character-btn'),
+  },
+  authController,
+  onLogout() {
+    resetGameplayState();
+    gameClient = buildGameClient();
+    renderCurrentAccountStatus();
+    updateHUD(false);
+    setInputState('action', false);
+    titleGateway.showTitleGateway({ form: 'login' });
+  },
+});
+accountMenu.mount();
 
 sendBtn.addEventListener('click', sendMessage);
 inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });

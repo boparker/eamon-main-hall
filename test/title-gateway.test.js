@@ -165,3 +165,24 @@ test('switch account clears stored session and keeps player on title gateway', a
   assert.equal(elements.gameScreen.classList.contains('active'), false);
   assert.equal(calls.some((call) => call.type === 'startPhase1Game'), false);
 });
+
+test('title gateway can be restored after gameplay logout', async () => {
+  const session = {
+    sessionToken: 'stored-token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+    profiles: [{ id: 'profile-1', name: 'Main Adventurers' }],
+  };
+  const { gateway, elements } = makeHarness({ session });
+  gateway.mount();
+  await elements.existingSessionButton.click();
+
+  gateway.showTitleGateway({ form: 'login' });
+
+  assert.equal(elements.gameScreen.classList.contains('active'), false);
+  assert.equal(elements.titleScreen.classList.contains('fade-out'), false);
+  assert.equal(elements.titleScreen.style.display, '');
+  assert.equal(elements.existingSessionButton.hidden, true);
+  assert.equal(elements.switchAccountButton.hidden, true);
+  assert.equal(elements.loginForm.hidden, false);
+});

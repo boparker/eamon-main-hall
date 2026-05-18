@@ -78,6 +78,15 @@ export function createTitleGateway({
     return null;
   }
 
+  function showTitleGateway({ form = 'login' } = {}) {
+    elements.gameScreen?.classList?.remove('active');
+    elements.titleScreen?.classList?.remove('fade-out');
+    if (elements.titleScreen?.style) elements.titleScreen.style.display = '';
+    hideStoredSessionControls();
+    if (elements.guestButton) elements.guestButton.disabled = false;
+    showForm(form);
+  }
+
   function mountStoredSession() {
     const session = authController.getSession?.();
     if (!elements.existingSessionButton) return;
@@ -109,5 +118,5 @@ export function createTitleGateway({
     });
   }
 
-  return { mount, start, authenticate, showForm, switchAccount };
+  return { mount, start, authenticate, showForm, switchAccount, showTitleGateway };
 }

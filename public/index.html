@@ -90,10 +90,18 @@
     .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
     .hud-stat-label { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
     .hud-stat-val { font-size: 0.9rem; color: var(--text); font-weight: 600; }
-    .hud-controls { display: flex; gap: 8px; }
+    .hud-controls { display: flex; gap: 8px; position: relative; }
     .hud-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; color: var(--text-dim); font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
     .hud-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     .hud-btn.active { border-color: var(--gold); color: var(--gold); }
+    #account-menu-panel { position: absolute; top: 40px; right: 0; width: 260px; z-index: 60; padding: 16px; display: grid; gap: 10px; background: rgba(8,6,4,0.96); border: 1px solid var(--gold-dim); box-shadow: 0 14px 40px rgba(0,0,0,0.45); }
+    #account-menu-panel[hidden] { display: none; }
+    .account-menu-summary { color: var(--gold); font-family: var(--font-head); letter-spacing: 0.08em; text-transform: uppercase; }
+    .account-menu-profile { color: var(--text-dim); font-size: 0.9rem; }
+    .account-menu-actions { display: grid; gap: 8px; }
+    .account-menu-action { padding: 9px 10px; background: transparent; border: 1px solid var(--border); color: var(--text); cursor: pointer; font-family: var(--font-body); text-align: left; }
+    .account-menu-action:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .account-menu-action[hidden] { display: none; }
 
     /* ── Location Title (below HUD, inside scene) ── */
     #location-title {
@@ -294,8 +302,18 @@
       <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">&mdash;</span></div>
     </div>
     <div class="hud-controls">
+      <button class="hud-btn" id="hud-account-btn" title="Account">&#9812;</button>
       <button class="hud-btn active" id="hud-music-btn" title="Toggle music">&#127925;</button>
       <button class="hud-btn active" id="hud-voice-btn" title="Toggle voice">&#128266;</button>
+      <div id="account-menu-panel" hidden>
+        <div class="account-menu-summary" id="account-menu-summary"></div>
+        <div class="account-menu-profile" id="account-menu-profile"></div>
+        <div class="account-menu-actions">
+          <button class="account-menu-action" id="account-switch-profile-btn" type="button">Switch Profile</button>
+          <button class="account-menu-action" id="account-switch-character-btn" type="button">Switch Character</button>
+          <button class="account-menu-action" id="account-logout-btn" type="button">Log Out</button>
+        </div>
+      </div>
     </div>
   </div>
 
