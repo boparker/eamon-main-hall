@@ -21,6 +21,7 @@ export function createAccountMenu({
   document = globalThis.document,
   onLogout = () => {},
   onSwitchProfile = () => {},
+  onCreateProfile = () => {},
   onListCharacters = () => [],
   onSwitchCharacter = () => {},
 }) {
@@ -38,6 +39,7 @@ export function createAccountMenu({
 
     if (elements.logoutButton) elements.logoutButton.hidden = !isAccount;
     if (elements.switchProfileButton) elements.switchProfileButton.hidden = !isAccount;
+    if (elements.createProfileButton) elements.createProfileButton.hidden = !isAccount;
     if (elements.switchCharacterButton) elements.switchCharacterButton.hidden = !isAccount;
   }
 
@@ -88,8 +90,27 @@ export function createAccountMenu({
     if (elements.profileList) elements.profileList.hidden = true;
   }
 
+  function showCreateProfileForm() {
+    if (elements.createProfileForm) elements.createProfileForm.hidden = false;
+  }
+
   function closeCharacterList() {
     if (elements.characterList) elements.characterList.hidden = true;
+  }
+
+  async function submitCreateProfile(event) {
+    event?.preventDefault?.();
+    const name = String(elements.createProfileName?.value ?? '').trim();
+    if (!name) return;
+    if (elements.createProfileButton) elements.createProfileButton.disabled = true;
+    try {
+      await onCreateProfile(name);
+      if (elements.createProfileName) elements.createProfileName.value = '';
+      if (elements.createProfileForm) elements.createProfileForm.hidden = true;
+      render();
+    } finally {
+      if (elements.createProfileButton) elements.createProfileButton.disabled = false;
+    }
   }
 
   function open() {
@@ -126,9 +147,11 @@ export function createAccountMenu({
     close();
     elements.toggleButton?.addEventListener('click', toggle);
     elements.switchProfileButton?.addEventListener('click', renderProfileList);
+    elements.createProfileButton?.addEventListener('click', showCreateProfileForm);
+    elements.createProfileForm?.addEventListener('submit', submitCreateProfile);
     elements.switchCharacterButton?.addEventListener('click', renderCharacterList);
     elements.logoutButton?.addEventListener('click', logout);
   }
 
-  return { mount, render, open, close, toggle, logout, renderProfileList, renderCharacterList };
+  return { mount, render, open, close, toggle, logout, renderProfileList, renderCharacterList, showCreateProfileForm, submitCreateProfile };
 }

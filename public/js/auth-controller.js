@@ -79,6 +79,16 @@ export function createAuthController({
       return persist({ ...session, profiles });
     },
 
+    addProfile(profile) {
+      if (!session?.sessionToken) throw new Error('No account session is active.');
+      if (!profile?.id) throw new Error('Profile id is required.');
+      const existing = Array.isArray(session.profiles) ? session.profiles : [];
+      const profiles = existing.some((item) => item?.id === profile.id)
+        ? existing.map((item) => (item?.id === profile.id ? profile : item))
+        : [...existing, profile];
+      return persist({ ...session, profiles, profileId: profile.id });
+    },
+
     async logout() {
       const token = session?.sessionToken;
       if (token) await api.logoutAccount(token);

@@ -108,6 +108,25 @@ test('selectCharacter persists selected character metadata on the active profile
   assert.equal(session.profiles[1].selected_character_id, null);
 });
 
+test('addProfile persists a new profile and makes it active', async () => {
+  const { controller } = makeController({
+    loginPayload: {
+      ok: true,
+      token: 'login-token',
+      user: { id: 'user-1', username: 'bo' },
+      profiles: [{ id: 'profile-1', name: 'Main' }],
+      profileId: 'profile-1',
+    },
+  });
+  await controller.login({ username: 'bo', password: 'secret12' });
+
+  const session = controller.addProfile({ id: 'profile-2', name: 'New Party' });
+
+  assert.equal(session.profileId, 'profile-2');
+  assert.deepEqual(session.profiles.map((profile) => profile.id), ['profile-1', 'profile-2']);
+  assert.deepEqual(controller.gameIdentity(), { sessionToken: 'login-token', profileId: 'profile-2' });
+});
+
 test('selectProfile rejects profiles outside the current account session', async () => {
   const { controller } = makeController();
   await controller.login({ username: 'bo', password: 'secret-pass' });

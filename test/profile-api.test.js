@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { selectProfileCharacter } from '../public/js/profile-api.js';
+import { createProfile, selectProfileCharacter } from '../public/js/profile-api.js';
 
 function createFetchRecorder({ response = { ok: true, profile: { id: 'profile-1', selected_character_id: 'char-1' } } } = {}) {
   const calls = [];
@@ -15,6 +15,19 @@ function createFetchRecorder({ response = { ok: true, profile: { id: 'profile-1'
   };
   return { calls, fetchImpl };
 }
+
+test('createProfile posts profile name to profile collection endpoint with bearer token', async () => {
+  const { calls, fetchImpl } = createFetchRecorder({ response: { ok: true, profile: { id: 'profile-2', name: 'New Party' } } });
+
+  const payload = await createProfile({ sessionToken: 'raw-session-token', name: 'New Party', fetchImpl });
+
+  assert.equal(payload.profile.id, 'profile-2');
+  assert.equal(calls[0].url, '/api/profiles');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.headers.authorization, 'Bearer raw-session-token');
+  assert.equal(calls[0].options.headers['content-type'], 'application/json');
+  assert.deepEqual(JSON.parse(calls[0].options.body), { name: 'New Party' });
+});
 
 test('selectProfileCharacter posts selected character to profile endpoint with bearer token', async () => {
   const { calls, fetchImpl } = createFetchRecorder();

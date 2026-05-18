@@ -17,6 +17,15 @@ export async function profileFetch(path, { method = 'GET', sessionToken, body, f
   return payload;
 }
 
+export function createProfile({ sessionToken, name, fetchImpl } = {}) {
+  return profileFetch('', {
+    method: 'POST',
+    sessionToken,
+    body: { name },
+    fetchImpl,
+  });
+}
+
 export function selectProfileCharacter({ sessionToken, profileId, characterId, fetchImpl } = {}) {
   return profileFetch(`/${encodeURIComponent(profileId)}/select-character`, {
     method: 'POST',

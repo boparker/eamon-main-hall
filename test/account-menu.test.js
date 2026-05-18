@@ -23,6 +23,7 @@ function element() {
     },
     addEventListener(type, handler) { listeners.set(type, handler); },
     async click() { await listeners.get('click')?.({ preventDefault() {} }); },
+    async submit() { await listeners.get('submit')?.({ preventDefault() {} }); },
   };
 }
 
@@ -35,6 +36,9 @@ function makeHarness({ session = null } = {}) {
     profile: element(),
     logoutButton: element(),
     switchProfileButton: element(),
+    createProfileButton: element(),
+    createProfileForm: element(),
+    createProfileName: element(),
     switchCharacterButton: element(),
     profileList: element(),
     characterList: element(),
@@ -56,6 +60,7 @@ function makeHarness({ session = null } = {}) {
     document,
     onLogout() { calls.push({ type: 'onLogout' }); },
     async onSwitchProfile(profileId) { calls.push({ type: 'onSwitchProfile', profileId }); },
+    async onCreateProfile(name) { calls.push({ type: 'onCreateProfile', name }); },
     async onListCharacters() { calls.push({ type: 'onListCharacters' }); return session?.characters ?? []; },
     async onSwitchCharacter(characterId) { calls.push({ type: 'onSwitchCharacter', characterId }); },
   });
@@ -79,6 +84,7 @@ test('account menu opens with signed-in user and profile actions', async () => {
   assert.equal(elements.profile.textContent, 'Profile: Main Adventurers');
   assert.equal(elements.logoutButton.hidden, false);
   assert.equal(elements.switchProfileButton.hidden, false);
+  assert.equal(elements.createProfileButton.hidden, false);
   assert.equal(elements.switchCharacterButton.hidden, false);
 });
 
@@ -93,6 +99,7 @@ test('account menu shows guest mode and hides account-only actions', async () =>
   assert.equal(elements.profile.textContent, 'Progress is saved to this browser only.');
   assert.equal(elements.logoutButton.hidden, true);
   assert.equal(elements.switchProfileButton.hidden, true);
+  assert.equal(elements.createProfileButton.hidden, true);
   assert.equal(elements.switchCharacterButton.hidden, true);
 });
 
@@ -138,6 +145,28 @@ test('switch profile renders account profiles and invokes profile switch callbac
   await elements.profileList.children[1].click();
 
   assert.deepEqual(calls.filter((call) => call.type === 'onSwitchProfile'), [{ type: 'onSwitchProfile', profileId: 'profile-2' }]);
+});
+
+test('create profile submits a profile name and hides the form after callback', async () => {
+  const session = {
+    sessionToken: 'token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+    profiles: [{ id: 'profile-1', name: 'Main Adventurers' }],
+  };
+  const { menu, elements, calls } = makeHarness({ session });
+
+  menu.mount();
+  await elements.toggleButton.click();
+  await elements.createProfileButton.click();
+  assert.equal(elements.createProfileForm.hidden, false);
+
+  elements.createProfileName.value = 'New Party';
+  await elements.createProfileForm.submit();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'onCreateProfile'), [{ type: 'onCreateProfile', name: 'New Party' }]);
+  assert.equal(elements.createProfileForm.hidden, true);
+  assert.equal(elements.createProfileName.value, '');
 });
 
 test('switch character renders current profile characters and invokes character switch callback', async () => {

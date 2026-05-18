@@ -13,7 +13,7 @@ import { createTitleGateway } from './title-gateway.js';
 import { renderAccountStatus } from './account-status.js';
 import { createAccountMenu } from './account-menu.js';
 import { listGameCharacters } from './api.js';
-import { selectProfileCharacter } from './profile-api.js';
+import { createProfile, selectProfileCharacter } from './profile-api.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -51,6 +51,18 @@ function resetGameplayState() {
 
 async function switchToProfile(profileId) {
   authController.selectProfile(profileId);
+  resetGameplayState();
+  gameClient = buildGameClient(authController.gameIdentity());
+  renderCurrentAccountStatus();
+  setInputState('action', false);
+  const response = await gameClient.startPhase1Game();
+  setInputState(response?.state?.character ? 'action' : 'name', true);
+}
+
+async function createAndSwitchToProfile(name) {
+  const identity = authController.gameIdentity();
+  const payload = await createProfile({ sessionToken: identity?.sessionToken, name });
+  authController.addProfile(payload.profile);
   resetGameplayState();
   gameClient = buildGameClient(authController.gameIdentity());
   renderCurrentAccountStatus();
@@ -151,12 +163,16 @@ const accountMenu = createAccountMenu({
     profile: document.getElementById('account-menu-profile'),
     logoutButton: document.getElementById('account-logout-btn'),
     switchProfileButton: document.getElementById('account-switch-profile-btn'),
+    createProfileButton: document.getElementById('account-create-profile-btn'),
+    createProfileForm: document.getElementById('account-create-profile-form'),
+    createProfileName: document.getElementById('account-create-profile-name'),
     switchCharacterButton: document.getElementById('account-switch-character-btn'),
     profileList: document.getElementById('account-profile-list'),
     characterList: document.getElementById('account-character-list'),
   },
   authController,
   onSwitchProfile: switchToProfile,
+  onCreateProfile: createAndSwitchToProfile,
   onListCharacters: listActiveProfileCharacters,
   onSwitchCharacter: switchToCharacter,
   onLogout() {
