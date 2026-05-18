@@ -66,13 +66,18 @@ function makeDeps(options = {}) {
       players.set(row.id, row);
       return row;
     },
-    async listCharacters(_db, playerId) {
-      return [...characters.values()].filter((character) => character.player_id === playerId);
+    async listCharacters(_db, owner) {
+      if (typeof owner === 'object') {
+        return [...characters.values()].filter((character) => character.user_id === owner.userId && character.profile_id === owner.profileId);
+      }
+      return [...characters.values()].filter((character) => character.player_id === owner);
     },
     async createCharacter(_db, input) {
       const row = {
         id: input.id ?? `char-${characters.size + 1}`,
         player_id: input.playerId,
+        user_id: input.userId ?? null,
+        profile_id: input.profileId ?? null,
         name: input.name,
         class: input.className,
         hardiness: input.hardiness,
@@ -90,14 +95,18 @@ function makeDeps(options = {}) {
       characters.set(row.id, row);
       return row;
     },
-    async getCharacter(_db, playerId, characterId) {
+    async getCharacter(_db, owner, characterId) {
       const row = characters.get(characterId);
-      return row?.player_id === playerId ? row : null;
+      if (typeof owner === 'object') return row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
+      return row?.player_id === owner ? row : null;
     },
-    async updateCharacter(_db, playerId, characterId, patch) {
-      calls.push({ type: 'updateCharacter', playerId, characterId, patch });
+    async updateCharacter(_db, owner, characterId, patch) {
+      calls.push({ type: 'updateCharacter', owner, characterId, patch });
       const row = characters.get(characterId);
-      if (!row || row.player_id !== playerId) return null;
+      const owns = typeof owner === 'object'
+        ? row?.user_id === owner.userId && row?.profile_id === owner.profileId
+        : row?.player_id === owner;
+      if (!row || !owns) return null;
       const updated = {
         ...row,
         hd: patch.hd ?? row.hd,
@@ -163,16 +172,22 @@ function makeDeps(options = {}) {
       return updated;
     },
     rng: options.rng,
+    hashSessionToken: (token) => `sha256$${token}`,
+    async getUserBySessionTokenHash(_db, tokenHash) {
+      calls.push({ type: 'getUserBySessionTokenHash', tokenHash });
+      if (tokenHash === 'sha256$raw-session-token') return { id: 'user-1', username: 'bo', display_name: 'Bo' };
+      return null;
+    },
   };
 }
 
-async function request(app, method, path, body) {
+async function request(app, method, path, body, headers = {}) {
   const server = app.listen(0);
   try {
     const { port } = server.address();
     const response = await fetch(`http://127.0.0.1:${port}${path}`, {
       method,
-      headers: body ? { 'content-type': 'application/json' } : {},
+      headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...headers },
       body: body ? JSON.stringify(body) : undefined,
     });
     const json = await response.json();
@@ -217,6 +232,37 @@ test('POST /api/game/bootstrap returns Great Hall with create/account choices an
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
   assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('authenticated game bootstrap uses profile ownership without requiring a guest player id', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const headers = { authorization: 'Bearer raw-session-token' };
+
+  const created = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Account Mara', className: 'adventurer', hardiness: 15, agility: 12, charisma: 15, gold: 200,
+  }, headers);
+  const response = await request(app, 'POST', '/api/game/bootstrap', { profileId: 'profile-1' }, headers);
+
+  assert.equal(created.status, 201);
+  assert.equal(response.status, 200);
+  assert.equal(response.body.state.player.id, 'account:user-1');
+  assert.equal(response.body.state.character.id, created.body.state.character.id);
+  assert.equal(response.body.state.character.playerId, 'account:user-1');
+  assert.equal(response.body.state.character.userId, 'user-1');
+  assert.equal(response.body.state.character.profileId, 'profile-1');
+});
+
+test('authenticated character list is scoped to the requested profile', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const headers = { authorization: 'Bearer raw-session-token' };
+
+  await request(app, 'POST', '/api/game/characters', { profileId: 'profile-1', name: 'One', className: 'adventurer' }, headers);
+  await request(app, 'POST', '/api/game/characters', { profileId: 'profile-2', name: 'Two', className: 'adventurer' }, headers);
+
+  const response = await request(app, 'GET', '/api/game/characters?profileId=profile-1', null, headers);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body.state.characters.map((character) => character.name), ['One']);
 });
 
 test('POST /api/game/bootstrap returns Great Hall with existing character, shop choices, and locked later adventures', async () => {
@@ -327,6 +373,27 @@ test('POST and GET /api/game/characters create and list player-owned characters'
   assert.equal(listed.status, 200);
   assert.equal(listed.body.state.characters.length, 1);
   assert.equal(listed.body.state.characters[0].id, created.body.state.character.id);
+});
+
+test('authenticated start-adventure scopes character lookup to the requested profile', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const headers = { authorization: 'Bearer raw-session-token' };
+
+  const created = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Profile Hero', className: 'adventurer', hardiness: 15, agility: 12, charisma: 15,
+  }, headers);
+  const blocked = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-2', characterId: created.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: created.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+
+  assert.equal(blocked.status, 404);
+  assert.equal(started.status, 201);
+  assert.equal(started.body.state.character.userId, 'user-1');
+  assert.equal(started.body.state.character.profileId, 'profile-1');
+  assert.equal(started.body.state.adventureRun.playerId, 'account:user-1');
 });
 
 test('POST /api/game/start-adventure creates persistent run and renders starting room', async () => {

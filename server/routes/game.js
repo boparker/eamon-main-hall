@@ -21,6 +21,9 @@ import {
   renderRoom,
 } from '../engine/renderer.js';
 import { upsertPlayer as defaultUpsertPlayer } from '../db/players.js';
+import { optionalAuth as defaultOptionalAuth } from '../auth/middleware.js';
+import { hashSessionToken as defaultHashSessionToken } from '../auth/sessions.js';
+import { getUserBySessionTokenHash as defaultGetUserBySessionTokenHash } from '../db/users.js';
 import {
   createCharacter as defaultCreateCharacter,
   getCharacter as defaultGetCharacter,
@@ -115,6 +118,8 @@ function rowCharacter(row) {
   return {
     id: row.id,
     playerId: row.player_id,
+    userId: row.user_id ?? null,
+    profileId: row.profile_id ?? null,
     name: row.name,
     className: row.class,
     hardiness: row.hardiness,
@@ -412,11 +417,33 @@ async function loadSession(req, res, deps, adventures) {
   return { character: rowCharacter(characterRow), run: rowRun(runRow), adventure };
 }
 
+function resolveGameContext(req) {
+  const profileId = req.body?.profileId ?? req.query?.profileId ?? null;
+  if (req.auth?.user) {
+    if (!profileId) return { error: 'profileId is required for registered account play.' };
+    const playerId = req.body?.playerId ?? req.query?.playerId ?? `account:${req.auth.user.id}`;
+    return {
+      playerId,
+      owner: { userId: req.auth.user.id, profileId },
+      userId: req.auth.user.id,
+      profileId,
+      player: { id: playerId, display_name: req.auth.user.display_name ?? req.auth.user.displayName ?? req.auth.user.username ?? null },
+      isAuthenticated: true,
+    };
+  }
+  const playerId = req.body?.playerId ?? req.query?.playerId ?? null;
+  if (!playerId) return { error: 'playerId is required.' };
+  return { playerId, owner: playerId, player: null, isAuthenticated: false };
+}
+
 function normalizeDeps(deps = {}) {
   return {
     db: deps.db,
     loadAdventures: deps.loadAdventures ?? loadJsonAdventures,
     upsertPlayer: deps.upsertPlayer ?? defaultUpsertPlayer,
+    optionalAuth: deps.optionalAuth ?? defaultOptionalAuth,
+    hashSessionToken: deps.hashSessionToken ?? defaultHashSessionToken,
+    getUserBySessionTokenHash: deps.getUserBySessionTokenHash ?? defaultGetUserBySessionTokenHash,
     createCharacter: deps.createCharacter ?? defaultCreateCharacter,
     getCharacter: deps.getCharacter ?? defaultGetCharacter,
     listCharacters: deps.listCharacters ?? defaultListCharacters,
@@ -439,19 +466,25 @@ export function createGameRouter(rawDeps = {}) {
     next();
   });
 
+  router.use(deps.optionalAuth({
+    db: deps.db,
+    hashSessionToken: deps.hashSessionToken,
+    getUserBySessionTokenHash: deps.getUserBySessionTokenHash,
+  }));
+
   router.post('/bootstrap', async (req, res, next) => {
     try {
-      const playerId = req.body?.playerId;
-      if (!playerId) return error(res, 400, 'playerId is required.', 'bad-request');
+      const context = resolveGameContext(req);
+      if (context.error) return error(res, 400, context.error, 'bad-request');
       const player = await deps.upsertPlayer(deps.db, {
-        id: playerId,
-        displayName: req.body.displayName,
-        authProvider: req.body.authProvider,
-        authSubject: req.body.authSubject,
-        email: req.body.email,
+        id: context.playerId,
+        displayName: req.body.displayName ?? context.player?.display_name,
+        authProvider: req.auth?.user ? 'local' : req.body.authProvider,
+        authSubject: req.auth?.user?.id ?? req.body.authSubject,
+        email: req.auth?.user?.email ?? req.body.email,
       });
       const [characters, adventures] = await Promise.all([
-        deps.listCharacters(deps.db, player.id),
+        deps.listCharacters(deps.db, context.owner),
         Promise.resolve(deps.loadAdventures()),
       ]);
       return res.json(hallResponse({ player, characters, adventures }));
@@ -462,9 +495,9 @@ export function createGameRouter(rawDeps = {}) {
 
   router.get('/characters', async (req, res, next) => {
     try {
-      const playerId = req.query.playerId;
-      if (!playerId) return error(res, 400, 'playerId is required.', 'bad-request');
-      const characters = await deps.listCharacters(deps.db, playerId);
+      const context = resolveGameContext(req);
+      if (context.error) return error(res, 400, context.error, 'bad-request');
+      const characters = await deps.listCharacters(deps.db, context.owner);
       return res.json(canonicalResponse({ text: 'Characters loaded.', choices: [], state: { characters: characters.map(rowCharacter) } }));
     } catch (err) {
       return next(err);
@@ -473,15 +506,18 @@ export function createGameRouter(rawDeps = {}) {
 
   router.post('/characters', async (req, res, next) => {
     try {
-      const { playerId, name } = req.body ?? {};
+      const { name } = req.body ?? {};
+      const context = resolveGameContext(req);
       const className = req.body?.className ?? req.body?.class ?? 'adventurer';
-      if (!playerId || !name) return error(res, 400, 'playerId and name are required.', 'bad-request');
+      if (context.error || !name) return error(res, 400, context.error ? context.error : 'name is required.', 'bad-request');
       if (!DEFAULT_CLASS_STATS[className]) return error(res, 400, `Unknown className ${className}.`, 'bad-request');
-      await deps.upsertPlayer(deps.db, { id: playerId });
+      await deps.upsertPlayer(deps.db, { id: context.playerId, displayName: context.player?.display_name, authProvider: context.isAuthenticated ? 'local' : undefined, authSubject: context.userId, email: req.auth?.user?.email });
       const defaults = DEFAULT_CLASS_STATS[className];
       const hardiness = numberOr(req.body.hardiness, defaults.hardiness);
       const character = await deps.createCharacter(deps.db, {
-        playerId,
+        playerId: context.playerId,
+        userId: context.userId ?? null,
+        profileId: context.profileId ?? null,
         name,
         className,
         hardiness,
@@ -496,7 +532,7 @@ export function createGameRouter(rawDeps = {}) {
         adventuresCompleted: Array.isArray(req.body.adventuresCompleted) ? req.body.adventuresCompleted : [],
       });
       const adventures = deps.loadAdventures();
-      return res.status(201).json(hallResponse({ player: { id: playerId }, characters: [character], adventures, character: rowCharacter(character), prefix: `${character.name} is ready in the Great Hall.` }));
+      return res.status(201).json(hallResponse({ player: { id: context.playerId }, characters: [character], adventures, character: rowCharacter(character), prefix: `${character.name} is ready in the Great Hall.` }));
     } catch (err) {
       return next(err);
     }
@@ -558,12 +594,13 @@ export function createGameRouter(rawDeps = {}) {
 
   router.post('/start-adventure', async (req, res, next) => {
     try {
-      const { playerId, characterId, adventureId = 'beginners-cave' } = req.body ?? {};
-      if (!playerId || !characterId) return error(res, 400, 'playerId and characterId are required.', 'bad-request');
+      const { characterId, adventureId = 'beginners-cave' } = req.body ?? {};
+      const context = resolveGameContext(req);
+      if (context.error || !characterId) return error(res, 400, context.error ? context.error : 'characterId is required.', 'bad-request');
       const adventures = deps.loadAdventures();
       const adventure = findAdventure(adventures, adventureId);
       if (!adventure) return error(res, 404, `Adventure ${adventureId} is not available.`, 'adventure-not-found');
-      const characterRow = await deps.getCharacter(deps.db, playerId, characterId);
+      const characterRow = await deps.getCharacter(deps.db, context.owner, characterId);
       if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');
       const character = rowCharacter(characterRow);
       if (!character.isAlive || character.hd <= 0) {
@@ -574,7 +611,7 @@ export function createGameRouter(rawDeps = {}) {
       }
       const startRoom = adventure.adventure.start_room;
       const runRow = await deps.createAdventureRun(deps.db, {
-        playerId,
+        playerId: context.playerId,
         characterId,
         adventureId,
         currentRoom: startRoom,
