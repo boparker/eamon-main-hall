@@ -1,7 +1,14 @@
-export async function gameFetch(path, { method = 'GET', body } = {}) {
+function requestHeaders({ body, sessionToken } = {}) {
+  const headers = {};
+  if (body) headers['content-type'] = 'application/json';
+  if (sessionToken) headers.authorization = `Bearer ${sessionToken}`;
+  return Object.keys(headers).length ? headers : undefined;
+}
+
+export async function gameFetch(path, { method = 'GET', body, sessionToken } = {}) {
   const response = await fetch(`/api/game${path}`, {
     method,
-    headers: body ? { 'content-type': 'application/json' } : undefined,
+    headers: requestHeaders({ body, sessionToken }),
     body: body ? JSON.stringify(body) : undefined,
   });
   const payload = await response.json();
@@ -14,26 +21,35 @@ export async function gameFetch(path, { method = 'GET', body } = {}) {
   return payload;
 }
 
-export function bootstrapGame({ playerId, displayName, email } = {}) {
-  return gameFetch('/bootstrap', { method: 'POST', body: { playerId, displayName, email } });
+function cleanBody(body) {
+  return Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined));
 }
 
-export function listGameCharacters(playerId) {
-  return gameFetch(`/characters?playerId=${encodeURIComponent(playerId)}`);
+export function bootstrapGame({ playerId, displayName, email, sessionToken, profileId } = {}) {
+  return gameFetch('/bootstrap', { method: 'POST', sessionToken, body: cleanBody({ playerId, displayName, email, profileId }) });
+}
+
+export function listGameCharacters(input) {
+  if (typeof input === 'object') {
+    const query = input.profileId ? `?profileId=${encodeURIComponent(input.profileId)}` : '';
+    return gameFetch(`/characters${query}`, { sessionToken: input.sessionToken });
+  }
+  return gameFetch(`/characters?playerId=${encodeURIComponent(input)}`);
 }
 
 export function createGameCharacter(character) {
-  return gameFetch('/characters', { method: 'POST', body: character });
+  const { sessionToken, ...body } = character;
+  return gameFetch('/characters', { method: 'POST', sessionToken, body: cleanBody(body) });
 }
 
-export function sendHallCommand({ playerId, characterId, input }) {
-  return gameFetch('/hall', { method: 'POST', body: { playerId, characterId, input } });
+export function sendHallCommand({ playerId, characterId, input, sessionToken, profileId }) {
+  return gameFetch('/hall', { method: 'POST', sessionToken, body: cleanBody({ playerId, profileId, characterId, input }) });
 }
 
-export function startGameAdventure({ playerId, characterId, adventureId }) {
-  return gameFetch('/start-adventure', { method: 'POST', body: { playerId, characterId, adventureId } });
+export function startGameAdventure({ playerId, characterId, adventureId, sessionToken, profileId }) {
+  return gameFetch('/start-adventure', { method: 'POST', sessionToken, body: cleanBody({ playerId, profileId, characterId, adventureId }) });
 }
 
-export function sendGameCommand({ playerId, characterId, adventureRunId, input }) {
-  return gameFetch('/command', { method: 'POST', body: { playerId, characterId, adventureRunId, input } });
+export function sendGameCommand({ playerId, characterId, adventureRunId, input, sessionToken, profileId }) {
+  return gameFetch('/command', { method: 'POST', sessionToken, body: cleanBody({ playerId, profileId, characterId, adventureRunId, input }) });
 }
