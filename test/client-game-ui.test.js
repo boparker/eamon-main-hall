@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { createPhase1GameClient } from '../public/js/game-client.js';
 
-function makeHarness({ bootstrapResponse, startResponse } = {}) {
+function makeHarness({ bootstrapResponse, startResponse, sessionToken = null, profileId = null } = {}) {
   const calls = [];
   const lines = [];
   const hudCharacters = [];
@@ -51,6 +51,8 @@ function makeHarness({ bootstrapResponse, startResponse } = {}) {
   const client = createPhase1GameClient({
     api,
     playerId: 'p1',
+    sessionToken,
+    profileId,
     render: (response) => lines.push(response.text),
     renderPlayer: (text) => lines.push(`> ${text}`),
     updateHUD: (character) => { if (character !== undefined) hudCharacters.push(character); },
@@ -88,6 +90,35 @@ const existingCharacterHall = {
   },
   media: { voice: null, background: null, portraits: [] },
 };
+
+test('registered game client sends session token and profile id instead of guest player id', async () => {
+  const { client, calls } = makeHarness({ bootstrapResponse: existingCharacterHall, sessionToken: 'raw-session-token', profileId: 'profile-1' });
+
+  await client.startPhase1Game();
+  await client.handleInput('begin beginners cave');
+  await client.handleInput('look');
+
+  assert.deepEqual(calls[0], { type: 'bootstrapGame', input: { sessionToken: 'raw-session-token', profileId: 'profile-1' } });
+  assert.equal(calls[1].type, 'startGameAdventure');
+  assert.deepEqual(calls[1].input, { sessionToken: 'raw-session-token', profileId: 'profile-1', characterId: 'char-1', adventureId: 'beginners-cave' });
+  assert.equal(calls[2].type, 'sendGameCommand');
+  assert.deepEqual(calls[2].input, { sessionToken: 'raw-session-token', profileId: 'profile-1', characterId: 'char-1', adventureRunId: 'run-1', input: 'look' });
+});
+
+test('registered character creation includes session token and profile id without guest player id', async () => {
+  const { client, calls } = makeHarness({ bootstrapResponse: noCharacterHall, sessionToken: 'raw-session-token', profileId: 'profile-1' });
+
+  await client.startPhase1Game();
+  await client.handleInput('Ariana');
+  await client.handleInput('female');
+  await client.handleInput('confirm');
+
+  const createCall = calls.find((call) => call.type === 'createGameCharacter');
+  assert.equal(createCall.input.sessionToken, 'raw-session-token');
+  assert.equal(createCall.input.profileId, 'profile-1');
+  assert.equal(Object.hasOwn(createCall.input, 'playerId'), false);
+  assert.equal(createCall.input.name, 'Ariana');
+});
 
 test('startPhase1Game bootstraps player and immediately enters name prompt when no character exists', async () => {
   const { client, calls, lines } = makeHarness({ bootstrapResponse: noCharacterHall });

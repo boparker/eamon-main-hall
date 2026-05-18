@@ -66,6 +66,8 @@ function responseCharacter(response) {
 export function createPhase1GameClient({
   api = { bootstrapGame, createGameCharacter, sendGameCommand, sendHallCommand, startGameAdventure },
   playerId,
+  sessionToken = null,
+  profileId = null,
   displayName = null,
   email = null,
   render = () => {},
@@ -85,6 +87,15 @@ export function createPhase1GameClient({
     creation: null,
     lastResponse: null,
   };
+
+  function gameIdentity() {
+    if (sessionToken && profileId) return { sessionToken, profileId };
+    return { playerId };
+  }
+
+  function requestPayload(fields) {
+    return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== null && value !== undefined));
+  }
 
   function applyResponse(response) {
     clientState.lastResponse = response;
@@ -106,7 +117,7 @@ export function createPhase1GameClient({
   }
 
   async function startPhase1Game() {
-    const response = await api.bootstrapGame({ playerId, displayName, email });
+    const response = await api.bootstrapGame(requestPayload({ ...gameIdentity(), displayName, email }));
     const applied = applyResponse(response);
     if (!clientState.character) {
       beginCharacterCreation();
@@ -170,7 +181,7 @@ export function createPhase1GameClient({
         return null;
       }
       const payload = {
-        playerId,
+        ...gameIdentity(),
         name: creation.name,
         className: 'adventurer',
         gender: creation.gender,
@@ -210,13 +221,13 @@ export function createPhase1GameClient({
         prompt('Create a character before beginning an adventure.');
         return null;
       }
-      const response = await api.startGameAdventure({ playerId, characterId: clientState.character.id, adventureId });
+      const response = await api.startGameAdventure({ ...gameIdentity(), characterId: clientState.character.id, adventureId });
       return applyResponse(response);
     }
 
     if (clientState.phase === 'adventure' && clientState.adventureRun?.status === 'active') {
       const response = await api.sendGameCommand({
-        playerId,
+        ...gameIdentity(),
         characterId: clientState.character?.id,
         adventureRunId: clientState.adventureRun.id,
         input: text,
@@ -225,7 +236,7 @@ export function createPhase1GameClient({
     }
 
     if (clientState.character?.id) {
-      const response = await api.sendHallCommand({ playerId, characterId: clientState.character.id, input: text });
+      const response = await api.sendHallCommand({ ...gameIdentity(), characterId: clientState.character.id, input: text });
       return applyResponse(response);
     }
 
