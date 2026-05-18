@@ -35,6 +35,7 @@ function makeHarness({ session = null } = {}) {
     registerForm: element(),
     status: element(),
     existingSessionButton: element(),
+    switchAccountButton: element(),
     loginUsername: element({ value: 'bo' }),
     loginPassword: element({ value: 'secret-pass' }),
     registerUsername: element({ value: 'newbo' }),
@@ -53,6 +54,7 @@ function makeHarness({ session = null } = {}) {
     gameIdentity() { return session ? { sessionToken: session.sessionToken, profileId: session.profileId } : null; },
     async login(input) { calls.push({ type: 'login', input }); session = { sessionToken: 'login-token', profileId: 'profile-1' }; return session; },
     async register(input) { calls.push({ type: 'register', input }); session = { sessionToken: 'register-token', profileId: 'profile-1' }; return session; },
+    async logout() { calls.push({ type: 'logout' }); session = null; },
   };
   const gateway = createTitleGateway({
     elements,
@@ -140,4 +142,26 @@ test('stored account session shows continue account choice and enters with accou
     identity: { sessionToken: 'stored-token', profileId: 'profile-1' },
   }]);
   assert.equal(elements.gameScreen.classList.contains('active'), true);
+});
+
+test('switch account clears stored session and keeps player on title gateway', async () => {
+  const session = {
+    sessionToken: 'stored-token',
+    profileId: 'profile-1',
+    user: { username: 'bo' },
+  };
+  const { gateway, elements, calls } = makeHarness({ session });
+  gateway.mount();
+
+  assert.equal(elements.switchAccountButton.hidden, false);
+
+  await elements.switchAccountButton.click();
+
+  assert.deepEqual(calls.filter((call) => call.type === 'logout'), [{ type: 'logout' }]);
+  assert.equal(elements.existingSessionButton.hidden, true);
+  assert.equal(elements.switchAccountButton.hidden, true);
+  assert.equal(elements.loginForm.hidden, false);
+  assert.equal(elements.registerForm.hidden, true);
+  assert.equal(elements.gameScreen.classList.contains('active'), false);
+  assert.equal(calls.some((call) => call.type === 'startPhase1Game'), false);
 });

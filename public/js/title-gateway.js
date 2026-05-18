@@ -66,16 +66,32 @@ export function createTitleGateway({
     return String(name).trim().toUpperCase() || 'ACCOUNT';
   }
 
+  function hideStoredSessionControls() {
+    if (elements.existingSessionButton) elements.existingSessionButton.hidden = true;
+    if (elements.switchAccountButton) elements.switchAccountButton.hidden = true;
+  }
+
+  async function switchAccount() {
+    await authController.logout?.();
+    hideStoredSessionControls();
+    showForm('login');
+    return null;
+  }
+
   function mountStoredSession() {
     const session = authController.getSession?.();
     if (!elements.existingSessionButton) return;
     if (!session?.sessionToken || !session?.profileId) {
-      elements.existingSessionButton.hidden = true;
+      hideStoredSessionControls();
       return;
     }
     elements.existingSessionButton.hidden = false;
     elements.existingSessionButton.textContent = `CONTINUE AS ${displayNameForSession(session)}`;
     elements.existingSessionButton.addEventListener('click', () => start(authController.gameIdentity()));
+    if (elements.switchAccountButton) {
+      elements.switchAccountButton.hidden = false;
+      elements.switchAccountButton.addEventListener('click', () => switchAccount());
+    }
   }
 
   function mount() {
@@ -93,5 +109,5 @@ export function createTitleGateway({
     });
   }
 
-  return { mount, start, authenticate, showForm };
+  return { mount, start, authenticate, showForm, switchAccount };
 }

@@ -71,6 +71,7 @@ const titleGateway = createTitleGateway({
     titleScreen: document.getElementById('title-screen'),
     gameScreen: document.getElementById('game-screen'),
     existingSessionButton: document.getElementById('existing-session-btn'),
+    switchAccountButton: document.getElementById('switch-account-btn'),
     guestButton: document.getElementById('enter-btn'),
     loginButton: document.getElementById('login-toggle-btn'),
     registerButton: document.getElementById('register-toggle-btn'),
