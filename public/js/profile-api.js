@@ -34,3 +34,12 @@ export function selectProfileCharacter({ sessionToken, profileId, characterId, f
     fetchImpl,
   });
 }
+
+export function claimGuestCharacter({ sessionToken, profileId, guestPlayerId, characterId, fetchImpl } = {}) {
+  return profileFetch(`/${encodeURIComponent(profileId)}/claim-guest-character`, {
+    method: 'POST',
+    sessionToken,
+    body: { guestPlayerId, characterId },
+    fetchImpl,
+  });
+}

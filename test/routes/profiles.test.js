@@ -41,6 +41,18 @@ function makeDeps(overrides = {}) {
       calls.push({ type: 'setSelectedCharacter', userId, profileId, characterId });
       return { id: profileId, user_id: userId, name: 'Bo', selected_character_id: characterId };
     },
+    async claimGuestCharacter(_db, input) {
+      calls.push({ type: 'claimGuestCharacter', ...input });
+      return {
+        id: input.characterId,
+        player_id: input.guestPlayerId,
+        user_id: input.userId,
+        profile_id: input.profileId,
+        name: 'Mara',
+        hardiness: 10,
+        equipment: { weapon: 'short-sword' },
+      };
+    },
     ...overrides,
   };
   deps.calls = calls;
@@ -106,6 +118,28 @@ test('POST /api/profiles/:profileId/select-character persists selected character
 
   assert.equal(response.status, 200);
   assert.equal(response.body.profile.selected_character_id, 'char-1');
+  assert.deepEqual(deps.calls.find((call) => call.type === 'setSelectedCharacter'), {
+    type: 'setSelectedCharacter', userId: 'user-1', profileId: 'profile-1', characterId: 'char-1',
+  });
+});
+
+test('POST /api/profiles/:profileId/claim-guest-character claims guest character and selects it', async () => {
+  const { app, deps } = makeApp();
+
+  const response = await request(
+    app,
+    'POST',
+    '/api/profiles/profile-1/claim-guest-character',
+    { guestPlayerId: 'guest-1', characterId: 'char-1' },
+    { authorization: 'Bearer raw-session-token' },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.ok, true);
+  assert.equal(response.body.character.id, 'char-1');
+  assert.deepEqual(deps.calls.find((call) => call.type === 'claimGuestCharacter'), {
+    type: 'claimGuestCharacter', guestPlayerId: 'guest-1', characterId: 'char-1', userId: 'user-1', profileId: 'profile-1',
+  });
   assert.deepEqual(deps.calls.find((call) => call.type === 'setSelectedCharacter'), {
     type: 'setSelectedCharacter', userId: 'user-1', profileId: 'profile-1', characterId: 'char-1',
   });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createProfile, selectProfileCharacter } from '../public/js/profile-api.js';
+import { claimGuestCharacter, createProfile, selectProfileCharacter } from '../public/js/profile-api.js';
 
 function createFetchRecorder({ response = { ok: true, profile: { id: 'profile-1', selected_character_id: 'char-1' } } } = {}) {
   const calls = [];
@@ -40,4 +40,22 @@ test('selectProfileCharacter posts selected character to profile endpoint with b
   assert.equal(calls[0].options.headers.authorization, 'Bearer raw-session-token');
   assert.equal(calls[0].options.headers['content-type'], 'application/json');
   assert.deepEqual(JSON.parse(calls[0].options.body), { characterId: 'char-1' });
+});
+
+test('claimGuestCharacter posts guest player and character ids to profile claim endpoint', async () => {
+  const { calls, fetchImpl } = createFetchRecorder({ response: { ok: true, character: { id: 'char-1' }, profile: { id: 'profile-1', selected_character_id: 'char-1' } } });
+
+  const payload = await claimGuestCharacter({
+    sessionToken: 'raw-session-token',
+    profileId: 'profile-1',
+    guestPlayerId: 'guest-1',
+    characterId: 'char-1',
+    fetchImpl,
+  });
+
+  assert.equal(payload.character.id, 'char-1');
+  assert.equal(calls[0].url, '/api/profiles/profile-1/claim-guest-character');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.headers.authorization, 'Bearer raw-session-token');
+  assert.deepEqual(JSON.parse(calls[0].options.body), { guestPlayerId: 'guest-1', characterId: 'char-1' });
 });

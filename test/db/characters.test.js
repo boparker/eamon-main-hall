@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createCharacter, getCharacter, listCharacters, updateCharacter } from '../../server/db/characters.js';
+import { claimGuestCharacter, createCharacter, getCharacter, listCharacters, updateCharacter } from '../../server/db/characters.js';
 
 function makePool(rows = []) {
   const queries = [];
@@ -110,4 +110,22 @@ test('updateCharacter can scope updates by registered user/profile ownership', a
   const query = pool.queries[0];
   assert.match(query.sql, /WHERE id = \$2 AND user_id = \$3 AND profile_id = \$4/);
   assert.deepEqual(query.params, [123, 'char-1', 'user-1', 'profile-1']);
+});
+
+test('claimGuestCharacter attaches a guest character to a user profile without mutating sheet fields', async () => {
+  const pool = makePool([{ id: 'char-1', name: 'Mara', hardiness: 10, equipment: { weapon: 'sword' } }]);
+
+  const claimed = await claimGuestCharacter(pool, {
+    guestPlayerId: 'guest-1',
+    characterId: 'char-1',
+    userId: 'user-1',
+    profileId: 'profile-1',
+  });
+
+  const query = pool.queries[0];
+  assert.equal(claimed.id, 'char-1');
+  assert.match(query.sql, /UPDATE player_characters SET\s+user_id = \$1,\s+profile_id = \$2,\s+updated_at = NOW\(\)/);
+  assert.match(query.sql, /WHERE id = \$3 AND player_id = \$4 AND user_id IS NULL AND profile_id IS NULL/);
+  assert.doesNotMatch(query.sql, /hardiness|agility|charisma|hd|max_hd|gold|inventory|equipment|adventures_completed/i);
+  assert.deepEqual(query.params, ['user-1', 'profile-1', 'char-1', 'guest-1']);
 });

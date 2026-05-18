@@ -114,3 +114,15 @@ export async function updateCharacter(db, owner, characterId, patch = {}) {
   `, params);
   return result.rows[0] ?? null;
 }
+
+export async function claimGuestCharacter(db, { guestPlayerId, characterId, userId, profileId }) {
+  const result = await db.query(`
+    UPDATE player_characters SET
+      user_id = $1,
+      profile_id = $2,
+      updated_at = NOW()
+    WHERE id = $3 AND player_id = $4 AND user_id IS NULL AND profile_id IS NULL
+    RETURNING *
+  `, [userId, profileId, characterId, guestPlayerId]);
+  return result.rows[0] ?? null;
+}

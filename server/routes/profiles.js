@@ -4,6 +4,7 @@ import { requireAuth as defaultRequireAuth } from '../auth/middleware.js';
 import { hashSessionToken as defaultHashSessionToken } from '../auth/sessions.js';
 import { getUserBySessionTokenHash as defaultGetUserBySessionTokenHash } from '../db/users.js';
 import { createProfile as defaultCreateProfile, listProfiles as defaultListProfiles, setSelectedCharacter as defaultSetSelectedCharacter } from '../db/profiles.js';
+import { claimGuestCharacter as defaultClaimGuestCharacter } from '../db/characters.js';
 
 function resolveDeps(raw = {}) {
   return {
@@ -14,6 +15,7 @@ function resolveDeps(raw = {}) {
     createProfile: raw.createProfile ?? defaultCreateProfile,
     listProfiles: raw.listProfiles ?? defaultListProfiles,
     setSelectedCharacter: raw.setSelectedCharacter ?? defaultSetSelectedCharacter,
+    claimGuestCharacter: raw.claimGuestCharacter ?? defaultClaimGuestCharacter,
   };
 }
 
@@ -59,6 +61,25 @@ export function createProfilesRouter(rawDeps = {}) {
       const profile = await deps.setSelectedCharacter(deps.db, req.auth.user.id, req.params.profileId, characterId);
       if (!profile) return res.status(404).json({ error: 'Profile or character not found' });
       return res.json({ ok: true, profile });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  router.post('/:profileId/claim-guest-character', async (req, res, next) => {
+    try {
+      const guestPlayerId = String(req.body?.guestPlayerId ?? '').trim();
+      const characterId = String(req.body?.characterId ?? '').trim();
+      if (!guestPlayerId || !characterId) return res.status(400).json({ error: 'guestPlayerId and characterId are required' });
+      const character = await deps.claimGuestCharacter(deps.db, {
+        guestPlayerId,
+        characterId,
+        userId: req.auth.user.id,
+        profileId: req.params.profileId,
+      });
+      if (!character) return res.status(404).json({ error: 'Guest character not found or already claimed' });
+      const profile = await deps.setSelectedCharacter(deps.db, req.auth.user.id, req.params.profileId, characterId);
+      return res.json({ ok: true, character, profile });
     } catch (err) {
       return next(err);
     }
