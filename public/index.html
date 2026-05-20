@@ -194,6 +194,13 @@
     #send-btn { flex-shrink: 0; background: none; border: 1px solid var(--border); border-radius: 2px; padding: 8px 20px; font-family: var(--font-head); font-size: 0.8rem; letter-spacing: 0.1em; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
     #send-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    #input-help-row { max-width: 700px; display: flex; justify-content: flex-end; margin-top: 10px; position: relative; }
+    #help-toggle-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); background: rgba(12,10,8,0.85); color: var(--text-dim); cursor: pointer; font-family: var(--font-head); }
+    #help-toggle-btn:hover, #help-toggle-btn.active { border-color: var(--gold-dim); color: var(--gold); box-shadow: 0 0 18px var(--gold-glow); }
+    #help-panel { position: absolute; right: 0; bottom: 36px; width: min(340px, calc(100vw - 40px)); padding: 14px 16px; background: rgba(8,6,4,0.96); border: 1px solid var(--gold-dim); box-shadow: 0 14px 40px rgba(0,0,0,0.45); color: var(--text); font-size: 0.95rem; line-height: 1.45; }
+    #help-panel[hidden] { display: none; }
+    #help-panel h2 { font-family: var(--font-head); color: var(--gold); font-size: 0.9rem; letter-spacing: 0.12em; margin-bottom: 8px; text-transform: uppercase; }
+    #help-panel ul { padding-left: 18px; display: grid; gap: 5px; }
 
     @keyframes inputPulse { 0%,100%{box-shadow:0 0 20px var(--gold-glow)} 50%{box-shadow:0 0 35px rgba(200,168,75,0.2),0 0 70px rgba(200,168,75,0.06)} }
     #input-box.pulse { border-color: var(--gold-dim); animation: inputPulse 2.5s ease-in-out infinite; }
@@ -354,6 +361,17 @@
       <span id="prompt-arrow" style="font-size:1.3rem">&#8250;</span>
       <input type="text" id="player-input" placeholder="" autocomplete="off" spellcheck="false" disabled style="font-size:1.15rem">
       <button id="send-btn" disabled style="font-size:1.05rem;padding:10px 22px">SEND</button>
+    </div>
+    <div id="input-help-row">
+      <button id="help-toggle-btn" type="button" aria-controls="help-panel" aria-label="Open help">?</button>
+      <div id="help-panel" hidden>
+        <h2>Great Hall Help</h2>
+        <ul>
+          <li>Create a character by entering a name, choosing a gender, and confirming the roll.</li>
+          <li>Use the choice buttons or type commands such as “visit weapons shop”, “view equipment”, or “begin beginner's cave”.</li>
+          <li>Accounts preserve characters before expeditions; guest play is only a Main Hall preview.</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>

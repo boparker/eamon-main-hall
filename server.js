@@ -25,6 +25,7 @@ const pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 }) : null;
+let dbReady = false;
 
 async function initDatabase() {
   if (!pool) {
@@ -50,6 +51,7 @@ async function initDatabase() {
     
     if (tableCheck.rows[0].exists) {
       console.log('[DB] Schema already initialized');
+      dbReady = true;
       return;
     }
     
@@ -101,31 +103,43 @@ async function initDatabase() {
     
     console.log('[DB] Schema created successfully');
     console.log('[DB] Ready for seed data');
+    dbReady = true;
     
   } catch (err) {
     console.error('[DB] Initialization error:', err.message);
-    throw err;
+    console.warn('[DB] Continuing without database-backed persistence until DATABASE_URL/Postgres is healthy.');
   }
 }
 
 // ── AI Client ─────────────────────────────────────────────────────────────────
-let AI_PROVIDER, MODEL;
+let AI_PROVIDER = null;
+let MODEL = null;
+
 if (process.env.XAI_API_KEY) {
   AI_PROVIDER = 'xai';
-  MODEL = 'grok-3-mini';
+  MODEL = 'grok-3-mini-latest';
 } else if (process.env.OPENAI_API_KEY) {
   AI_PROVIDER = 'openai';
   MODEL = 'gpt-4o';
-} else {
-  AI_PROVIDER = 'openai';
-  MODEL = 'gpt-4o';
+} else if (process.env.ANTHROPIC_API_KEY) {
+  AI_PROVIDER = 'anthropic';
+  MODEL = 'claude-3-5-haiku-latest';
 }
 
-const anthropic = AI_PROVIDER === 'anthropic' ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
-const openai = AI_PROVIDER !== 'anthropic' ? new OpenAI({
-  apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
-  baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1',
-}) : null;
+const anthropic = AI_PROVIDER === 'anthropic'
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+const openai = AI_PROVIDER && AI_PROVIDER !== 'anthropic'
+  ? new OpenAI({
+      apiKey: process.env.XAI_API_KEY || process.env.OPENAI_API_KEY,
+      baseURL: process.env.XAI_API_KEY ? 'https://api.x.ai/v1' : 'https://api.openai.com/v1',
+    })
+  : null;
+
+if (!AI_PROVIDER) {
+  console.warn('[AI] No XAI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY set. App will boot; AI routes will return an error until a key is configured.');
+}
 
 // ── ElevenLabs config (FULL voice IDs) ────────────────────────────────────────
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY;
@@ -305,6 +319,13 @@ async function streamAI(messages, res, session) {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+
+  if (!AI_PROVIDER || (!openai && !anthropic)) {
+    res.write(`data: ${JSON.stringify({ error: 'AI provider is not configured. Set XAI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY.' })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
+    return;
+  }
 
   try {
     let streamIterator;
@@ -740,9 +761,11 @@ app.get('/api/health', (req, res) => {
     ok: true,
     fal_key_set: !!process.env.FAL_KEY,
     fal_key_length: process.env.FAL_KEY?.length || 0,
-    db_connected: !!pool,
+    db_configured: !!pool,
+    db_ready: dbReady,
     model: MODEL,
     provider: AI_PROVIDER,
+    ai_configured: !!AI_PROVIDER,
   });
 });
 

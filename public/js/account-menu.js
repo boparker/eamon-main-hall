@@ -30,7 +30,7 @@ export function createAccountMenu({
     const isAccount = Boolean(session?.sessionToken && session?.profileId);
 
     if (isAccount) {
-      elements.summary.textContent = `Entered in the Guild rolls as ${userName(session) ?? 'adventurer'}`;
+      elements.summary.textContent = `Entered in the Guild rolls as ${userName(session) ?? 'account'}`;
       elements.profile.textContent = `Roster: ${activeProfileName(session) ?? session.profileId}`;
     } else {
       elements.summary.textContent = 'Visiting the Guild as a guest';

@@ -39,12 +39,16 @@ test('updateHUD keeps shop gold label synced with current character gold', () =>
   assert.equal(elements.get('shop-gold').textContent, 'Your gold: 200');
 });
 
-test('updateHUD clears shop gold label when there is no active character', () => {
+test('updateHUD shows starting gold and dashes for character stats before character creation', () => {
   const elements = installFakeDocument(['hud-name', 'stat-hd', 'stat-ag', 'stat-ch', 'stat-gold', 'shop-gold']);
   state.character = {};
 
   updateHUD(false);
 
-  assert.equal(elements.get('stat-gold').textContent, '—');
-  assert.equal(elements.get('shop-gold').textContent, 'Your gold: —');
+  assert.equal(elements.get('hud-name').textContent, '—');
+  assert.equal(elements.get('stat-hd').textContent, '—');
+  assert.equal(elements.get('stat-ag').textContent, '—');
+  assert.equal(elements.get('stat-ch').textContent, '—');
+  assert.equal(elements.get('stat-gold').textContent, 200);
+  assert.equal(elements.get('shop-gold').textContent, 'Your gold: 200');
 });

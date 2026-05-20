@@ -257,16 +257,12 @@ function hallChoices(character, unlockedAdventures = []) {
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
-  const playerName = player?.displayName || player?.id || 'wanderer';
-  const lines = [prefix || `You stand in the Great Hall, ${playerName}.`];
-  lines.push('The Main Hall keeps your character, equipment, gold, and adventure choices before any expedition begins.');
+  const displayName = String(player?.displayName ?? '').trim();
+  const lines = [prefix || (displayName ? `You stand in the Great Hall, ${displayName}.` : 'You stand in the Great Hall.')];
   if (!character) {
-    lines.push('Create a new adventurer: choose a name and gender, roll prime attributes, start with 200 gold, then buy equipment. You may also sign the Guild rolls to preserve an adventurer beyond the Main Hall.');
+    lines.push('The Guild is ready to record a new adventurer.');
   } else {
     lines.push(`${character.name} is present in the Guild roster and ready for the next expedition.`);
-    const inventory = character.inventory?.length ? character.inventory.map((item) => item.name ?? item.slug).join(', ') : 'none';
-    lines.push(`Inventory summary: ${inventory}. Use View Equipment or the HUD for full character details.`);
-    lines.push('You may shop for weapons or armor, review equipment, create another character, or explicitly begin The Beginner\'s Cave.');
   }
   if (unlockedAdventures?.length) lines.push(`Unlocked adventures: ${unlockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
   if (lockedAdventures?.length) lines.push(`Locked adventures: ${lockedAdventures.map((adventure) => adventure.name).join(', ')}.`);

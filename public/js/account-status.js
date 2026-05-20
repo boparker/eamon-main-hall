@@ -14,15 +14,16 @@ export function renderAccountStatus(element, session) {
   if (!element) return;
 
   const name = userName(session);
-  if (!session?.sessionToken && !name) {
+  if (!session?.sessionToken && !session?.token && !name && !session?.profileId) {
     element.textContent = 'Guest mode';
     element.dataset.mode = 'guest';
     element.hidden = false;
     return;
   }
 
+  const accountLabel = name ?? 'account';
   const profile = profileName(session);
-  element.textContent = profile ? `Signed in as ${name} · ${profile}` : `Signed in as ${name}`;
+  element.textContent = profile ? `Signed in as ${accountLabel} · ${profile}` : `Signed in as ${accountLabel}`;
   element.dataset.mode = 'account';
   element.hidden = false;
 }

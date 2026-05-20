@@ -3,12 +3,13 @@
 import { state } from './state.js';
 
 export function updateHUD(animate) {
-  document.getElementById('hud-name').textContent = state.character.name || '—';
+  const hasCharacter = Boolean(state.character?.id || state.character?.name);
+  document.getElementById('hud-name').textContent = hasCharacter ? state.character.name : '—';
   const stats = {
-    'stat-hd': state.character.hd,
-    'stat-ag': state.character.agility ?? state.character.ag,
-    'stat-ch': state.character.charisma ?? state.character.ch,
-    'stat-gold': state.character.name ? (state.character.gold ?? 0) : null,
+    'stat-hd': hasCharacter ? state.character.hd : null,
+    'stat-ag': hasCharacter ? (state.character.agility ?? state.character.ag) : null,
+    'stat-ch': hasCharacter ? (state.character.charisma ?? state.character.ch) : null,
+    'stat-gold': hasCharacter ? (state.character.gold ?? 0) : 200,
   };
   for (const [id, val] of Object.entries(stats)) {
     const el = document.getElementById(id);

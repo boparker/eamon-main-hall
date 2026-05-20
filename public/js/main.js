@@ -14,6 +14,7 @@ import { renderAccountStatus } from './account-status.js';
 import { createAccountMenu } from './account-menu.js';
 import { listGameCharacters } from './api.js';
 import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
+import { initHelpMenu } from './help-menu.js';
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -156,6 +157,7 @@ registerPurchaseHandler((text) => {
 
 // ── Audio controls ──
 initAudioControls();
+initHelpMenu();
 
 // ── Boot / Title gateway ──
 titleGateway = createTitleGateway({

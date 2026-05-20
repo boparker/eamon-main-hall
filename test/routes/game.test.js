@@ -274,6 +274,7 @@ test('POST /api/game/bootstrap returns Great Hall with create/account choices an
   assert.equal(response.body.events[0].type, 'enter_hall');
   assert.equal(response.body.state.phase, 'great-hall');
   assert.match(response.body.text, /Great Hall/i);
+  assert.equal(response.body.text.startsWith('You stand in the Great Hall, Bo.'), true);
   assert.equal(response.body.state.character, null);
   assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /guild rolls/i.test(choice)), true);
@@ -281,6 +282,15 @@ test('POST /api/game/bootstrap returns Great Hall with create/account choices an
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
   assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('POST /api/game/bootstrap omits player-name salutation when no display name is known', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const response = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'local-player-1' });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.text.startsWith('You stand in the Great Hall.'), true);
+  assert.doesNotMatch(response.body.text.split('\n')[0], /local-player-1|adventurer|wanderer/i);
 });
 
 test('authenticated game bootstrap uses profile ownership without requiring a guest player id', async () => {
@@ -334,6 +344,7 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
   assert.match(response.body.text, /Mara/);
+  assert.doesNotMatch(response.body.text, /Inventory summary|Use View Equipment|HUD|shop for weapons|explicitly begin/i);
   assert.doesNotMatch(response.body.text, /HD \d+\/\d+/i);
   assert.doesNotMatch(response.body.text, /Hardiness|Agility|Charisma|Gold \d+|Bank \d+|Equipment: \{/i);
 });
