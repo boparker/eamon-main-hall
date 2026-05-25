@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   createAdventureRun,
   getAdventureRun,
+  getActiveAdventureRunForCharacter,
   updateAdventureRun,
   completeAdventureRun,
   abandonAdventureRun,
@@ -79,6 +80,16 @@ test('getAdventureRun can scope by registered user and profile', async () => {
 
   assert.match(pool.queries[0].sql, /WHERE id = \$1 AND player_id = \$2 AND user_id = \$3 AND profile_id = \$4/);
   assert.deepEqual(pool.queries[0].params, ['run-1', 'account:user-1', 'user-1', 'profile-1']);
+});
+
+test('getActiveAdventureRunForCharacter scopes active runs by character and registered profile', async () => {
+  const pool = makePool([{ id: 'run-1' }]);
+
+  await getActiveAdventureRunForCharacter(pool, { playerId: 'account:user-1', userId: 'user-1', profileId: 'profile-1' }, 'char-1');
+
+  assert.match(pool.queries[0].sql, /WHERE character_id = \$1 AND status = 'active' AND player_id = \$2 AND user_id = \$3 AND profile_id = \$4/);
+  assert.match(pool.queries[0].sql, /ORDER BY updated_at DESC/);
+  assert.deepEqual(pool.queries[0].params, ['char-1', 'account:user-1', 'user-1', 'profile-1']);
 });
 
 test('updateAdventureRun updates allowed state fields as JSON', async () => {

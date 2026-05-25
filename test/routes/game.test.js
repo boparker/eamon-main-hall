@@ -145,6 +145,12 @@ function makeDeps(options = {}) {
       if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
       return row?.player_id === owner ? row : null;
     },
+    async getActiveAdventureRunForCharacter(_db, owner, characterId) {
+      const rows = [...runs.values()].filter((row) => row.character_id === characterId && row.status === 'active');
+      const row = rows.at(-1);
+      if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
+      return row?.player_id === owner ? row : null;
+    },
     async updateAdventureRun(_db, owner, runId, patch) {
       calls.push({ type: 'updateRun', owner, runId, patch });
       const row = runs.get(runId);
@@ -518,6 +524,28 @@ test('POST /api/game/start-adventure creates persistent run and renders starting
   assert.equal(started.body.state.run.currentRoom, 1);
   assert.match(started.body.text, /Entrance/);
   assert.deepEqual(started.body.choices, ['north', 'south']);
+});
+
+test('POST /api/game/start-adventure resumes an existing active run instead of crashing on duplicate active run', async () => {
+  const { app, deps } = makeApp();
+  const headers = { authorization: 'Bearer raw-session-token' };
+  const character = await request(app, 'POST', '/api/game/characters', {
+    profileId: 'profile-1', name: 'Mara', className: 'rogue', hardiness: 10, agility: 12, charisma: 7,
+  }, headers);
+
+  const started = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+  const resumed = await request(app, 'POST', '/api/game/start-adventure', {
+    profileId: 'profile-1', characterId: character.body.state.character.id, adventureId: 'beginners-cave',
+  }, headers);
+
+  assert.equal(started.status, 201);
+  assert.equal(resumed.status, 200);
+  assert.equal(resumed.body.event.type, 'resume_adventure');
+  assert.equal(resumed.body.state.adventureRun.id, started.body.state.adventureRun.id);
+  assert.equal(resumed.body.state.locationTitle, 'Entrance');
+  assert.equal(deps.calls.filter((call) => call.type === 'createRun').length, 1);
 });
 
 test('authenticated command scopes character and run mutations to the requested profile', async () => {

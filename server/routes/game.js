@@ -34,6 +34,7 @@ import {
   abandonAdventureRun as defaultAbandonAdventureRun,
   completeAdventureRun as defaultCompleteAdventureRun,
   createAdventureRun as defaultCreateAdventureRun,
+  getActiveAdventureRunForCharacter as defaultGetActiveAdventureRunForCharacter,
   getAdventureRun as defaultGetAdventureRun,
   updateAdventureRun as defaultUpdateAdventureRun,
 } from '../db/adventureRuns.js';
@@ -470,6 +471,7 @@ function normalizeDeps(deps = {}) {
     listCharacters: deps.listCharacters ?? defaultListCharacters,
     updateCharacter: deps.updateCharacter ?? defaultUpdateCharacter,
     createAdventureRun: deps.createAdventureRun ?? defaultCreateAdventureRun,
+    getActiveAdventureRunForCharacter: deps.getActiveAdventureRunForCharacter ?? defaultGetActiveAdventureRunForCharacter,
     getAdventureRun: deps.getAdventureRun ?? defaultGetAdventureRun,
     updateAdventureRun: deps.updateAdventureRun ?? defaultUpdateAdventureRun,
     completeAdventureRun: deps.completeAdventureRun ?? defaultCompleteAdventureRun,
@@ -636,6 +638,18 @@ export function createGameRouter(rawDeps = {}) {
       }
       if (adventureId !== BEGINNERS_CAVE_ID && !isBeginnerComplete(character)) {
         return error(res, 423, "Complete The Beginner's Cave before starting later adventures.", 'adventure-locked');
+      }
+      const existingRunRow = await deps.getActiveAdventureRunForCharacter(deps.db, context.owner, characterId);
+      if (existingRunRow) {
+        const existingAdventure = findAdventure(adventures, existingRunRow.adventure_id);
+        if (!existingAdventure) return error(res, 404, `Adventure ${existingRunRow.adventure_id} is not available.`, 'adventure-not-found');
+        return res.json(roomResponse({
+          adventure: existingAdventure,
+          run: rowRun(existingRunRow),
+          character,
+          event: { type: 'resume_adventure' },
+          intent: { type: 'start_adventure', source: 'rules', resumed: true },
+        }));
       }
       const startRoom = adventure.adventure.start_room;
       const runRow = await deps.createAdventureRun(deps.db, {

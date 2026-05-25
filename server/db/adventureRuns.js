@@ -101,6 +101,18 @@ export async function getAdventureRun(db, owner, runId) {
   return result.rows[0] ?? null;
 }
 
+export async function getActiveAdventureRunForCharacter(db, owner, characterId) {
+  const scope = runOwnerWhere(owner, 2);
+  const result = await db.query(
+    `SELECT * FROM adventure_runs
+     WHERE character_id = $1 AND status = 'active' AND ${scope.clause}
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [characterId, ...scope.params],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function updateAdventureRun(db, owner, runId, patch = {}) {
   const assignments = [];
   const params = [];
