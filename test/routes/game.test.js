@@ -274,7 +274,7 @@ test('POST /api/game/bootstrap returns Great Hall with create/account choices an
   assert.equal(response.body.events[0].type, 'enter_hall');
   assert.equal(response.body.state.phase, 'great-hall');
   assert.match(response.body.text, /Great Hall/i);
-  assert.equal(response.body.text.startsWith('You stand in the Great Hall, Bo.'), true);
+  assert.equal(response.body.text.startsWith('You stand in the Great Hall.'), true);
   assert.equal(response.body.state.character, null);
   assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /guild rolls/i.test(choice)), true);
@@ -405,6 +405,27 @@ test('POST /api/game/hall buys equipment server-side and blocks invalid or unaff
   const unaffordable = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy plate armor' });
   assert.equal(unaffordable.status, 409);
   assert.match(unaffordable.body.text, /not enough|insufficient/i);
+});
+
+test('authenticated POST /api/game/hall uses account profile ownership without requiring playerId', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const created = await createAccountCharacter(app, { name: 'Account Mara', gold: 80 });
+  const characterId = created.body.state.character.id;
+
+  const shop = await request(app, 'POST', '/api/game/hall', {
+    profileId: 'profile-1', characterId, input: 'visit weapons shop',
+  }, accountHeaders);
+  assert.equal(shop.status, 200);
+  assert.match(shop.body.text, /Short Sword/);
+
+  const bought = await request(app, 'POST', '/api/game/hall', {
+    profileId: 'profile-1', characterId, input: 'buy short sword',
+  }, accountHeaders);
+  assert.equal(bought.status, 200);
+  assert.equal(bought.body.state.character.userId, 'user-1');
+  assert.equal(bought.body.state.character.profileId, 'profile-1');
+  assert.equal(bought.body.state.character.gold, 50);
+  assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
 });
 
 test('Beginner completion unlocks later adventure metadata in Great Hall', async () => {

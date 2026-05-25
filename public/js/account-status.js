@@ -23,7 +23,8 @@ export function renderAccountStatus(element, session) {
 
   const accountLabel = name ?? 'account';
   const profile = profileName(session);
-  element.textContent = profile ? `Signed in as ${accountLabel} · ${profile}` : `Signed in as ${accountLabel}`;
+  const profileLooksDuplicate = profile && String(profile).trim().toLowerCase() === String(accountLabel).trim().toLowerCase();
+  element.textContent = profile && !profileLooksDuplicate ? `Signed in as ${accountLabel} · ${profile}` : `Signed in as ${accountLabel}`;
   element.dataset.mode = 'account';
   element.hidden = false;
 }

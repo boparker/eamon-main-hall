@@ -41,6 +41,7 @@ function makeHarness({ session = null, onAuthenticated = null } = {}) {
     registerUsername: element({ value: 'newbo' }),
     registerEmail: element({ value: 'bo@example.com' }),
     registerPassword: element({ value: 'secret-pass' }),
+    registerPasswordConfirm: element({ value: 'secret-pass' }),
   };
   const calls = [];
   const gameClient = {
@@ -109,6 +110,20 @@ test('register path creates an account on the title screen and enters with accou
     input: { username: 'newbo', email: 'bo@example.com', password: 'secret-pass' },
   }]);
   assert.equal(elements.gameScreen.classList.contains('active'), true);
+});
+
+test('register path requires email and matching password confirmation', async () => {
+  const { gateway, elements, calls } = makeHarness();
+  gateway.mount();
+
+  elements.registerEmail.value = '';
+  await assert.rejects(() => elements.registerForm.submit(), /Email is required/);
+  assert.equal(calls.some((call) => call.type === 'register'), false);
+
+  elements.registerEmail.value = 'bo@example.com';
+  elements.registerPasswordConfirm.value = 'different-pass';
+  await assert.rejects(() => elements.registerForm.submit(), /Passwords do not match/);
+  assert.equal(calls.some((call) => call.type === 'register'), false);
 });
 
 test('authenticated hook can claim a pending guest character before entering account game', async () => {

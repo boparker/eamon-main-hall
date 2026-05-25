@@ -126,9 +126,9 @@ export function createPhase1GameClient({
     return applied;
   }
 
-  function prompt(text, character = clientState.character) {
+  function prompt(text, character = clientState.character, choices = []) {
     updateHUD(character, { state: { phase: 'great-hall', character } });
-    render({ ok: true, text, choices: [], state: { phase: 'great-hall', character } });
+    render({ ok: true, text, choices, state: { phase: 'great-hall', character } });
   }
 
   function beginCharacterCreation() {
@@ -152,19 +152,23 @@ export function createPhase1GameClient({
       }
       creation.name = String(input ?? '').trim().split(/\s+/).slice(0, 3).join(' ');
       creation.step = 'gender';
-      prompt('Choose a gender: male or female.');
+      prompt('Choose a gender: male or female.', null, ['Male', 'Female']);
       return null;
     }
     if (creation.step === 'gender') {
       const normalizedGender = normalizeText(input);
       if (!['m', 'male', 'f', 'female'].includes(normalizedGender)) {
-        prompt('Choose a gender: male or female.');
+        prompt('Choose a gender: male or female.', null, ['Male', 'Female']);
         return null;
       }
       creation.gender = normalizedGender.startsWith('f') ? 'f' : 'm';
       creation.stats = statsGenerator('adventurer');
       creation.step = 'confirm';
-      prompt(`Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces. Type confirm to begin your adventuring career, reroll to roll again, or create character to restart.`);
+      prompt(
+        `Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces.`,
+        null,
+        ['Confirm', 'Reroll', 'Create Character'],
+      );
       return null;
     }
     if (creation.step === 'confirm') {
@@ -174,11 +178,19 @@ export function createPhase1GameClient({
       }
       if (/^(reroll|roll again)$/i.test(String(input ?? '').trim())) {
         creation.stats = statsGenerator('adventurer');
-        prompt(`Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces. Type confirm to begin your adventuring career, reroll to roll again, or create character to restart.`);
+        prompt(
+          `Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces.`,
+          null,
+          ['Confirm', 'Reroll', 'Create Character'],
+        );
         return null;
       }
       if (!isConfirm(input)) {
-        prompt('Type confirm to create this adventurer, reroll to roll again, or create character to restart.');
+        prompt(
+          'Choose confirm to create this adventurer, reroll to roll again, or create character to restart.',
+          null,
+          ['Confirm', 'Reroll', 'Create Character'],
+        );
         return null;
       }
       const payload = {

@@ -257,8 +257,8 @@ function hallChoices(character, unlockedAdventures = []) {
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
-  const displayName = String(player?.displayName ?? '').trim();
-  const lines = [prefix || (displayName ? `You stand in the Great Hall, ${displayName}.` : 'You stand in the Great Hall.')];
+  const characterName = String(character?.name ?? '').trim();
+  const lines = [prefix || (characterName ? `You stand in the Great Hall, ${characterName}.` : 'You stand in the Great Hall.')];
   if (!character) {
     lines.push('The Guild is ready to record a new adventurer.');
   } else {
@@ -543,10 +543,12 @@ export function createGameRouter(rawDeps = {}) {
 
   router.post('/hall', async (req, res, next) => {
     try {
-      const { playerId, characterId, input } = req.body ?? {};
-      if (!playerId || !characterId || !input) return error(res, 400, 'playerId, characterId, and input are required.', 'bad-request');
+      const { characterId, input } = req.body ?? {};
+      const context = resolveGameContext(req);
+      if (context.error || !characterId || !input) return error(res, 400, context.error ? context.error : 'characterId and input are required.', 'bad-request');
+      const hallPlayer = context.player ?? { id: context.playerId };
       const [characterRow, adventures] = await Promise.all([
-        deps.getCharacter(deps.db, playerId, characterId),
+        deps.getCharacter(deps.db, context.owner, characterId),
         Promise.resolve(deps.loadAdventures()),
       ]);
       if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');
@@ -554,23 +556,25 @@ export function createGameRouter(rawDeps = {}) {
       const normalizedInput = normalizeTarget(input);
       if (/register|account|upgrade|login|sign\s*in/.test(normalizedInput)) {
         return res.json(hallResponse({
-          player: { id: playerId },
+          player: hallPlayer,
           characters: [characterRow],
           adventures,
           character,
-          prefix: 'Account registration is reserved for the next account layer. This anonymous player profile is already being saved locally for now.',
+          prefix: context.isAuthenticated
+            ? 'This adventurer is already preserved in your account.'
+            : 'Create a free account to preserve this adventurer before leaving the Great Hall.',
         }));
       }
       if (normalizedInput === 'view equipment' || normalizedInput === 'equipment') {
-        return res.json(equipmentResponse({ player: { id: playerId }, character, characters: [characterRow], adventures }));
+        return res.json(equipmentResponse({ player: hallPlayer, character, characters: [characterRow], adventures }));
       }
       if (/^(?:visit\s+)?(?:weapon|weapons|armor|shield|shields|equipment)(?:\s+shop)?$/.test(normalizedInput)
         || /shop/.test(normalizedInput)) {
-        return res.json(shopResponse({ player: { id: playerId }, character, characters: [characterRow], adventures, input }));
+        return res.json(shopResponse({ player: hallPlayer, character, characters: [characterRow], adventures, input }));
       }
       const buyMatch = /^buy\s+/i.test(input);
       if (!buyMatch) {
-        return res.json(hallResponse({ player: { id: playerId }, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
+        return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
       }
       const item = findShopItem(input);
       if (!item) return error(res, 400, `The Great Hall shop does not sell ${String(input).replace(/^buy\s+/i, '')}.`, 'invalid-purchase');
@@ -583,13 +587,13 @@ export function createGameRouter(rawDeps = {}) {
       const ownedItem = { slug: item.slug, name: item.name, price: item.price, category: item.category, stats: item.stats };
       const inventory = [...(character.inventory ?? []), ownedItem];
       const equipment = { ...(character.equipment ?? {}), [item.equipmentSlot]: ownedItem };
-      const updated = await deps.updateCharacter(deps.db, playerId, characterId, {
+      const updated = await deps.updateCharacter(deps.db, context.owner, characterId, {
         gold: character.gold - item.price,
         inventory,
         equipment,
       });
       const updatedCharacter = rowCharacter(updated);
-      return res.json(hallResponse({ player: { id: playerId }, characters: [updated], adventures, character: updatedCharacter, prefix: `You buy ${item.name} and return to the Great Hall.` }));
+      return res.json(hallResponse({ player: hallPlayer, characters: [updated], adventures, character: updatedCharacter, prefix: `You buy ${item.name} and return to the Great Hall.` }));
     } catch (err) {
       return next(err);
     }

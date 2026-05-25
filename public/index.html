@@ -50,6 +50,8 @@
     .enter-btn { padding: 14px 32px; font-family: var(--font-head); font-size: 0.9rem; letter-spacing: 0.15em; color: var(--gold); background: transparent; border: 1px solid var(--gold-dim); border-radius: 2px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; }
     .enter-btn:hover { background: rgba(200,168,75,0.06); border-color: var(--gold); box-shadow: 0 0 30px rgba(200,168,75,0.12); }
     .enter-btn.secondary { color: var(--text); border-color: var(--border); }
+    .enter-btn.ghost { color: var(--text-dim); border-color: rgba(110,93,62,0.55); background: rgba(255,255,255,0.015); font-size: 0.78rem; padding: 11px 22px; }
+    .enter-btn.ghost:hover { color: var(--text); border-color: var(--border); box-shadow: 0 0 18px rgba(200,168,75,0.08); }
     .auth-panel { width: min(420px, calc(100vw - 40px)); display: grid; gap: 10px; padding: 16px; border: 1px solid var(--border); background: rgba(12,10,8,0.72); backdrop-filter: blur(12px); }
     .auth-panel[hidden] { display: none; }
     .auth-panel input { width: 100%; padding: 11px 12px; background: rgba(5,4,4,0.85); border: 1px solid var(--border); color: var(--text); font-family: var(--font-body); font-size: 1rem; }
@@ -269,9 +271,9 @@
   <div class="title-actions" aria-label="Choose how to enter Eamon">
     <button class="enter-btn" id="existing-session-btn" hidden>CONTINUE ACCOUNT</button>
     <button class="enter-btn secondary" id="switch-account-btn" hidden>SWITCH ACCOUNT</button>
-    <button class="enter-btn" id="enter-btn">CONTINUE AS GUEST</button>
-    <button class="enter-btn secondary" id="login-toggle-btn">LOG IN</button>
+    <button class="enter-btn" id="login-toggle-btn">LOG IN</button>
     <button class="enter-btn secondary" id="register-toggle-btn">CREATE ACCOUNT</button>
+    <button class="enter-btn ghost" id="enter-btn">CONTINUE AS GUEST</button>
   </div>
   <p class="title-status" id="title-auth-status" aria-live="polite"></p>
   <form class="auth-panel" id="login-form" hidden>
@@ -281,8 +283,9 @@
   </form>
   <form class="auth-panel" id="register-form" hidden>
     <input id="register-username" name="username" type="text" autocomplete="username" placeholder="Choose username" required>
-    <input id="register-email" name="email" type="email" autocomplete="email" placeholder="Email optional">
+    <input id="register-email" name="email" type="email" autocomplete="email" placeholder="Email" required>
     <input id="register-password" name="password" type="password" autocomplete="new-password" placeholder="Choose password" required>
+    <input id="register-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="Confirm password" required>
     <button class="enter-btn" type="submit">CREATE ACCOUNT</button>
   </form>
 </div>

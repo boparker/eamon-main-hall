@@ -55,6 +55,11 @@ export function createTitleGateway({
           email: elements.registerEmail.value.trim(),
           password: elements.registerPassword.value,
         };
+    if (kind === 'register') {
+      const passwordConfirm = elements.registerPasswordConfirm?.value ?? input.password;
+      if (!input.email) throw new Error('Email is required to create an account.');
+      if (input.password !== passwordConfirm) throw new Error('Passwords do not match.');
+    }
     const session = kind === 'login'
       ? await authController.login(input)
       : await authController.register(input);

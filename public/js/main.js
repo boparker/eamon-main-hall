@@ -177,6 +177,7 @@ titleGateway = createTitleGateway({
     registerUsername: document.getElementById('register-username'),
     registerEmail: document.getElementById('register-email'),
     registerPassword: document.getElementById('register-password'),
+    registerPasswordConfirm: document.getElementById('register-password-confirm'),
   },
   gameClient,
   authController,
