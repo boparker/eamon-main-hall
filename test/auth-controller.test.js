@@ -49,6 +49,18 @@ test('register saves returned account session and exposes game identity', async 
   assert.deepEqual(controller.gameIdentity(), { sessionToken: 'register-token', profileId: 'profile-1' });
 });
 
+test('register accepts singular profile auth payload and exposes account game identity', async () => {
+  const { controller } = makeController({
+    registerPayload: { ok: true, sessionToken: 'register-token', user: { id: 'user-1' }, profile: { id: 'profile-1', name: 'Bo' } },
+  });
+
+  const session = await controller.register({ username: 'bo', email: 'bo@example.com', password: 'secret-pass' });
+
+  assert.equal(session.profileId, 'profile-1');
+  assert.deepEqual(session.profiles.map((profile) => profile.id), ['profile-1']);
+  assert.deepEqual(controller.gameIdentity(), { sessionToken: 'register-token', profileId: 'profile-1' });
+});
+
 test('login saves returned account session and exposes game identity', async () => {
   const { controller } = makeController();
 

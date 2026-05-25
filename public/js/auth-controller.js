@@ -11,8 +11,8 @@ import {
 } from './auth-state.js';
 
 function sessionFromAuthPayload(payload, previousSession = null) {
-  const profiles = payload.profiles ?? previousSession?.profiles ?? [];
-  const payloadProfileId = payload.profileId;
+  const profiles = payload.profiles ?? (payload.profile ? [payload.profile] : previousSession?.profiles ?? []);
+  const payloadProfileId = payload.profileId ?? payload.activeProfile?.id ?? payload.profile?.id;
   const previousProfileId = previousSession?.profileId;
   const profileId = payloadProfileId ?? (profiles.some((profile) => profile?.id === previousProfileId) ? previousProfileId : undefined);
   return {

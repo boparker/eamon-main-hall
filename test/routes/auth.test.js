@@ -86,6 +86,9 @@ test('POST /api/auth/register creates user, default profile, and session token',
   assert.equal(response.body.sessionToken, 'raw-session-token');
   assert.equal(response.body.user.username, 'boparker');
   assert.equal(response.body.profile.id, 'profile-1');
+  assert.equal(response.body.profileId, 'profile-1');
+  assert.equal(response.body.activeProfile.id, 'profile-1');
+  assert.deepEqual(response.body.profiles.map((profile) => profile.id), ['profile-1']);
   assert.equal(deps.calls.find((call) => call.type === 'createUser').input.passwordHash, 'scrypt$secretpass1');
   assert.equal(deps.calls.some((call) => call.type === 'createProfile'), true);
   assert.equal(deps.calls.some((call) => call.type === 'createUserSession'), true);

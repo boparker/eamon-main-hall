@@ -76,9 +76,18 @@ export function createAuthRouter(rawDeps = {}) {
         displayName: req.body?.displayName ?? validation.username,
       });
       const profile = await deps.createProfile(deps.db, user.id, req.body?.displayName ?? user.username);
+      const profiles = [profile];
       const sessionToken = await issueSession(deps, user.id);
 
-      return res.status(201).json({ ok: true, user: publicUser(user), profile, sessionToken });
+      return res.status(201).json({
+        ok: true,
+        user: publicUser(user),
+        profile,
+        profiles,
+        activeProfile: profile,
+        profileId: profile.id,
+        sessionToken,
+      });
     } catch (err) {
       if (err?.code === '23505') return res.status(409).json({ error: 'Username or email already exists' });
       return next(err);
