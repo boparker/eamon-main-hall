@@ -63,6 +63,9 @@ const HALL_SHOP_ITEMS = [
   { slug: 'shield', name: 'Shield', price: 40, category: 'armor', equipmentSlot: 'shield', stats: { defense: '+2', type: 'Shield' } },
 ];
 
+const GREAT_HALL_TITLE = 'The Great Hall';
+const MARCOS_WEAPON_SHOP_TITLE = "Marcos Cavielli's Weapon Shop";
+
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
     .filter((file) => file.endsWith('.json'))
@@ -281,6 +284,7 @@ function hallResponse({ player, characters = [], adventures = [], character = nu
     choices: hallChoices(activeCharacter, unlockedAdventures),
     state: {
       phase: 'great-hall',
+      locationTitle: GREAT_HALL_TITLE,
       player: playerState,
       character: activeCharacter,
       characters: mappedCharacters,
@@ -311,6 +315,7 @@ function shopItemsForInput(input) {
 function hallState({ player, character, characters, adventures, extra = {} }) {
   return {
     phase: 'great-hall',
+    locationTitle: GREAT_HALL_TITLE,
     player: playerSummary(player),
     character,
     characters: characters.map((row) => rowCharacter(row) ?? row),
@@ -322,17 +327,21 @@ function hallState({ player, character, characters, adventures, extra = {} }) {
 
 function equipmentText(character) {
   const inventory = character.inventory?.length
-    ? character.inventory.map((item) => item.name ?? item.slug).join(', ')
-    : 'none';
+    ? character.inventory.map((item) => `• ${item.name ?? item.slug}`).join('\n')
+    : '• none';
   const equipment = character.equipment ?? {};
   const weapon = equipment.weapon?.name ?? equipment.weapon?.slug ?? 'unarmed';
   const armor = equipment.armor?.name ?? equipment.armor?.slug ?? 'none';
   const shield = equipment.shield?.name ?? equipment.shield?.slug ?? 'none';
   return [
     `${character.name}'s Equipment`,
-    `Gold: ${character.gold}. Bank: ${character.bankGold}.`,
-    `Weapon: ${weapon}. Armor: ${armor}. Shield: ${shield}.`,
-    `Inventory: ${inventory}.`,
+    `Gold: ${character.gold} / Bank: ${character.bankGold}`,
+    'Equipped:',
+    `• Weapon: ${weapon}`,
+    `• Armor: ${armor}`,
+    `• Shield: ${shield}`,
+    'Inventory:',
+    inventory,
   ].join('\n');
 }
 
@@ -348,14 +357,23 @@ function equipmentResponse({ player, character, characters, adventures }) {
 
 function shopResponse({ player, character, characters, adventures, input }) {
   const items = shopItemsForInput(input);
-  const title = items.some((item) => item.category === 'armor') ? 'Armor & Shields' : 'Weapons';
-  const catalog = items.map((item) => `${item.name} — ${item.price} gold`).join('\n');
+  const section = items.some((item) => item.category === 'armor') ? 'Armor & Shields' : 'Weapons';
+  const catalog = items.map((item) => `• ${item.name} — ${item.price} gold`).join('\n');
   return canonicalResponse({
     intent: { type: 'hall_shop', input },
     event: { type: 'hall_shop', input },
-    text: `${title} available in the Great Hall:\n${catalog}\nType buy followed by the item name to purchase.`,
+    text: `${MARCOS_WEAPON_SHOP_TITLE}\n${section} available:\n${catalog}\nChoose an item below, or type buy followed by the item name.`,
     choices: items.map((item) => `Buy ${item.name}`).concat(['Return to Great Hall']),
-    state: hallState({ player, character, characters, adventures, extra: { shop: { title, items } } }),
+    state: hallState({
+      player,
+      character,
+      characters,
+      adventures,
+      extra: {
+        locationTitle: MARCOS_WEAPON_SHOP_TITLE,
+        shop: { key: 'marcos', title: MARCOS_WEAPON_SHOP_TITLE, section, items },
+      },
+    }),
   });
 }
 
@@ -369,7 +387,7 @@ function roomResponse({ adventure, run, character, text = null, event = { type: 
     events,
     text: text ?? renderRoom(room, entities, items, room.exits),
     choices: choicesForRoom(room),
-    state: { character, adventureRun: run, room, entities, items },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', character, adventureRun: run, room, entities, items },
   });
 }
 

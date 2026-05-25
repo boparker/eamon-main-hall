@@ -50,29 +50,55 @@ export const SHOP_DATA = {
 
 // Shop-to-location mapping for background generation
 const SHOP_LOCATIONS = {
-  marcos: "Marcos Cavielli's Weapon Shop \u2014 racks of swords and axes on stone walls, anvil, forge glow",
-  hokas: "Hokas Tokas' Magic Emporium \u2014 shelves of potions, glowing crystals, arcane tomes, purple mist",
-  bank: "Shylock McFenney's Bank \u2014 gold stacks, iron vault doors, counting tables, candlelight",
-  pawn: "Sam Slicker's Pawn Shop \u2014 cluttered shelves of adventuring gear, dusty treasures, dim lanterns",
+  marcos: "Marcos Cavielli's Weapon Shop — racks of swords and axes on stone walls, anvil, forge glow",
+  hokas: "Hokas Tokas' Magic Emporium — shelves of potions, glowing crystals, arcane tomes, purple mist",
+  bank: "Shylock McFenney's Bank — gold stacks, iron vault doors, counting tables, candlelight",
+  pawn: "Sam Slicker's Pawn Shop — cluttered shelves of adventuring gear, dusty treasures, dim lanterns",
 };
+
+function normalizeShopPayload(shopOrKey) {
+  if (typeof shopOrKey === 'string') {
+    const legacy = SHOP_DATA[shopOrKey];
+    return legacy ? { key: shopOrKey, title: legacy.title, items: legacy.items } : null;
+  }
+  if (!shopOrKey || !Array.isArray(shopOrKey.items)) return null;
+  return shopOrKey;
+}
+
+function itemIcon(item = {}) {
+  const type = String(item.stats?.type ?? item.category ?? '').toLowerCase();
+  if (/shield/.test(type) || item.equipmentSlot === 'shield') return '▣';
+  if (/armor/.test(type) || item.equipmentSlot === 'armor') return '◈';
+  if (/spell|scroll|potion/.test(type)) return '✦';
+  return '⚔';
+}
+
+function statLabel(key) {
+  return ({
+    damage: 'DMG', dmg: 'DMG', defense: 'DEF', def: 'DEF', odds: 'HIT', heal: 'HEAL', buff: 'BUFF',
+    block: 'BLOCK', dur: 'DUR', uses: 'USES', range: 'RNG', effect: 'FX', power: 'PWR', weight: 'WT',
+    agility: 'AG', ag: 'AG', type: 'TYPE',
+  })[key] ?? String(key).toUpperCase();
+}
 
 // Purchase callback — set by main.js to avoid circular dependency
 let _onPurchase = null;
 export function registerPurchaseHandler(fn) { _onPurchase = fn; }
 
-export function openShop(shopKey) {
-  const shop = SHOP_DATA[shopKey];
+export function openShop(shopOrKey) {
+  const shop = normalizeShopPayload(shopOrKey);
   if (!shop) return;
+  const shopKey = shop.key ?? 'marcos';
 
   // Generate shop-specific background
-  const shopLocation = SHOP_LOCATIONS[shopKey];
+  const shopLocation = shop.title ?? SHOP_LOCATIONS[shopKey];
   if (shopLocation && shopLocation !== getLastBgLocation()) {
     setLastBgLocation(shopLocation);
     generateSceneBg(shopLocation);
   }
 
   const panel = document.getElementById('shop-panel');
-  document.getElementById('shop-title').textContent = shop.title;
+  document.getElementById('shop-title').textContent = shop.section ? `${shop.title}: ${shop.section}` : shop.title;
   document.getElementById('shop-title').dataset.shopKey = shopKey;
   document.getElementById('shop-gold').textContent = `Your gold: ${state.character.gold || 0}`;
   const container = document.getElementById('shop-items');
@@ -81,7 +107,7 @@ export function openShop(shopKey) {
   // Group items by category
   const groups = {};
   for (const item of shop.items) {
-    const cat = (item.stats && item.stats.type) || 'General';
+    const cat = (item.stats && item.stats.type) || item.category || 'General';
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(item);
   }
@@ -99,11 +125,11 @@ export function openShop(shopKey) {
     if (showHeaders) {
       const weaponTypes = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer'];
       const armorTypes = ['Armor', 'Shield'];
-      const headerLabel = weaponTypes.includes(cat) ? '\u2694 WEAPONS'
-        : armorTypes.includes(cat) ? '\u{1F6E1} ARMOR & SHIELDS'
-        : cat === 'Spell' ? '\u2726 SPELLS'
-        : cat === 'Potion' ? '\u{1F9EA} POTIONS'
-        : cat === 'Scroll' ? '\u{1F4DC} SCROLLS'
+      const headerLabel = weaponTypes.includes(cat) ? '⚔ WEAPONS'
+        : armorTypes.includes(cat) ? '▣ ARMOR & SHIELDS'
+        : cat === 'Spell' ? '✦ SPELLS'
+        : cat === 'Potion' ? 'POTIONS'
+        : cat === 'Scroll' ? 'SCROLLS'
         : cat;
 
       if (headerLabel !== lastHeaderLabel) {
@@ -124,27 +150,26 @@ export function openShop(shopKey) {
       if (item.stats) {
         const statEntries = Object.entries(item.stats).filter(([k]) => k !== 'type');
         statsHtml = '<div class="shop-item-stats">' + statEntries.map(([k, v]) => {
-          const label = k === 'dmg' ? 'DMG' : k === 'def' ? 'DEF' : k === 'odds' ? 'HIT' : k === 'heal' ? 'HEAL' : k === 'buff' ? 'BUFF' : k === 'block' ? 'BLOCK' : k === 'dur' ? 'DUR' : k === 'uses' ? 'USES' : k === 'range' ? 'RNG' : k === 'effect' ? 'FX' : k === 'power' ? 'PWR' : k === 'weight' ? 'WT' : k === 'ag' ? 'AG' : k.toUpperCase();
+          const label = statLabel(k);
           const cls = String(v).startsWith('+') ? 'stat-positive' : String(v).startsWith('-') ? 'stat-negative' : '';
           return `<span class="shop-stat ${cls}">${label} <span class="shop-stat-val">${v}</span></span>`;
         }).join('') + '</div>';
-        statsHtml = `<div class="shop-item-type" style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">${item.stats.type || ''}</div>` + statsHtml;
+        statsHtml = `<div class="shop-item-type" style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">${item.stats.type || item.category || ''}</div>` + statsHtml;
       }
 
       div.innerHTML = `
+        <div class="shop-item-icon" aria-hidden="true">${itemIcon(item)}</div>
         <div class="shop-item-info">
           <div class="shop-item-name">${item.name}</div>
-          <div class="shop-item-desc">${item.desc}</div>
+          <div class="shop-item-desc">${item.desc ?? item.category ?? ''}</div>
           ${statsHtml}
         </div>
-        <div class="shop-item-price">${item.price > 0 ? item.price + ' gold' : '\u2014'}</div>
+        <div class="shop-item-price">${item.price > 0 ? item.price + ' gold' : '—'}</div>
       `;
 
       if (canAfford && item.price > 0) {
         div.addEventListener('click', () => {
-          const currentShopKey = document.getElementById('shop-title').dataset.shopKey;
           if (_onPurchase) _onPurchase(`Buy ${item.name}`);
-          setTimeout(() => { if (currentShopKey) openShop(currentShopKey); }, 300);
         });
       }
 
@@ -156,8 +181,8 @@ export function openShop(shopKey) {
 }
 
 export function closeShop() {
-  document.getElementById('shop-panel').classList.remove('open');
+  document.getElementById('shop-panel')?.classList.remove('open');
 }
 
 // Wire up close button
-document.getElementById('shop-close-btn').addEventListener('click', closeShop);
+document.getElementById('shop-close-btn')?.addEventListener('click', closeShop);

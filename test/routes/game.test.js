@@ -334,6 +334,7 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
 
   assert.equal(response.status, 200);
   assert.equal(response.body.state.phase, 'great-hall');
+  assert.equal(response.body.state.locationTitle, 'The Great Hall');
   assert.equal(response.body.state.character.id, character.body.state.character.id);
   assert.equal(response.body.state.character.className, 'rogue');
   assert.equal(response.body.choices.some((choice) => /create character/i.test(choice)), true);
@@ -357,6 +358,7 @@ test('POST /api/game/characters returns to Great Hall and preserves explicit cla
 
   assert.equal(created.status, 201);
   assert.equal(created.body.state.phase, 'great-hall');
+  assert.equal(created.body.state.locationTitle, 'The Great Hall');
   assert.equal(created.body.state.character.className, 'mystic');
   assert.equal(created.body.state.character.charisma, 13);
   assert.equal(created.body.state.character.gold, 75);
@@ -375,7 +377,10 @@ test('POST /api/game/hall buys equipment server-side and blocks invalid or unaff
     playerId: 'p1', characterId, input: 'visit weapons shop',
   });
   assert.equal(shop.status, 200);
-  assert.match(shop.body.text, /Short Sword/);
+  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapon Shop");
+  assert.equal(shop.body.state.shop.title, "Marcos Cavielli's Weapon Shop");
+  assert.equal(shop.body.state.shop.section, 'Weapons');
+  assert.match(shop.body.text, /• Short Sword — 30 gold/);
   assert.equal(shop.body.choices.some((choice) => /buy short sword/i.test(choice)), true);
 
   const equipment = await request(app, 'POST', '/api/game/hall', {
@@ -383,6 +388,8 @@ test('POST /api/game/hall buys equipment server-side and blocks invalid or unaff
   });
   assert.equal(equipment.status, 200);
   assert.match(equipment.body.text, /Equipment/i);
+  assert.match(equipment.body.text, /• Weapon: unarmed/);
+  assert.match(equipment.body.text, /Inventory:\n• none/);
   assert.doesNotMatch(equipment.body.text, /Short Sword.*30 gold/);
 
   const bought = await request(app, 'POST', '/api/game/hall', {
@@ -390,6 +397,7 @@ test('POST /api/game/hall buys equipment server-side and blocks invalid or unaff
   });
   assert.equal(bought.status, 200);
   assert.equal(bought.body.state.phase, 'great-hall');
+  assert.equal(bought.body.state.locationTitle, 'The Great Hall');
   assert.equal(bought.body.state.character.gold, 50);
   assert.equal(bought.body.state.character.inventory.some((item) => item.slug === 'short-sword'), true);
   assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
@@ -416,6 +424,7 @@ test('authenticated POST /api/game/hall uses account profile ownership without r
     profileId: 'profile-1', characterId, input: 'visit weapons shop',
   }, accountHeaders);
   assert.equal(shop.status, 200);
+  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapon Shop");
   assert.match(shop.body.text, /Short Sword/);
 
   const bought = await request(app, 'POST', '/api/game/hall', {
