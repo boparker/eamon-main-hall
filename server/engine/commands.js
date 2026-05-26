@@ -93,6 +93,13 @@ export function parseCommand(input) {
     }
   }
 
+  if (command.startsWith('pick up ')) {
+    const target = command.slice('pick up '.length).trim();
+    if (target) {
+      return { type: 'take', target, source: 'rules' };
+    }
+  }
+
   const [verb, ...rest] = command.split(' ');
   const objectText = rest.join(' ').trim();
 

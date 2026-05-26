@@ -123,6 +123,19 @@ test('resolveAttack handles invalid damage dice as zero damage', () => {
   assert.equal(defender.hp, 5);
 });
 
+test('resolveAttack uses deterministic unarmed damage when an adventurer has no weapon dice', () => {
+  const attacker = { agility: 20 };
+  const defender = { hp: 5, agility: 0 };
+
+  const result = resolveAttack(attacker, defender, sequenceRng([0.5, 0.999999]));
+
+  assert.equal(result.hit, true);
+  assert.equal(result.rawDamage, 2);
+  assert.equal(result.damage, 2);
+  assert.equal(result.defenderHp, 3);
+  assert.equal(defender.hp, 3);
+});
+
 test('resolveAttack handles invalid rng by falling back to deterministic minimum rolls', () => {
   const attacker = { agility: 20, damage_dice: '1d4' };
   const defender = { hp: 5, agility: 0 };

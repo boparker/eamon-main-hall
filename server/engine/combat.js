@@ -33,7 +33,7 @@ function getDamageDice(entity) {
     ?? entity.weapon?.damage_dice
     ?? entity.weapon?.damageDice
     ?? entity.weapon?.damage
-    ?? null;
+    ?? '1d2';
 }
 
 function safeRng(rng) {

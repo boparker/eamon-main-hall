@@ -70,6 +70,23 @@ test('renderRoom supports adventure visible entity shape and robust empty inputs
   assertPlainText(renderRoom(null, null, null, null));
 });
 
+test('renderRoom does not list the same visible item twice when given resolved items plus placements', () => {
+  const text = renderRoom(
+    { title: 'Small Room', narration_text: 'A hermit watches from the corner.' },
+    { characters: [{ name: 'Hermit' }], placements: [{ item_slug: 'healing-potion' }] },
+    [{ slug: 'healing-potion', name: 'Healing Potion' }],
+    { west: 4 },
+  );
+
+  assert.equal(text, [
+    'Small Room',
+    'A hermit watches from the corner.',
+    'You see: Hermit.',
+    'Items here: Healing Potion.',
+    'Exits: west.',
+  ].join('\n'));
+});
+
 test('renderRoom strips lowercase tags, markdown, and tolerates malformed collections', () => {
   const text = renderRoom(
     { name: '**Bold** [hidden:foo] [Click](http://x.test)', narration_text: 'Go <b>north</b> {now} [VOICE: narrator]. _italic_ and *em* [tag-name:secret]' },

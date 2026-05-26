@@ -91,6 +91,23 @@ function choicesForRoom(room) {
   return DIRECTIONS.filter((direction) => room?.exits?.[direction] !== null && room?.exits?.[direction] !== undefined);
 }
 
+function itemChoice(item) {
+  return `${isCollectible(item) ? 'take' : 'read'} ${item.name ?? item.slug}`;
+}
+
+function choicesForRun(adventure, run) {
+  const room = getCurrentRoom(run, adventure);
+  const entities = getVisibleRoomEntities(run, adventure);
+  const items = visibleItems(adventure, entities);
+  const exits = choicesForRoom(room);
+  const itemChoices = items.map(itemChoice);
+  const characterChoices = (entities.characters ?? []).flatMap((character) => {
+    if (character.type === 'enemy' || character.type === 'boss') return [`attack ${character.name ?? character.slug}`];
+    return [`talk ${character.name ?? character.slug}`];
+  });
+  return [...exits, ...itemChoices, ...characterChoices];
+}
+
 function findItem(adventure, slugOrName) {
   const target = normalizeTarget(slugOrName);
   return adventure.items.find((item) => normalizeTarget(item.slug) === target || normalizeTarget(item.name) === target) ?? null;
@@ -117,6 +134,14 @@ function findVisibleEnemy(adventure, run, target) {
   return (visible.characters ?? []).find((character) => (
     character.type === 'enemy' || character.type === 'boss'
   ) && (
+    normalizeTarget(character.slug) === normalized || normalizeTarget(character.name) === normalized
+  )) ?? null;
+}
+
+function findVisibleCharacter(adventure, run, target) {
+  const normalized = normalizeTarget(target);
+  const visible = getVisibleRoomEntities(run, adventure);
+  return (visible.characters ?? []).find((character) => (
     normalizeTarget(character.slug) === normalized || normalizeTarget(character.name) === normalized
   )) ?? null;
 }
@@ -387,7 +412,7 @@ function roomResponse({ adventure, run, character, text = null, event = { type: 
     event,
     events,
     text: text ?? renderRoom(room, entities, items, room.exits),
-    choices: choicesForRoom(room),
+    choices: choicesForRun(adventure, run),
     state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', character, adventureRun: run, room, entities, items },
   });
 }
@@ -693,17 +718,17 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'inventory' || command.type === 'stats') {
-        return res.json(canonicalResponse({ intent: command, event: { type: command.type, command }, text: renderInventory(character), choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+        return res.json(canonicalResponse({ intent: command, event: { type: command.type, command }, text: renderInventory(character), choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'help') {
-        return res.json(canonicalResponse({ intent: command, event: { type: 'help', command }, text: 'Try: look, north, south, take gem, attack rat, inventory, or leave.', choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+        return res.json(canonicalResponse({ intent: command, event: { type: 'help', command }, text: 'Try: look, north, south, take gem, attack rat, inventory, or leave.', choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'move') {
         const result = move(run, adventure, command.direction);
         if (!result.ok) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command, reason: result.reason }, text: renderMoveBlocked(command.direction), choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command, reason: result.reason }, text: renderMoveBlocked(command.direction), choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         run = result.run;
         if (result.destination === 'main-hall') {
@@ -734,22 +759,22 @@ export function createGameRouter(rawDeps = {}) {
       if (command.type === 'read_item') {
         const item = findVisibleItem(adventure, run, command.target);
         if (!item) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
-        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item }, text: item.text ?? item.description ?? `There is nothing written on ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item }, text: item.text ?? item.description ?? `There is nothing written on ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'take') {
         const item = findVisibleItem(adventure, run, command.target);
         if (!item) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to take.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to take.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         if (!isCollectible(item)) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'not-collectible' }, text: `You cannot take ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'not-collectible' }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const taken = takeTreasure(character, item);
         if (!taken.ok) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: taken.reason }, text: `You cannot take ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: taken.reason }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         character = taken.character;
         run = markItemCollected(run, item.slug);
@@ -757,13 +782,13 @@ export function createGameRouter(rawDeps = {}) {
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
           deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
-        return res.json(canonicalResponse({ intent: command, event: { type: 'take', command, item }, text: `You take ${item.name}.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
+        return res.json(canonicalResponse({ intent: command, event: { type: 'take', command, item }, text: `You take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
       }
 
       if (command.type === 'attack') {
         const enemyTemplate = findVisibleEnemy(adventure, run, command.target);
         if (!enemyTemplate) {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
         const combat = resolveCombatRound(character, enemy, deps.rng);
@@ -787,9 +812,19 @@ export function createGameRouter(rawDeps = {}) {
           intent: command,
           events,
           text: renderCombatResult(combat),
-          choices: combat.characterDefeated ? [] : choicesForRoom(getCurrentRoom(run, adventure)),
+          choices: combat.characterDefeated ? [] : choicesForRun(adventure, run),
           state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat },
         }));
+      }
+
+      if (command.type === 'talk') {
+        const target = findVisibleCharacter(adventure, run, command.target);
+        if (!target) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'missing-character' }, text: `There is no ${command.target} here to talk to.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        const name = target.name ?? target.slug ?? 'They';
+        const dialogue = target.dialogue ?? target.text ?? target.description ?? `${name} has nothing more to say.`;
+        return res.json(canonicalResponse({ intent: command, event: { type: 'talk', command, character: target.slug ?? target.id ?? name }, text: dialogue, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'leave') {
@@ -808,7 +843,7 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(hall);
       }
 
-      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, or leave.', choices: choicesForRoom(getCurrentRoom(run, adventure)), state: { character, adventureRun: run } }));
+      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, or leave.', choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
     } catch (err) {
       return next(err);
     }

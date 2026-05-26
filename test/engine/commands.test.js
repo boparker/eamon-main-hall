@@ -52,6 +52,7 @@ test('parseCommand parses required take example and variants', () => {
   assert.deepEqual(parseCommand('take rusty dagger'), { type: 'take', target: 'rusty dagger', source: 'rules' });
   assert.deepEqual(parseCommand('get coins'), { type: 'take', target: 'coins', source: 'rules' });
   assert.deepEqual(parseCommand('grab brass key'), { type: 'take', target: 'brass key', source: 'rules' });
+  assert.deepEqual(parseCommand('pick up healing potion'), { type: 'take', target: 'healing potion', source: 'rules' });
 });
 
 test('parseCommand parses use, cast, and open deterministically as use_item', () => {

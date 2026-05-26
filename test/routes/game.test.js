@@ -20,6 +20,7 @@ const beginner = {
   ],
   characters: [
     { id: 'rat-1', slug: 'rat', name: 'Rat', type: 'enemy', friendliness: 'hostile', hp: 2, agility: 0, damage_dice: '1d1', location_room: 2, portrait_description: 'rat', current_hp_from: 'hp' },
+    { id: 'hermit-1', slug: 'hermit', name: 'Hermit', type: 'npc', friendliness: 'friendly', hp: 5, agility: 1, location_room: 2, portrait_description: 'hermit', dialogue: 'The hermit nods toward the darkness and keeps his counsel.' },
   ],
   items: [
     { id: 'gem-1', slug: 'gem', name: 'Gem', type: 'treasure', value: 5, weight: 1 },
@@ -588,6 +589,7 @@ test('POST /api/game/command handles movement deterministically and persists run
   assert.equal(moved.body.state.adventureRun.currentRoom, 2);
   assert.deepEqual(moved.body.media, { voice: null, background: null, portraits: [] });
   assert.match(moved.body.text, /Rat Room/);
+  assert.deepEqual(moved.body.choices, ['north', 'take Gem', 'read inscription', 'attack Rat', 'talk Hermit']);
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.currentRoom === 2), true);
 });
 
@@ -637,6 +639,34 @@ test('POST /api/game/command reads original noncollectible artifacts without col
   assert.match(take.body.text, /cannot take/i);
   assert.equal(take.body.state.character.inventory.some((item) => item.slug === 'inscription'), false);
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.collectedItems?.includes('inscription')), false);
+});
+
+test('POST /api/game/command supports talking to visible non-hostile characters', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'south');
+
+  const talk = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'talk to hermit');
+
+  assert.equal(talk.status, 200);
+  assert.equal(talk.body.intent.type, 'talk');
+  assert.equal(talk.body.events[0].type, 'talk');
+  assert.match(talk.body.text, /hermit nods/i);
+  assert.deepEqual(talk.body.choices, ['north', 'take Gem', 'read inscription', 'attack Rat', 'talk Hermit']);
+});
+
+test('POST /api/game/command pick up synonym takes visible items', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'south');
+
+  const take = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'pick up gem');
+
+  assert.equal(take.status, 200);
+  assert.equal(take.body.intent.type, 'take');
+  assert.equal(take.body.state.character.inventory[0].slug, 'gem');
 });
 
 test('authenticated leave command abandons only the requested profile run', async () => {
@@ -705,7 +735,8 @@ test('POST /api/game/command rejects mutation after run is completed', async () 
 });
 
 test('POST /api/game/command marks dead characters and runs terminal', async () => {
-  const { app } = makeApp(makeDeps({ rng: () => 0.99 }));
+  const rolls = [0, 0.99, 0.99];
+  const { app } = makeApp(makeDeps({ rng: () => rolls.shift() ?? 0.99 }));
   const character = await createAccountCharacter(app, { hardiness: 1, agility: 0, hd: 1, maxHd: 1 });
   const started = await startAccountAdventure(app, character.body.state.character.id);
   await accountCommand(app, character.body.state.character.id, started.body.state.adventureRun.id, 'south');

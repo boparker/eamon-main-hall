@@ -71,7 +71,13 @@ function visibleItems(entities, items) {
     sources.push(...arrayFrom(entities.items), ...arrayFrom(entities.placements));
   }
 
-  return namesFrom(sources);
+  const seen = new Set();
+  return namesFrom(sources).filter((name) => {
+    const key = sentence(name).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function validExitNames(exits) {
