@@ -29,7 +29,7 @@
     /* ═══ TITLE SCREEN ═══ */
     #title-screen {
       position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; z-index: 100;
+      align-items: center; justify-content: safe center; z-index: 100;
       padding: 32px 20px;
       background: radial-gradient(ellipse 80% 60% at 50% 32%, rgba(200,168,75,0.06), transparent 70%), var(--bg);
       transition: opacity 1.2s ease; overflow-y: auto;
@@ -39,7 +39,7 @@
     /* ── Masthead ── */
     .title-masthead { display: flex; flex-direction: column; align-items: center; }
     .title-dragon {
-      width: 220px; height: 264px;
+      width: clamp(150px, 22vh, 220px); height: clamp(180px, 26.4vh, 264px);
       background: url('dragon-v2.jpg') center center / contain no-repeat;
       filter: drop-shadow(0 0 40px rgba(200,168,75,0.15));
       animation: dragonBreathe 5s ease-in-out infinite;
@@ -113,7 +113,8 @@
     .auth-panel input:focus { outline: none; border-color: var(--gold-dim); box-shadow: 0 0 18px var(--gold-glow); }
     .auth-panel .enter-btn[type="submit"] { margin-top: 6px; }
 
-    .title-status { min-height: 1.2em; margin-top: 18px; color: var(--text-dim); font-size: 0.9rem; text-align: center; letter-spacing: 0.02em; }
+    .title-status { min-height: 1.2em; margin-top: 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; letter-spacing: 0.02em; transition: color 0.2s; }
+    .title-status.error { color: #e0917f; }
 
     /* ═══ GAME SCREEN ═══ */
     #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
@@ -364,9 +365,9 @@
         <input id="register-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" required></label>
       <button class="enter-btn primary" type="submit">CREATE ACCOUNT</button>
     </form>
-  </div>
 
-  <p class="title-status" id="title-auth-status" aria-live="polite"></p>
+    <p class="title-status" id="title-auth-status" aria-live="polite"></p>
+  </div>
 </div>
 
 <!-- ═ GAME ═ -->

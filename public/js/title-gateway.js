@@ -38,10 +38,19 @@ export function createTitleGateway({
     }
   }
 
+  function setStatus(message, kind = 'info') {
+    if (!elements.status) return;
+    elements.status.textContent = message || '';
+    const classes = elements.status.classList;
+    if (!classes) return;
+    if (kind === 'error' && message) classes.add('error');
+    else classes.remove('error');
+  }
+
   function showForm(kind) {
     if (elements.loginForm) elements.loginForm.hidden = kind !== 'login';
     if (elements.registerForm) elements.registerForm.hidden = kind !== 'register';
-    if (elements.status) elements.status.textContent = '';
+    setStatus('');
   }
 
   async function authenticate(kind) {
@@ -123,11 +132,11 @@ export function createTitleGateway({
     elements.registerButton?.addEventListener('click', () => showForm('register'));
     elements.loginForm?.addEventListener('submit', (event) => {
       event.preventDefault();
-      return authenticate('login');
+      return authenticate('login').catch((err) => { setStatus(err?.message || 'Login failed.', 'error'); throw err; });
     });
     elements.registerForm?.addEventListener('submit', (event) => {
       event.preventDefault();
-      return authenticate('register');
+      return authenticate('register').catch((err) => { setStatus(err?.message || 'Could not create account.', 'error'); throw err; });
     });
   }
 
