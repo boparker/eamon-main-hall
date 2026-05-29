@@ -16,6 +16,11 @@ import { createAccountMenu } from './account-menu.js';
 import { listGameCharacters } from './api.js';
 import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
 import { initHelpMenu } from './help-menu.js';
+import { createCreationCard } from './creation-card.js';
+
+const creationCard = createCreationCard({
+  submit: (text) => { inputEl.value = text; sendMessage(); },
+});
 
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
@@ -31,6 +36,8 @@ function renderGameResponse(response = {}) {
   clearChoices();
   for (const choice of response.choices ?? []) addChoice(choice);
   renderChoices();
+
+  creationCard.sync(gameClient?.getState?.().creation);
 }
 
 function buildGameClient(identity = null) {
