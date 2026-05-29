@@ -125,6 +125,50 @@
     .title-status { min-height: 1.2em; margin-top: 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; letter-spacing: 0.02em; transition: color 0.2s; }
     .title-status.error { color: #e0917f; }
 
+    /* ═══ CHARACTER CREATION (shares the entry-card visual language) ═══ */
+    #creation-overlay {
+      position: absolute; inset: 0; z-index: 20; display: flex;
+      align-items: center; justify-content: safe center; padding: 24px 20px;
+      background: rgba(5,4,4,0.55); backdrop-filter: blur(2px); overflow-y: auto;
+    }
+    #creation-overlay[hidden] { display: none; }
+    #game-screen.creating #narrative-area,
+    #game-screen.creating #choices-area,
+    #game-screen.creating #input-zone,
+    #game-screen.creating #thinking { display: none; }
+
+    .creation-card {
+      position: relative; width: min(420px, calc(100vw - 40px));
+      padding: 26px 28px 24px; border: 1px solid var(--border); border-radius: 3px;
+      background: rgba(12,10,8,0.82); backdrop-filter: blur(14px);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+    }
+    .creation-card::before {
+      content: ''; position: absolute; left: 50%; top: -1px; transform: translateX(-50%);
+      width: 64px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .creation-card input { width: 100%; padding: 12px 13px; background: rgba(5,4,4,0.85); border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-family: var(--font-body); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    .creation-card input:focus { outline: none; border-color: var(--gold-dim); box-shadow: 0 0 18px var(--gold-glow); }
+    .creation-card .auth-heading { margin-bottom: 16px; }
+
+    .creation-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+    .step-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--gold-dim); background: transparent; transition: all 0.3s; }
+    .step-dot.active { background: var(--gold); box-shadow: 0 0 10px var(--gold-glow); }
+    .step-dot.done { background: var(--gold-dim); }
+
+    .creation-subhead { text-align: center; color: var(--text-dim); font-style: italic; font-size: 0.95rem; margin-bottom: 18px; }
+    .creation-form { display: grid; gap: 16px; }
+
+    .creation-option-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .enter-btn.option { padding: 22px 16px; font-size: 0.95rem; }
+
+    .creation-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .creation-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border: 1px solid var(--border); border-radius: 4px; background: rgba(200,168,75,0.03); }
+    .creation-stat-val { font-family: var(--font-head); font-size: 1.5rem; color: var(--gold); line-height: 1; }
+    .creation-stat-label { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
+    .creation-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .creation-card .enter-btn.link { margin-top: 12px; width: 100%; }
+
     /* ═══ GAME SCREEN ═══ */
     #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
     #game-screen.active { opacity: 1; pointer-events: all; }
@@ -466,6 +510,15 @@
           <li>Accounts preserve characters before expeditions; guest play is only a Main Hall preview.</li>
         </ul>
       </div>
+    </div>
+  </div>
+
+  <!-- ═ CHARACTER CREATION ═ -->
+  <div id="creation-overlay" hidden>
+    <div class="creation-card">
+      <div class="creation-progress" id="creation-progress"></div>
+      <h2 class="auth-heading" id="creation-heading">Name Your Adventurer</h2>
+      <div id="creation-body"></div>
     </div>
   </div>
 </div>
