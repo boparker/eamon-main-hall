@@ -59,6 +59,15 @@
     .title-sub .rule:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
     .title-tagline { margin-top: 14px; color: var(--text-dim); font-style: italic; font-size: 0.92rem; letter-spacing: 0.04em; }
 
+    /* Stage: stacked on narrow screens, side-by-side on wide ones */
+    .title-stage { display: flex; flex-direction: column; align-items: center; }
+    @media (min-width: 880px) {
+      .title-stage { flex-direction: row; align-items: center; gap: clamp(48px, 6vw, 100px); }
+      .title-masthead { margin: 0; }
+      .title-dragon { width: clamp(240px, 30vh, 300px); height: clamp(288px, 36vh, 360px); }
+      .entry-card { margin-top: 0; }
+    }
+
     /* ── Entry card ── */
     .entry-card {
       position: relative; width: min(384px, calc(100vw - 40px)); margin-top: 34px;
@@ -325,6 +334,7 @@
 
 <!-- ═ TITLE ═ -->
 <div id="title-screen">
+  <div class="title-stage">
   <div class="title-masthead">
     <div class="title-dragon"></div>
     <h1 class="title-main">EAMON</h1>
@@ -367,6 +377,7 @@
     </form>
 
     <p class="title-status" id="title-auth-status" aria-live="polite"></p>
+  </div>
   </div>
 </div>
 
