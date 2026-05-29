@@ -201,6 +201,11 @@ titleGateway = createTitleGateway({
 });
 titleGateway.mount();
 
+// Back links inside the auth forms return to the entry choices
+document.querySelectorAll('[data-auth-back]').forEach((btn) => {
+  btn.addEventListener('click', () => titleGateway.showForm(null));
+});
+
 const accountMenu = createAccountMenu({
   elements: {
     toggleButton: document.getElementById('hud-account-btn'),
