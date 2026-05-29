@@ -279,3 +279,31 @@ test('character creation can restart during confirmation', async () => {
   assert.equal(createCall.input.className, 'adventurer');
   assert.equal(createCall.input.gender, 'm');
 });
+
+test('cancelling creation restores the existing character and re-bootstraps the Great Hall', async () => {
+  const { client, calls } = makeHarness({ bootstrapResponse: existingCharacterHall });
+  await client.startPhase1Game();
+
+  await client.handleInput('create character');
+  assert.equal(client.getState().creation.step, 'name');
+  assert.equal(client.getState().creation.previousCharacter.id, 'char-1');
+
+  await client.cancelCreation();
+
+  assert.equal(client.getState().creation, null);
+  assert.equal(client.getState().character.id, 'char-1');
+  assert.equal(calls.filter((call) => call.type === 'bootstrapGame').length, 2);
+});
+
+test('cancelling first-time creation is a safe no-op without a prior character', async () => {
+  const { client, calls } = makeHarness({ bootstrapResponse: noCharacterHall });
+  await client.startPhase1Game();
+  assert.equal(client.getState().creation.step, 'name');
+  assert.equal(client.getState().creation.previousCharacter, null);
+
+  const result = await client.cancelCreation();
+
+  assert.equal(result, null);
+  assert.equal(client.getState().creation, null);
+  assert.equal(calls.filter((call) => call.type === 'bootstrapGame').length, 1);
+});

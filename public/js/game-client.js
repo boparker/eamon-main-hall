@@ -133,10 +133,25 @@ export function createPhase1GameClient({
 
   function beginCharacterCreation() {
     clientState.phase = 'great-hall';
+    // Remember the character we had (if any) so creation can be cancelled and
+    // restored. Carry it across restarts ("Start over") within creation.
+    const previousCharacter = clientState.creation?.previousCharacter ?? clientState.character ?? null;
     clientState.character = null;
     clientState.adventureRun = null;
-    clientState.creation = { step: 'name' };
+    clientState.creation = { step: 'name', previousCharacter };
     prompt('Name your character.', null);
+  }
+
+  // Abandon character creation. Only meaningful when there was an existing
+  // character to return to (e.g. opened the flow by mistake); re-bootstraps the
+  // Great Hall so the prior character and its server-provided choices return.
+  function cancelCreation() {
+    if (!clientState.creation) return null;
+    const previous = clientState.creation.previousCharacter ?? null;
+    clientState.creation = null;
+    if (!previous) return null;
+    clientState.character = previous;
+    return startPhase1Game();
   }
 
   async function handleCreationInput(input) {
@@ -275,6 +290,7 @@ export function createPhase1GameClient({
     startPhase1Game,
     handleInput,
     applyResponse,
+    cancelCreation,
     getState: () => ({ ...clientState }),
   };
 }

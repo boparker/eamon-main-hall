@@ -19,9 +19,24 @@ export function createCreationCard({
   progressEl = document.getElementById('creation-progress'),
   headingEl = document.getElementById('creation-heading'),
   bodyEl = document.getElementById('creation-body'),
+  closeBtn = document.getElementById('creation-close'),
   submit = () => {},
+  onCancel = () => {},
 } = {}) {
+  // Cancellable only when there is a prior character to return to (so a
+  // first-time, mandatory creation has no misleading dismiss affordance).
+  let cancelable = false;
+
+  function requestCancel() {
+    if (cancelable) onCancel();
+  }
+  closeBtn?.addEventListener('click', requestCancel);
+  overlay?.addEventListener('click', (event) => {
+    if (event.target === overlay) requestCancel();
+  });
+
   function hide() {
+    cancelable = false;
     if (overlay) overlay.hidden = true;
     gameScreen?.classList.remove('creating');
   }
@@ -141,6 +156,8 @@ export function createCreationCard({
 
   function sync(creation) {
     if (!creation || !creation.step) { hide(); return; }
+    cancelable = !!creation.previousCharacter;
+    if (closeBtn) closeBtn.hidden = !cancelable;
     show();
     renderProgress(creation.step);
     if (headingEl) headingEl.textContent = HEADINGS[creation.step] ?? 'Create Your Adventurer';

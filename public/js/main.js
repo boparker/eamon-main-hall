@@ -20,6 +20,7 @@ import { createCreationCard } from './creation-card.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
+  onCancel: () => cancelCharacterCreation(),
 });
 
 function renderGameResponse(response = {}) {
@@ -152,6 +153,22 @@ async function sendMessage() {
     await gameClient.handleInput(text);
   } catch (err) {
     renderGameResponse({ text: err.message || 'The Great Hall clerk cannot process that right now.', choices: [], state: { phase: 'great-hall' } });
+  } finally {
+    state.isStreaming = false;
+    setInputState('action', true);
+  }
+}
+
+// Abandon the character-creation card and return to the Great Hall.
+async function cancelCharacterCreation() {
+  if (state.isStreaming) return;
+  creationCard.hide();
+  state.isStreaming = true;
+  setInputState('action', false);
+  try {
+    await gameClient.cancelCreation();
+  } catch (err) {
+    renderGameResponse({ text: err.message || 'The Great Hall is unavailable right now.', choices: [], state: { phase: 'great-hall' } });
   } finally {
     state.isStreaming = false;
     setInputState('action', true);
