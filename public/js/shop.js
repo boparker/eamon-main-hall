@@ -32,7 +32,7 @@ export const SHOP_DATA = {
     ],
   },
   bank: {
-    title: "SHYLOCK McFENNEY'S BANK",
+    title: 'BANK OF EAMON TOWNE',
     items: [
       { name: 'Deposit 50 Gold', desc: 'Safe keeping', price: 0 },
       { name: 'Deposit 100 Gold', desc: 'Safe keeping', price: 0 },
@@ -52,7 +52,7 @@ export const SHOP_DATA = {
 const SHOP_LOCATIONS = {
   marcos: "Marcos Cavielli's Weapon Shop — racks of swords and axes on stone walls, anvil, forge glow",
   hokas: "Hokas Tokas' Magic Emporium — shelves of potions, glowing crystals, arcane tomes, purple mist",
-  bank: "Shylock McFenney's Bank — gold stacks, iron vault doors, counting tables, candlelight",
+  bank: 'Bank of Eamon Towne — gold stacks, iron vault doors, counting tables, candlelight',
   pawn: "Sam Slicker's Pawn Shop — cluttered shelves of adventuring gear, dusty treasures, dim lanterns",
 };
 
@@ -112,7 +112,7 @@ export function openShop(shopOrKey) {
     groups[cat].push(item);
   }
 
-  const categoryOrder = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer', 'Armor', 'Shield', 'Spell', 'Potion', 'Scroll', 'General'];
+  const categoryOrder = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer', 'Bow', 'Club', 'Halberd', 'Armor', 'Shield', 'Spell', 'Potion', 'Scroll', 'General'];
   const sortedCats = Object.keys(groups).sort((a, b) => {
     const ai = categoryOrder.indexOf(a), bi = categoryOrder.indexOf(b);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
@@ -123,7 +123,7 @@ export function openShop(shopOrKey) {
 
   for (const cat of sortedCats) {
     if (showHeaders) {
-      const weaponTypes = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer'];
+      const weaponTypes = ['Sword', 'Axe', 'Mace', 'Spear', 'Hammer', 'Bow', 'Club', 'Halberd'];
       const armorTypes = ['Armor', 'Shield'];
       const headerLabel = weaponTypes.includes(cat) ? '⚔ WEAPONS'
         : armorTypes.includes(cat) ? '▣ ARMOR & SHIELDS'

@@ -32,10 +32,10 @@ export async function generateSceneBg(location) {
   // Map location names to local scene images
   const sceneMap = {
     'The Great Hall': 'scenes/great-hall.png',
-    "Marcos Cavielli's Weapon Shop": 'scenes/weapon-shop.jpg',
-    "Hokas Tokas' Magic Emporium": 'scenes/magic-shop.jpg',
-    "Shylock McFenney's Bank": 'scenes/bank.jpg',
-    "Sam Slicker's Pawn Shop": 'scenes/pawn-shop.jpg',
+    "Marcos Cavielli's Weapons & Armour Shoppe": 'scenes/weapon-shop.jpg',
+    "Hokas Tokas' School of Magick": 'scenes/magic-shop.jpg',
+    "The Witch's Shop": 'scenes/witch-shop.jpg',
+    'Bank of Eamon Towne': 'scenes/bank.jpg',
   };
 
   if (sceneMap[location]) {

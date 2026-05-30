@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS player_characters (
   bank_gold INTEGER NOT NULL DEFAULT 0 CHECK (bank_gold >= 0),
   inventory JSONB NOT NULL DEFAULT '[]'::jsonb,
   equipment JSONB NOT NULL DEFAULT '{}'::jsonb,
+  spells JSONB NOT NULL DEFAULT '{}'::jsonb,
   adventures_completed JSONB NOT NULL DEFAULT '[]'::jsonb,
   is_alive BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -159,6 +160,7 @@ CREATE TABLE IF NOT EXISTS player_characters (
 CREATE INDEX IF NOT EXISTS player_characters_player_id_idx ON player_characters(player_id);
 ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS profile_id TEXT REFERENCES player_profiles(id) ON DELETE SET NULL;
+ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS spells JSONB NOT NULL DEFAULT '{}'::jsonb;
 CREATE INDEX IF NOT EXISTS player_characters_user_id_idx ON player_characters(user_id);
 CREATE INDEX IF NOT EXISTS player_characters_profile_id_idx ON player_characters(profile_id);
 CREATE TABLE IF NOT EXISTS adventure_runs (

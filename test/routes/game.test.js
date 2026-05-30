@@ -92,6 +92,7 @@ function makeDeps(options = {}) {
         bank_gold: input.bankGold ?? 0,
         inventory: input.inventory ?? [],
         equipment: input.equipment ?? {},
+        spells: input.spells ?? {},
         adventures_completed: input.adventuresCompleted ?? [],
         is_alive: input.isAlive ?? true,
       };
@@ -112,10 +113,18 @@ function makeDeps(options = {}) {
       if (!row || !owns) return null;
       const updated = {
         ...row,
+        name: patch.name ?? row.name,
+        hardiness: patch.hardiness ?? row.hardiness,
+        agility: patch.agility ?? row.agility,
+        charisma: patch.charisma ?? row.charisma,
         hd: patch.hd ?? row.hd,
+        max_hd: patch.maxHd ?? row.max_hd,
         gold: patch.gold ?? row.gold,
+        bank_gold: patch.bankGold ?? row.bank_gold,
         inventory: patch.inventory ?? row.inventory,
         equipment: patch.equipment ?? row.equipment,
+        spells: patch.spells ?? row.spells,
+        adventures_completed: patch.adventuresCompleted ?? row.adventures_completed,
         is_alive: patch.isAlive ?? row.is_alive,
       };
       characters.set(characterId, updated);
@@ -206,6 +215,10 @@ function makeDeps(options = {}) {
 
 async function request(app, method, path, body, headers = {}) {
   const server = app.listen(0);
+  await new Promise((resolve, reject) => {
+    server.once('listening', resolve);
+    server.once('error', reject);
+  });
   try {
     const { port } = server.address();
     const response = await fetch(`http://127.0.0.1:${port}${path}`, {
@@ -381,37 +394,36 @@ test('POST /api/game/hall buys equipment server-side and blocks invalid or unaff
   const characterId = created.body.state.character.id;
 
   const shop = await request(app, 'POST', '/api/game/hall', {
-    playerId: 'p1', characterId, input: 'visit weapons shop',
+    playerId: 'p1', characterId, input: 'visit the weapon shop',
   });
   assert.equal(shop.status, 200);
-  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapon Shop");
-  assert.equal(shop.body.state.shop.title, "Marcos Cavielli's Weapon Shop");
-  assert.equal(shop.body.state.shop.section, 'Weapons');
-  assert.match(shop.body.text, /• Short Sword — 30 gold/);
-  assert.equal(shop.body.choices.some((choice) => /buy short sword/i.test(choice)), true);
-
-  const equipment = await request(app, 'POST', '/api/game/hall', {
-    playerId: 'p1', characterId, input: 'view equipment',
-  });
-  assert.equal(equipment.status, 200);
-  assert.match(equipment.body.text, /Equipment/i);
-  assert.match(equipment.body.text, /• Weapon: unarmed/);
-  assert.match(equipment.body.text, /Inventory:\n• none/);
-  assert.doesNotMatch(equipment.body.text, /Short Sword.*30 gold/);
+  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapons & Armour Shoppe");
+  assert.equal(shop.body.state.shop.key, 'marcos');
+  // one combined shop carrying both weapons and armor
+  assert.equal(shop.body.state.shop.items.some((item) => item.slug === 'short-sword'), true);
+  assert.equal(shop.body.state.shop.items.some((item) => item.category === 'armor'), true);
 
   const bought = await request(app, 'POST', '/api/game/hall', {
     playerId: 'p1', characterId, input: 'buy short sword',
   });
   assert.equal(bought.status, 200);
   assert.equal(bought.body.state.phase, 'great-hall');
-  assert.equal(bought.body.state.locationTitle, 'The Great Hall');
+  // buying keeps you in Marcos's shop
+  assert.equal(bought.body.state.locationTitle, "Marcos Cavielli's Weapons & Armour Shoppe");
   assert.equal(bought.body.state.character.gold, 50);
   assert.equal(bought.body.state.character.inventory.some((item) => item.slug === 'short-sword'), true);
   assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
 
-  const duplicate = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy short sword' });
-  assert.equal(duplicate.status, 409);
-  assert.match(duplicate.body.text, /already own|already have/i);
+  // Marcos has an endless supply — buying again is allowed (gold drops further)
+  const again = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy club' });
+  assert.equal(again.status, 200);
+  assert.equal(again.body.state.character.gold, 35);
+
+  // sell it back at half value
+  const sold = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'sell club' });
+  assert.equal(sold.status, 200);
+  assert.equal(sold.body.state.character.gold, 35 + Math.floor(15 / 2));
+  assert.equal(sold.body.state.character.inventory.some((item) => item.slug === 'club'), false);
 
   const invalid = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'buy moon blade' });
   assert.equal(invalid.status, 400);
@@ -428,11 +440,11 @@ test('authenticated POST /api/game/hall uses account profile ownership without r
   const characterId = created.body.state.character.id;
 
   const shop = await request(app, 'POST', '/api/game/hall', {
-    profileId: 'profile-1', characterId, input: 'visit weapons shop',
+    profileId: 'profile-1', characterId, input: 'visit the weapon shop',
   }, accountHeaders);
   assert.equal(shop.status, 200);
-  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapon Shop");
-  assert.match(shop.body.text, /Short Sword/);
+  assert.equal(shop.body.state.locationTitle, "Marcos Cavielli's Weapons & Armour Shoppe");
+  assert.equal(shop.body.state.shop.items.some((item) => item.slug === 'short-sword'), true);
 
   const bought = await request(app, 'POST', '/api/game/hall', {
     profileId: 'profile-1', characterId, input: 'buy short sword',
@@ -442,6 +454,65 @@ test('authenticated POST /api/game/hall uses account profile ownership without r
   assert.equal(bought.body.state.character.profileId, 'profile-1');
   assert.equal(bought.body.state.character.gold, 50);
   assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
+});
+
+test('POST /api/game/hall — Hokas Tokas teaches spells for a flat price', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner], rng: () => 0 }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Mage', className: 'mystic', hardiness: 12, agility: 12, charisma: 18, gold: 200,
+  });
+  const characterId = created.body.state.character.id;
+
+  const visit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'visit the wizard' });
+  assert.equal(visit.body.state.locationTitle, "Hokas Tokas' School of Magick");
+  assert.equal(visit.body.choices.some((c) => /learn power/i.test(c)), true);
+
+  const learned = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'learn power' });
+  assert.equal(learned.status, 200);
+  assert.equal(learned.body.state.character.gold, 100); // power costs 100
+  assert.ok(learned.body.state.character.spells.power > 0);
+
+  const broke = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'learn speed' });
+  assert.equal(broke.status, 409); // speed costs 4000
+  assert.equal(broke.body.error, 'insufficient-gold');
+});
+
+test('POST /api/game/hall — the Witch raises attributes at a cubic price', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Brute', className: 'warrior', hardiness: 15, agility: 12, charisma: 9, gold: 4000,
+  });
+  const characterId = created.body.state.character.id;
+
+  const visit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'visit the witch' });
+  assert.equal(visit.body.state.locationTitle, "The Witch's Shop");
+  assert.equal(visit.body.choices.some((c) => /raise hardiness/i.test(c)), true);
+
+  const raised = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'raise hardiness' });
+  assert.equal(raised.status, 200);
+  assert.equal(raised.body.state.character.hardiness, 16);
+  assert.equal(raised.body.state.character.gold, 4000 - 3400); // price for hardiness 15
+  assert.equal(raised.body.state.character.maxHd, 16); // hardiness raises HD
+});
+
+test('POST /api/game/hall — the Bank stores and returns gold', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Saver', className: 'rogue', hardiness: 12, agility: 15, charisma: 9, gold: 200,
+  });
+  const characterId = created.body.state.character.id;
+
+  const deposit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'deposit 150' });
+  assert.equal(deposit.status, 200);
+  assert.equal(deposit.body.state.character.gold, 50);
+  assert.equal(deposit.body.state.character.bankGold, 150);
+
+  const withdraw = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'withdraw 100' });
+  assert.equal(withdraw.body.state.character.gold, 150);
+  assert.equal(withdraw.body.state.character.bankGold, 50);
+
+  const overdraw = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'withdraw 999' });
+  assert.equal(overdraw.status, 409);
 });
 
 test('Beginner completion unlocks later adventure metadata in Great Hall', async () => {
