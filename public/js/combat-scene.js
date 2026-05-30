@@ -3,6 +3,7 @@
 // buttons submit the matching command through registerCombatAction.
 
 import { state } from './state.js';
+import { formatActionLabel } from './input.js';
 
 let _onAction = null;
 export function registerCombatAction(fn) { _onAction = fn; }
@@ -84,7 +85,7 @@ function renderActions(choices) {
     b.type = 'button';
     // movement = visible "Flee <dir>" secondary button (not a dim link)
     b.className = 'enter-btn' + (isAttack ? ' primary' : isMove ? ' flee' : '');
-    b.textContent = isMove ? `Flee ${cap(text)}` : cap(text);
+    b.textContent = isMove ? `Flee ${cap(text)}` : formatActionLabel(text);
     b.addEventListener('click', () => { if (_onAction) _onAction(choice); });
     el.appendChild(b);
   }

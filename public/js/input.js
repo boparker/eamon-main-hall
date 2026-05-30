@@ -21,17 +21,36 @@ export function addChoice(text) {
 let _sendFn = null;
 export function registerSendFn(fn) { _sendFn = fn; }
 
+// Title-case a target ("gold key" → "Gold Key"); proper names stay as-is.
+function titleCaseWords(value) {
+  return String(value).replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// Format a raw command choice for display while the original text is still sent
+// as the command (the parser lowercases input). "talk Cynthia" → "Talk to
+// Cynthia", "attack priest" → "Attack Priest", "north" → "North".
+export function formatActionLabel(text) {
+  const t = String(text ?? '').trim();
+  let m;
+  if ((m = /^talk\s+(?:to\s+)?(.+)$/i.exec(t))) return `Talk to ${titleCaseWords(m[1])}`;
+  if ((m = /^attack\s+(.+)$/i.exec(t))) return `Attack ${titleCaseWords(m[1])}`;
+  if ((m = /^take\s+(.+)$/i.exec(t))) return `Take ${titleCaseWords(m[1])}`;
+  if ((m = /^(?:read|examine|inspect)\s+(.+)$/i.exec(t))) return `Read ${titleCaseWords(m[1])}`;
+  if (/^(north|south|east|west|up|down)$/i.test(t)) return t.charAt(0).toUpperCase() + t.slice(1);
+  return t; // already-formatted hall/shop labels pass through unchanged
+}
+
 export function renderChoices() {
   choicesArea.innerHTML = '';
   if (pendingChoices.length === 0) { choicesArea.classList.remove('visible'); return; }
   for (const text of pendingChoices) {
     const card = document.createElement('div');
     card.className = 'choice-card';
-    card.textContent = text;
+    card.textContent = formatActionLabel(text);
     card.addEventListener('click', () => {
       choicesArea.classList.remove('visible');
       pendingChoices = [];
-      inputEl.value = text;
+      inputEl.value = text; // send the original command, not the formatted label
       if (_sendFn) _sendFn();
     });
     choicesArea.appendChild(card);
