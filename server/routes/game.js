@@ -994,7 +994,11 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'missing-character' }, text: `There is no ${command.target} here to talk to.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const name = target.name ?? target.slug ?? 'They';
-        const dialogue = target.dialogue ?? target.text ?? target.description ?? `${name} has nothing more to say.`;
+        // Hostile foes won't parley — talking doesn't dump their look-description.
+        if (target.type === 'enemy' || target.type === 'boss' || target.friendliness === 'hostile' || target.is_hostile === true) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'hostile', character: target.slug ?? name }, text: `${name} answers only with a snarl — words will not help you here.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        const dialogue = target.dialogue ?? target.text ?? `${name} gives you a quiet nod but has little to say.`;
         return res.json(canonicalResponse({ intent: command, event: { type: 'talk', command, character: target.slug ?? target.id ?? name }, text: dialogue, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
