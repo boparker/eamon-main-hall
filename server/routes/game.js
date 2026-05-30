@@ -683,7 +683,7 @@ export function createGameRouter(rawDeps = {}) {
         return render(shopResponse, rowCharacter(row), row, `You buy ${item.name} and ready it. "Pleasure doing business!"`);
       }
       if (/^sell\s+equipment$|^sell$|^sell\s+from/.test(normalizedInput)) {
-        return render(sellResponse, character, characterRow);
+        return render(shopResponse, character, characterRow, '"Looking to sell? Let\'s see what you\'ve got," says Marcos.');
       }
       const sellMatch = /^sell\s+(.+)/i.exec(input);
       if (sellMatch) {
@@ -692,7 +692,7 @@ export function createGameRouter(rawDeps = {}) {
         const result = sellToShop(character, owned.slug);
         if (!result.ok) return error(res, 409, `You cannot sell ${owned.name}.`, result.reason);
         const row = await persist({ gold: result.character.gold, inventory: result.character.inventory, equipment: result.character.equipment });
-        return render(sellResponse, rowCharacter(row), row, `Marcos hands you ${result.goldGained} gold for ${owned.name}.`);
+        return render(shopResponse, rowCharacter(row), row, `Marcos hands you ${result.goldGained} gold for ${owned.name}.`);
       }
 
       // ── Hokas Tokas: learn / upgrade spells ─────────────────────────────
