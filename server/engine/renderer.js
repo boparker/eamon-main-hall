@@ -145,7 +145,8 @@ function collectibleNames(items) {
   const out = [];
   for (const item of items) {
     if (!item || typeof item !== 'object') continue;
-    if (item.collectible === false || item.weight === -999) continue;
+    // Containers (chests) are listed even though they're not takeable loot.
+    if (item.type !== 'container' && (item.collectible === false || item.weight === -999)) continue;
     const name = sentence(item.name ?? item.canonical_name ?? item.slug);
     const key = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     if (!name || seen.has(key)) continue;

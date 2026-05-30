@@ -8,6 +8,7 @@ import {
   createAdventureRun,
   getCurrentRoom,
   getVisibleRoomEntities,
+  markContainerOpened,
   markEnemyDefeated,
   markItemCollected,
   move,
@@ -179,9 +180,15 @@ test('after_defeating placements use defeated character location rooms', () => {
   const adventure = loadBeginnersCave();
 
   const defeatedHermit = markEnemyDefeated(roomRun(adventure, 5), 'hermit');
+  // The healing potion now sits inside a chest — hidden until the chest is opened.
   assert.deepEqual(
     getVisibleRoomEntities(defeatedHermit, adventure).placements.map((placement) => placement.item_slug),
-    ['axe', 'healing-potion'],
+    ['axe', 'chest'],
+  );
+  const opened = markContainerOpened(defeatedHermit, 'chest');
+  assert.deepEqual(
+    getVisibleRoomEntities(opened, adventure).placements.map((placement) => placement.item_slug),
+    ['axe', 'chest', 'healing-potion'],
   );
 
   const defeatedHeinrich = markEnemyDefeated(roomRun(adventure, 6), 'heinrich');
