@@ -11,7 +11,8 @@ import {
   markItemCollected,
   move,
 } from '../engine/adventures.js';
-import { resolveCombatRound } from '../engine/combat.js';
+import { resolveAttack, resolveCombatRound } from '../engine/combat.js';
+import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure } from '../engine/economy.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
@@ -161,33 +162,36 @@ function combatSide(attack) {
 // Client-friendly combat state: head-to-head HP + (optionally) the latest round.
 // Returns null when no enemy is present (so the combat scene hides). When a
 // round result is supplied it is always included, so the killing blow animates.
-function combatStateFor({ adventure, run, character, enemyTemplate = null, result = null }) {
+function combatStateFor({ adventure, run, character, enemyTemplate = null, result = null, round }) {
   const enemy = enemyTemplate ?? visibleEnemy(adventure, run);
   if (!enemy) return null;
   const maxHp = enemy.hp ?? 0;
   const hp = Math.max(0, run.enemyHp?.[enemy.slug] ?? maxHp);
-  if (!result && hp <= 0) return null;
+  if (!result && round === undefined && hp <= 0) return null;
   return {
     enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp },
     player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0 },
-    round: result ? {
+    spells: character.spells ?? {}, // so the combat scene can offer cast buttons
+    round: round !== undefined ? round : (result ? {
       player: combatSide(result.playerAttack),
       enemy: combatSide(result.enemyAttack),
       enemyDefeated: !!result.enemyDefeated,
       characterDefeated: !!result.characterDefeated,
-    } : null,
+    } : null),
   };
 }
 
 // Apply the equipped weapon's damage dice and armour class to the character so
 // combat actually reflects gear. Mutates in place; these fields are transient
 // (characterPatch never persists them).
-function applyEquipmentToCombatant(character) {
+function applyEquipmentToCombatant(character, run = null) {
   const eq = character.equipment ?? {};
   const damage = eq.weapon?.stats?.damage;
   character.weapon = damage ? { damage } : undefined;
   character.weaponOdds = Number(eq.weapon?.stats?.weaponOdds) || 0;
   character.defense = (Number(eq.armor?.stats?.armorClass) || 0) + (Number(eq.shield?.stats?.armorClass) || 0);
+  // Speed spell doubles agility for the rest of the run.
+  if (run?.flags?.haste) character.agility = (Number(character.agility) || 0) * 2;
   return character;
 }
 
@@ -973,7 +977,7 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
-        applyEquipmentToCombatant(character);
+        applyEquipmentToCombatant(character, run);
         const combat = resolveCombatRound(character, enemy, deps.rng);
         character.hd = character.hp;
         run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
@@ -998,6 +1002,63 @@ export function createGameRouter(rawDeps = {}) {
           text: renderCombatResult(combat),
           choices: combat.characterDefeated ? [] : choicesForRun(adventure, run),
           state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat: combatState },
+        }));
+      }
+
+      if (command.type === 'use_item') {
+        const spellName = normalizeTarget(command.target);
+        const stateNow = () => ({ character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) });
+        if (!isSpell(spellName)) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'use_failed', command, reason: 'not-a-spell' }, text: `You can't use ${command.target} that way here.`, choices: choicesForRun(adventure, run), state: stateNow() }));
+        }
+        if ((character.spells?.[spellName] ?? 0) <= 0) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'cast_failed', command, reason: 'not-learned' }, text: `You have not learned the ${spellName} spell. Hokas Tokas can teach it back in the Guild Hall.`, choices: choicesForRun(adventure, run), state: stateNow() }));
+        }
+
+        const enemyTemplate = visibleEnemy(adventure, run);
+        const enemy = enemyTemplate ? { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp } : null;
+        applyEquipmentToCombatant(character, run);
+        const cast = castSpell(character, spellName, { enemy, rng: deps.rng });
+        if (!cast.ok) {
+          return error(res, 409, cast.reason === 'no-target' ? 'There is no enemy here to blast.' : `You cannot cast ${spellName} now.`, cast.reason);
+        }
+        if (cast.haste) run = { ...run, flags: { ...(run.flags ?? {}), haste: true } };
+
+        let enemyAttack = null;
+        let enemyDefeated = false;
+        let characterDefeated = false;
+        if (enemyTemplate) {
+          if (enemy.hp <= 0) {
+            enemyDefeated = true;
+            run = markEnemyDefeated(run, enemyTemplate.slug);
+          } else {
+            enemyAttack = resolveAttack(enemy, character, deps.rng);
+            character.hd = character.hp;
+            if ((character.hd ?? 0) <= 0) { characterDefeated = true; character.isAlive = false; run = { ...run, status: 'dead' }; }
+          }
+          run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
+        }
+
+        const [updatedCharacter, updatedRun] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+
+        const round = {
+          player: { spell: spellName, success: cast.success, roll: cast.roll, ability: cast.ability, damage: cast.damage, heal: cast.heal, haste: cast.haste },
+          enemy: enemyAttack ? combatSide(enemyAttack) : null,
+          enemyDefeated,
+          characterDefeated,
+        };
+        const enemyText = enemyAttack ? (enemyAttack.hit ? `${enemyTemplate.name} strikes back for ${enemyAttack.damage}.` : `${enemyTemplate.name} lunges but misses.`) : null;
+        const text = [cast.message, enemyText, enemyDefeated ? 'The enemy is defeated.' : null, characterDefeated ? 'You have been defeated.' : null].filter(Boolean).join('\n');
+        const combat = enemyTemplate ? combatStateFor({ adventure, run, character, enemyTemplate, round }) : null;
+        return res.json(canonicalResponse({
+          intent: command,
+          events: [{ type: 'cast', spell: spellName, success: cast.success }],
+          text,
+          choices: characterDefeated ? [] : choicesForRun(adventure, run),
+          state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat },
         }));
       }
 

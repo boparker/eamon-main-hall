@@ -299,6 +299,10 @@
 
     /* motion */
     .dmg-float { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); font-family: var(--font-head); font-size: 1.8rem; color: #e0573f; text-shadow: 0 2px 8px rgba(0,0,0,0.85); opacity: 0; pointer-events: none; }
+    .heal-float { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); font-family: var(--font-head); font-size: 1.8rem; color: #8fbc6a; text-shadow: 0 2px 8px rgba(0,0,0,0.85); opacity: 0; pointer-events: none; }
+    .heal-float.show { animation: dmgFloatAnim 1.1s ease forwards; }
+    .combat-actions .enter-btn.cast { color: #cdbcf2; border-color: rgba(150,125,210,0.5); }
+    .combat-actions .enter-btn.cast:hover { border-color: #b89cff; color: #e3d8ff; box-shadow: 0 0 18px rgba(160,130,255,0.25); }
     .hit-flash { position: absolute; inset: 0; background: rgba(224,60,40,0.5); opacity: 0; pointer-events: none; }
     @keyframes hitShake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-7px)} 30%{transform:translateX(6px)} 45%{transform:translateX(-5px)} 60%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
     @keyframes hitFlashAnim { 0%{opacity:0} 20%{opacity:0.55} 100%{opacity:0} }
@@ -725,7 +729,7 @@
   <div id="combat-scene" hidden>
     <div class="combat-stage">
       <div class="combatant" id="combatant-player">
-        <div class="combat-portrait"><span class="portrait-placeholder">🜂</span><span class="hit-flash"></span><span class="dmg-float"></span></div>
+        <div class="combat-portrait"><span class="portrait-placeholder">🜂</span><span class="hit-flash"></span><span class="dmg-float"></span><span class="heal-float"></span></div>
         <div class="combatant-name" id="combat-player-name">Theron</div>
         <div class="hp-bar"><div class="hp-fill" id="combat-player-hp" style="width:82%"></div><span class="hp-text" id="combat-player-hptext">18 / 22</span></div>
       </div>
@@ -740,7 +744,7 @@
       </div>
 
       <div class="combatant enemy" id="combatant-enemy">
-        <div class="combat-portrait"><span class="portrait-placeholder">👁</span><span class="hit-flash"></span><span class="dmg-float"></span></div>
+        <div class="combat-portrait"><span class="portrait-placeholder">👁</span><span class="hit-flash"></span><span class="dmg-float"></span><span class="heal-float"></span></div>
         <div class="combatant-name" id="combat-enemy-name">Cave Goblin</div>
         <div class="hp-bar"><div class="hp-fill enemy" id="combat-enemy-hp" style="width:40%"></div><span class="hp-text" id="combat-enemy-hptext">4 / 10</span></div>
       </div>
