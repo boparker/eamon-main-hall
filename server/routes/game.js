@@ -136,6 +136,43 @@ function findVisibleEnemy(adventure, run, target) {
   )) ?? null;
 }
 
+function visibleEnemy(adventure, run) {
+  const visible = getVisibleRoomEntities(run, adventure);
+  return (visible.characters ?? []).find((c) => c.type === 'enemy' || c.type === 'boss') ?? null;
+}
+
+function combatSide(attack) {
+  if (!attack) return null;
+  return {
+    hit: !!attack.hit,
+    roll: attack.roll ?? null,
+    total: attack.attackTotal ?? null,
+    target: attack.targetNumber ?? null,
+    damage: attack.damage ?? 0,
+  };
+}
+
+// Client-friendly combat state: head-to-head HP + (optionally) the latest round.
+// Returns null when no enemy is present (so the combat scene hides). When a
+// round result is supplied it is always included, so the killing blow animates.
+function combatStateFor({ adventure, run, character, enemyTemplate = null, result = null }) {
+  const enemy = enemyTemplate ?? visibleEnemy(adventure, run);
+  if (!enemy) return null;
+  const maxHp = enemy.hp ?? 0;
+  const hp = Math.max(0, run.enemyHp?.[enemy.slug] ?? maxHp);
+  if (!result && hp <= 0) return null;
+  return {
+    enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp },
+    player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0 },
+    round: result ? {
+      player: combatSide(result.playerAttack),
+      enemy: combatSide(result.enemyAttack),
+      enemyDefeated: !!result.enemyDefeated,
+      characterDefeated: !!result.characterDefeated,
+    } : null,
+  };
+}
+
 function findVisibleCharacter(adventure, run, target) {
   const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
@@ -479,7 +516,7 @@ function roomResponse({ adventure, run, character, text = null, event = { type: 
     events,
     text: text ?? renderRoom(room, entities, items, room.exits),
     choices: choicesForRun(adventure, run),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', character, adventureRun: run, room, entities, items },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
   });
 }
 
@@ -935,12 +972,13 @@ export function createGameRouter(rawDeps = {}) {
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
           deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
+        const combatState = combatStateFor({ adventure, run, character, enemyTemplate, result: combat });
         return res.json(canonicalResponse({
           intent: command,
           events,
           text: renderCombatResult(combat),
           choices: combat.characterDefeated ? [] : choicesForRun(adventure, run),
-          state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat },
+          state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat: combatState },
         }));
       }
 

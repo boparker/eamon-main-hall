@@ -17,6 +17,7 @@ import { listGameCharacters } from './api.js';
 import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
 import { initHelpMenu } from './help-menu.js';
 import { createCreationCard } from './creation-card.js';
+import { renderCombat, hideCombat, registerCombatAction } from './combat-scene.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
@@ -39,6 +40,9 @@ function renderGameResponse(response = {}) {
   renderChoices();
 
   creationCard.sync(gameClient?.getState?.().creation);
+
+  if (response.state?.combat) renderCombat(response.state.combat, response.choices, response.text);
+  else hideCombat();
 }
 
 function buildGameClient(identity = null) {
@@ -179,6 +183,10 @@ async function cancelCharacterCreation() {
 // Choices and shop need to trigger sendMessage without circular imports
 registerSendFn(sendMessage);
 registerPurchaseHandler((text) => {
+  inputEl.value = text;
+  sendMessage();
+});
+registerCombatAction((text) => {
   inputEl.value = text;
   sendMessage();
 });
