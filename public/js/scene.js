@@ -11,7 +11,25 @@ export function setLastBgLocation(loc) { lastBgLocation = loc; }
 
 export function setLocation(name) {
   const el = document.getElementById('location-title');
-  el.textContent = name;
+
+  // Split "Main - Sub" (–, —, |, :) into a primary title + flanked sub-location.
+  const parts = String(name ?? '').split(/\s+[-–—|:]\s+/);
+  const main = (parts[0] ?? '').trim();
+  const sub = parts.slice(1).join(' — ').trim();
+
+  el.replaceChildren();
+  const mainEl = document.createElement('div');
+  mainEl.className = 'location-main';
+  mainEl.textContent = main;
+  el.appendChild(mainEl);
+  if (sub) {
+    const subEl = document.createElement('div');
+    subEl.className = 'location-sub';
+    const rule = () => { const s = document.createElement('span'); s.className = 'rule'; return s; };
+    subEl.append(rule(), document.createTextNode(sub), rule());
+    el.appendChild(subEl);
+  }
+
   el.classList.remove('visible', 'reveal');
   void el.offsetWidth;
   el.classList.add('visible', 'reveal');
