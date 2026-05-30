@@ -3,6 +3,30 @@
 const scroll = document.getElementById('narrative-scroll');
 let activeStreamLine = null;
 
+// Render deterministic response text as separate lines, styling section labels
+// ("You see", "Items here", "Exits", equipment labels) so they stand out from
+// the prose.
+const SECTION_LABEL = /^(You see|Items here|Exits|You can read|Equipped|Inventory|Gold|Bank)\s*:\s*(.*)$/;
+
+export function renderNarrative(text) {
+  const lines = String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    const div = document.createElement('div');
+    div.className = 'narrative-line line-enter';
+    const match = SECTION_LABEL.exec(line);
+    if (match) {
+      const label = document.createElement('span');
+      label.className = 'nl-label';
+      label.textContent = match[1] + ':';
+      div.append(label, document.createTextNode(match[2] ? ' ' + match[2] : ''));
+    } else {
+      div.textContent = line;
+    }
+    scroll.appendChild(div);
+  }
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
 export function addPlayerLine(text) {
   const div = document.createElement('div');
   div.className = 'narrative-line player-line line-enter';

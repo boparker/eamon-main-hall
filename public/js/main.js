@@ -3,7 +3,7 @@
 
 import { PLAYER_ID, state } from './state.js';
 import { updateHUD } from './hud.js';
-import { addPlayerLine, startStreamLine, appendStreamToken, finishStreamLine } from './narrative.js';
+import { addPlayerLine, renderNarrative } from './narrative.js';
 import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
@@ -32,9 +32,7 @@ function renderGameResponse(response = {}) {
   else closeShop();
   updateHUD(true);
 
-  startStreamLine();
-  appendStreamToken(response.text ?? '');
-  finishStreamLine();
+  renderNarrative(response.text ?? '');
   clearChoices();
   for (const choice of response.choices ?? []) addChoice(choice);
   renderChoices();
