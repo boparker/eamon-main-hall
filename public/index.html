@@ -177,6 +177,129 @@
     .creation-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .creation-card .enter-btn.link { margin-top: 12px; width: 100%; }
 
+    /* ═══ SHOP SCENE (tile grid + shopkeeper portrait) ═══ */
+    #shop-scene {
+      position: absolute; inset: 0; z-index: 20; display: flex;
+      align-items: center; justify-content: safe center; padding: clamp(16px,3vw,40px);
+      background: linear-gradient(rgba(5,4,4,0.5), rgba(5,4,4,0.72)); backdrop-filter: blur(3px); overflow-y: auto;
+    }
+    #shop-scene[hidden] { display: none; }
+    #game-screen.shopping #narrative-area,
+    #game-screen.shopping #choices-area,
+    #game-screen.shopping #input-zone,
+    #game-screen.shopping #location-title,
+    #game-screen.shopping #thinking { display: none; }
+
+    .shop-scene-inner { display: flex; gap: clamp(18px,3vw,36px); width: min(1040px, 100%); align-items: stretch; }
+
+    /* Shopkeeper card */
+    .shopkeeper {
+      position: relative; flex: 0 0 clamp(220px, 26vw, 300px); display: flex; flex-direction: column; align-items: center;
+      padding: 22px 20px; border: 1px solid var(--border); border-radius: 6px;
+      background: rgba(12,10,8,0.7); backdrop-filter: blur(10px); box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .shopkeeper::before { content: ''; position: absolute; left: 50%; top: -1px; transform: translateX(-50%); width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .shopkeeper-portrait {
+      width: 100%; aspect-ratio: 4/5; border-radius: 4px; margin-bottom: 16px; position: relative;
+      display: grid; place-items: center; border: 1px solid var(--gold-dim);
+      background: radial-gradient(120% 90% at 50% 25%, rgba(60,48,30,0.55), rgba(8,6,5,0.95));
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
+    .shopkeeper-portrait::after { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(200,168,75,0.18); border-radius: 2px; pointer-events: none; }
+    .portrait-placeholder { font-size: clamp(3rem,7vw,4.5rem); color: rgba(200,168,75,0.35); }
+    .shopkeeper-name { font-family: var(--font-head); font-size: 1.25rem; color: var(--gold); letter-spacing: 0.08em; text-align: center; }
+    .shopkeeper-line { font-style: italic; color: var(--text-dim); font-size: 0.92rem; text-align: center; margin-top: 6px; line-height: 1.45; }
+    .shopkeeper-gold { margin-top: 14px; color: var(--gold); font-size: 0.95rem; letter-spacing: 0.04em; }
+    .shopkeeper-gold .coin { color: var(--action); }
+    .shop-tabs { display: flex; gap: 8px; margin-top: 16px; width: 100%; }
+    .shop-tab { flex: 1; padding: 9px; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+    .shop-tab.active { color: var(--action); border-color: var(--gold); background: rgba(200,168,75,0.08); }
+    .shop-tab:hover { color: var(--gold); }
+    .shopkeeper .enter-btn.link { margin-top: 14px; }
+
+    /* Tile grid */
+    .shop-grid-wrap { flex: 1; min-width: 0; overflow-y: auto; max-height: 80vh; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+    .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; align-content: start; }
+    .shop-tile {
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+      padding: 14px 10px 12px; border: 1px solid rgba(200,168,75,0.16); border-radius: 6px;
+      background: rgba(255,255,255,0.025); cursor: pointer; font-family: var(--font-body); color: var(--text);
+      transition: transform 0.18s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    }
+    .shop-tile:hover { transform: translateY(-2px); border-color: var(--gold); background: rgba(200,168,75,0.08); box-shadow: 0 0 24px var(--gold-glow); }
+    .shop-tile.cant-afford { opacity: 0.4; cursor: not-allowed; }
+    .shop-tile.cant-afford:hover { transform: none; border-color: rgba(200,168,75,0.16); background: rgba(255,255,255,0.025); box-shadow: none; }
+    .tile-icon { width: 56px; height: 56px; display: grid; place-items: center; margin-bottom: 4px; border: 1px solid rgba(200,168,75,0.22); border-radius: 6px; background: rgba(200,168,75,0.05); color: var(--gold); font-size: 1.6rem; }
+    .tile-name { font-size: 0.92rem; color: var(--text); line-height: 1.2; }
+    .tile-stat { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+    .tile-price { font-family: var(--font-head); font-size: 0.95rem; color: var(--gold); margin-top: 2px; }
+    .shop-cat-label { grid-column: 1 / -1; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold-dim); margin-top: 6px; }
+    .shop-cat-label:first-child { margin-top: 0; }
+
+    @media (max-width: 760px) {
+      .shop-scene-inner { flex-direction: column; }
+      .shopkeeper { flex-basis: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .shopkeeper-portrait { width: 90px; margin: 0 14px 0 0; }
+    }
+
+    /* ═══ COMBAT SCENE (head-to-head) ═══ */
+    #combat-scene {
+      position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: clamp(14px,2.5vh,30px);
+      padding: clamp(16px,3vw,40px); background: linear-gradient(rgba(5,4,4,0.42), rgba(5,4,4,0.74)); backdrop-filter: blur(3px); overflow-y: auto;
+    }
+    #combat-scene[hidden] { display: none; }
+    #game-screen.in-combat #narrative-area,
+    #game-screen.in-combat #choices-area,
+    #game-screen.in-combat #input-zone,
+    #game-screen.in-combat #location-title,
+    #game-screen.in-combat #thinking { display: none; }
+
+    .combat-stage { display: flex; align-items: center; justify-content: center; gap: clamp(16px,4vw,64px); width: min(900px,100%); }
+    .combatant { display: flex; flex-direction: column; align-items: center; width: clamp(150px, 22vw, 230px); }
+    .combat-portrait {
+      position: relative; width: 100%; aspect-ratio: 4/5; border-radius: 5px; display: grid; place-items: center; overflow: hidden;
+      border: 1px solid var(--gold-dim); background: radial-gradient(120% 90% at 50% 25%, rgba(60,48,30,0.5), rgba(8,6,5,0.95)); box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
+    .combat-portrait::after { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(200,168,75,0.18); border-radius: 2px; pointer-events: none; }
+    .portrait-placeholder { font-size: clamp(2.6rem,6vw,4rem); color: rgba(200,168,75,0.4); }
+    .combatant-name { font-family: var(--font-head); font-size: clamp(1rem,2vw,1.25rem); color: var(--gold); letter-spacing: 0.08em; margin-top: 12px; text-align: center; }
+
+    .hp-bar { position: relative; width: 100%; height: 22px; margin-top: 8px; border: 1px solid var(--border); border-radius: 3px; background: rgba(0,0,0,0.55); overflow: hidden; }
+    .hp-fill { height: 100%; background: linear-gradient(90deg, #5f8a36, #8fbc6a); transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .hp-fill.enemy { background: linear-gradient(90deg, #7a2e2e, #c0392b); }
+    .hp-text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 0.72rem; color: var(--text); letter-spacing: 0.05em; text-shadow: 0 1px 2px rgba(0,0,0,0.95); }
+
+    .combat-center { display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
+    .combat-roll { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 96px; justify-content: center; }
+    .roll-die { width: 54px; height: 54px; display: grid; place-items: center; font-family: var(--font-head); font-size: 1.5rem; color: var(--action); border: 1px solid var(--gold); border-radius: 8px; background: rgba(200,168,75,0.1); box-shadow: 0 0 22px var(--gold-glow); transform: rotate(-8deg); }
+    .roll-calc { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.04em; }
+    .roll-result { font-family: var(--font-head); font-size: 1rem; letter-spacing: 0.16em; text-transform: uppercase; }
+    .roll-result.hit { color: #8fbc6a; text-shadow: 0 0 12px rgba(143,188,106,0.4); }
+    .roll-result.miss { color: var(--text-dim); }
+    .combat-vs { font-size: 1.4rem; color: var(--gold-dim); }
+
+    .combat-log { width: min(680px,100%); display: flex; flex-direction: column; gap: 6px; text-align: center; }
+    .combat-log-line { font-size: clamp(0.95rem,1.8vw,1.1rem); line-height: 1.5; color: var(--text); }
+    .combat-log-line.dim { color: var(--text-dim); font-style: italic; }
+    .combat-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+    /* motion */
+    .dmg-float { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); font-family: var(--font-head); font-size: 1.8rem; color: #e0573f; text-shadow: 0 2px 8px rgba(0,0,0,0.85); opacity: 0; pointer-events: none; }
+    .hit-flash { position: absolute; inset: 0; background: rgba(224,60,40,0.5); opacity: 0; pointer-events: none; }
+    @keyframes hitShake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-7px)} 30%{transform:translateX(6px)} 45%{transform:translateX(-5px)} 60%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
+    @keyframes hitFlashAnim { 0%{opacity:0} 20%{opacity:0.55} 100%{opacity:0} }
+    @keyframes dmgFloatAnim { 0%{opacity:0; transform:translate(-50%,8px)} 20%{opacity:1} 100%{opacity:0; transform:translate(-50%,-28px)} }
+    .combatant.shake { animation: hitShake 0.5s ease; }
+    .combat-portrait.flash .hit-flash { animation: hitFlashAnim 0.5s ease; }
+    .dmg-float.show { animation: dmgFloatAnim 1.1s ease forwards; }
+
+    @media (max-width: 700px) {
+      .combat-stage { gap: 8px; }
+      .combatant { width: 33vw; }
+      .roll-die { width: 44px; height: 44px; font-size: 1.2rem; }
+    }
+
     /* ═══ GAME SCREEN ═══ */
     #game-screen { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
     #game-screen.active { opacity: 1; pointer-events: all; }
@@ -215,6 +338,13 @@
     .hud-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; color: var(--text-dim); font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
     .hud-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
     .hud-btn.active { border-color: var(--gold); color: var(--gold); }
+    .hud-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .hud-btn svg .note-head { fill: currentColor; stroke: none; }
+    .hud-btn svg .spk-body { fill: currentColor; stroke: currentColor; stroke-width: 1; }
+    /* Off state (not .active): show the mute slash, hide speaker waves — consistent across music + sound */
+    .hud-btn .mute-slash { display: none; }
+    .hud-btn:not(.active) .mute-slash { display: inline; }
+    .hud-btn:not(.active) .wave { display: none; }
     #account-menu-panel { position: absolute; top: 40px; right: 0; width: 260px; z-index: 60; padding: 16px; display: grid; gap: 10px; background: rgba(8,6,4,0.96); border: 1px solid var(--gold-dim); box-shadow: 0 14px 40px rgba(0,0,0,0.45); }
     #account-menu-panel[hidden] { display: none; }
     .account-menu-summary { color: var(--gold); font-family: var(--font-head); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -226,31 +356,50 @@
     .account-menu-list { display: grid; gap: 6px; padding-top: 4px; border-top: 1px solid var(--border); }
     .account-menu-list[hidden] { display: none; }
 
-    /* ── Location Title (below HUD, inside scene) ── */
+    /* ── Location Title (below HUD, inside scene) — supports two lines ── */
     #location-title {
-      position: relative; z-index: 15;
-      text-align: center; padding: 20px 28px 8px;
-      font-family: var(--font-head);
-      font-size: clamp(2rem, 5.5vw, 3.2rem);
-      color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase;
-      text-shadow: 0 0 50px rgba(200,168,75,0.3), 0 2px 12px rgba(0,0,0,0.9);
-      opacity: 0; transition: opacity 0.8s ease;
+      position: relative; z-index: 15; text-align: center;
+      padding: 22px 28px 6px; opacity: 0; transition: opacity 0.8s ease;
     }
     #location-title.visible { opacity: 1; }
-    @keyframes titleReveal { from { opacity: 0; letter-spacing: 0.35em; } to { opacity: 1; letter-spacing: 0.2em; } }
-    #location-title.reveal { animation: titleReveal 1s ease-out forwards; }
+    #location-title .location-main {
+      font-family: var(--font-head);
+      font-size: clamp(1.7rem, 4.6vw, 2.9rem); line-height: 1.05;
+      color: var(--gold); letter-spacing: 0.16em; text-transform: uppercase;
+      text-shadow: 0 0 50px rgba(200,168,75,0.3), 0 2px 12px rgba(0,0,0,0.9);
+      max-width: 20ch; margin: 0 auto; /* long names wrap to a second line */
+    }
+    #location-title .location-sub {
+      display: inline-flex; align-items: center; gap: 12px; margin-top: 9px;
+      font-family: var(--font-head); color: rgba(200,168,75,0.7);
+      font-size: clamp(0.78rem, 1.9vw, 0.98rem); letter-spacing: 0.26em; text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+    }
+    #location-title .location-sub .rule { width: clamp(18px, 5vw, 42px); height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim)); }
+    #location-title .location-sub .rule:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
+    @keyframes titleReveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    #location-title.reveal { animation: titleReveal 0.9s ease-out forwards; }
 
-    /* ── Narrative ── */
+    /* ── Narrative — a bounded "story panel" so the scene art breathes above ── */
     #narrative-area {
       position: relative; z-index: 5; flex: 1; display: flex;
       flex-direction: column; justify-content: flex-end;
       padding: 0 clamp(20px,5vw,80px) 0; overflow: hidden;
     }
-    #narrative-scroll { max-height: 40vh; overflow-y: auto; scrollbar-width: none; }
+    #narrative-scroll {
+      width: 100%; max-width: 660px; max-height: 42vh; overflow-y: auto; scrollbar-width: none;
+      padding: 20px 24px 22px; margin-bottom: 2px;
+      background: linear-gradient(180deg, rgba(12,10,8,0.32), rgba(9,7,5,0.74));
+      border: 1px solid var(--border); border-top: 2px solid var(--gold-dim); border-radius: 5px;
+      backdrop-filter: blur(7px); box-shadow: 0 16px 50px rgba(0,0,0,0.45);
+    }
     #narrative-scroll::-webkit-scrollbar { display: none; }
-    .narrative-line { font-size: clamp(1.05rem,2.2vw,1.3rem); line-height: 1.8; color: var(--text); margin-bottom: 12px; max-width: 700px; white-space: pre-line; }
-    .narrative-line.player-line { color: var(--gold); font-style: italic; font-size: 0.95em; margin-bottom: 16px; opacity: 0.8; }
-    .narrative-line.player-line::before { content: '› '; color: var(--gold-dim); }
+    .narrative-line { font-size: clamp(1.02rem,1.9vw,1.2rem); line-height: 1.75; color: var(--text); margin-bottom: 13px; white-space: pre-line; letter-spacing: 0.01em; }
+    .narrative-line:last-child { margin-bottom: 0; }
+    /* Storybook drop cap on the opening line of narrator prose */
+    .narrative-line.lead::first-letter { font-family: var(--font-head); font-size: 2.9em; line-height: 0.8; float: left; padding: 4px 10px 0 0; color: var(--gold); }
+    .narrative-line.player-line { color: var(--gold); font-style: italic; font-size: 0.95em; margin-bottom: 14px; opacity: 0.82; }
+    .narrative-line.player-line::before { content: '\203A '; color: var(--gold-dim); }
 
     /* Action highlight — bold gold text for commands/questions */
     .action-highlight {
@@ -457,9 +606,15 @@
       <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">&mdash;</span></div>
     </div>
     <div class="hud-controls">
-      <button class="hud-btn" id="hud-account-btn" title="Account">&#9812;</button>
-      <button class="hud-btn active" id="hud-music-btn" title="Toggle music">&#127925;</button>
-      <button class="hud-btn active" id="hud-voice-btn" title="Toggle voice">&#128266;</button>
+      <button class="hud-btn" id="hud-account-btn" title="Account" aria-label="Account">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+      </button>
+      <button class="hud-btn active" id="hud-music-btn" title="Toggle music" aria-label="Toggle music">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l9-2v10"/><circle class="note-head" cx="6.5" cy="18" r="2.6"/><circle class="note-head" cx="15.5" cy="16" r="2.6"/><line class="mute-slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+      </button>
+      <button class="hud-btn active" id="hud-voice-btn" title="Toggle sound" aria-label="Toggle sound">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk-body" d="M4 9.5h3l5-4v13l-5-4H4z"/><path class="wave" d="M16 9.2a4 4 0 0 1 0 5.6"/><path class="wave" d="M18.6 6.6a7.5 7.5 0 0 1 0 10.8"/><line class="mute-slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+      </button>
       <div id="account-menu-panel" hidden>
         <div class="account-menu-summary" id="account-menu-summary"></div>
         <div class="account-menu-profile" id="account-menu-profile"></div>
@@ -529,6 +684,56 @@
       <h2 class="auth-heading" id="creation-heading">Name Your Adventurer</h2>
       <div id="creation-body"></div>
     </div>
+  </div>
+
+  <!-- ═ SHOP SCENE (tile grid + shopkeeper) ═ -->
+  <div id="shop-scene" hidden>
+    <div class="shop-scene-inner">
+      <aside class="shopkeeper">
+        <div class="shopkeeper-portrait" id="shopkeeper-portrait"><span class="portrait-placeholder">⚒</span></div>
+        <div class="shopkeeper-name" id="shopkeeper-name">Marcos Cavielli</div>
+        <div class="shopkeeper-line" id="shopkeeper-line">"Well met! What do you need?"</div>
+        <div class="shopkeeper-gold"><span class="coin">◉</span> <span id="shop-scene-gold">300</span> gold</div>
+        <div class="shop-tabs" id="shop-tabs">
+          <button class="shop-tab active" data-tab="buy">Buy</button>
+          <button class="shop-tab" data-tab="sell">Sell</button>
+        </div>
+        <button class="enter-btn link" id="shop-leave-btn">&larr; Leave the shop</button>
+      </aside>
+      <div class="shop-grid-wrap">
+        <div class="shop-grid" id="shop-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═ COMBAT SCENE (head-to-head) ═ -->
+  <div id="combat-scene" hidden>
+    <div class="combat-stage">
+      <div class="combatant" id="combatant-player">
+        <div class="combat-portrait"><span class="portrait-placeholder">🜂</span><span class="hit-flash"></span><span class="dmg-float"></span></div>
+        <div class="combatant-name" id="combat-player-name">Theron</div>
+        <div class="hp-bar"><div class="hp-fill" id="combat-player-hp" style="width:82%"></div><span class="hp-text" id="combat-player-hptext">18 / 22</span></div>
+      </div>
+
+      <div class="combat-center">
+        <div class="combat-roll" id="combat-roll">
+          <div class="roll-die" id="roll-die">14</div>
+          <div class="roll-calc" id="roll-calc">14 + AG 4 = 18 vs 12</div>
+          <div class="roll-result hit" id="roll-result">HIT</div>
+        </div>
+        <div class="combat-vs">&#9876;</div>
+      </div>
+
+      <div class="combatant enemy" id="combatant-enemy">
+        <div class="combat-portrait"><span class="portrait-placeholder">👁</span><span class="hit-flash"></span><span class="dmg-float"></span></div>
+        <div class="combatant-name" id="combat-enemy-name">Cave Goblin</div>
+        <div class="hp-bar"><div class="hp-fill enemy" id="combat-enemy-hp" style="width:40%"></div><span class="hp-text" id="combat-enemy-hptext">4 / 10</span></div>
+      </div>
+    </div>
+
+    <div class="combat-log" id="combat-log"></div>
+
+    <div class="combat-actions" id="combat-actions"></div>
   </div>
 </div>
 

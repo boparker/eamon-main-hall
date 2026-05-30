@@ -98,7 +98,6 @@ export function initAudioControls() {
     state.musicEnabled = !state.musicEnabled;
     const btn = document.getElementById('hud-music-btn');
     btn.classList.toggle('active', state.musicEnabled);
-    btn.textContent = state.musicEnabled ? '\u{1F3B5}' : '\u{1F507}';
     if (state.musicEnabled) {
       bgMusic.play().catch(() => {});
       bgMusic.volume = 0.3;
@@ -112,7 +111,6 @@ export function initAudioControls() {
     state.voiceEnabled = !state.voiceEnabled;
     const btn = document.getElementById('hud-voice-btn');
     btn.classList.toggle('active', state.voiceEnabled);
-    btn.textContent = state.voiceEnabled ? '\u{1F50A}' : '\u{1F507}';
     if (!state.voiceEnabled && ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
   });
 }
