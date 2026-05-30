@@ -17,7 +17,7 @@ import { listGameCharacters } from './api.js';
 import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
 import { initHelpMenu } from './help-menu.js';
 import { createCreationCard } from './creation-card.js';
-import { renderCombat, hideCombat, registerCombatAction } from './combat-scene.js';
+import { renderCombat, hideCombat, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
@@ -187,6 +187,21 @@ registerPurchaseHandler((text) => {
 registerCombatAction((text) => {
   inputEl.value = text;
   sendMessage();
+});
+// On death, the combat scene's "Return to the Guild Hall" re-bootstraps the hall.
+registerCombatReturnToHall(async () => {
+  if (state.isStreaming) return;
+  hideCombat();
+  state.isStreaming = true;
+  setInputState('action', false);
+  try {
+    const response = await gameClient.startPhase1Game();
+    setInputState(response?.state?.character ? 'action' : 'name', true);
+  } catch (err) {
+    renderGameResponse({ text: err.message || 'The Guild Hall is unavailable right now.', choices: [], state: { phase: 'great-hall' } });
+  } finally {
+    state.isStreaming = false;
+  }
 });
 
 // ── Audio controls ──
