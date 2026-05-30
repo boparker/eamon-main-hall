@@ -751,6 +751,21 @@ test('POST /api/game/command supports talking to visible non-hostile characters'
   assert.deepEqual(talk.body.choices, ['north', 'take Gem', 'read inscription', 'attack Rat', 'talk Hermit']);
 });
 
+test('POST /api/game/command — talking to a hostile foe will not parley (no look-dump)', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  const runId = started.body.state.run.id;
+  const charId = character.body.state.character.id;
+  await accountCommand(app, charId, runId, 'south'); // into the Rat Room
+
+  const talk = await accountCommand(app, charId, runId, 'talk rat');
+  assert.equal(talk.status, 200);
+  assert.equal(talk.body.events[0].reason, 'hostile');
+  assert.match(talk.body.text, /snarl|will not help/i);
+  assert.doesNotMatch(talk.body.text, /You see/i); // never dumps the look-description as speech
+});
+
 test('POST /api/game/command pick up synonym takes visible items', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);
