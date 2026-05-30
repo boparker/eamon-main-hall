@@ -179,6 +179,18 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   };
 }
 
+// Apply the equipped weapon's damage dice and armour class to the character so
+// combat actually reflects gear. Mutates in place; these fields are transient
+// (characterPatch never persists them).
+function applyEquipmentToCombatant(character) {
+  const eq = character.equipment ?? {};
+  const damage = eq.weapon?.stats?.damage;
+  character.weapon = damage ? { damage } : undefined;
+  character.weaponOdds = Number(eq.weapon?.stats?.weaponOdds) || 0;
+  character.defense = (Number(eq.armor?.stats?.armorClass) || 0) + (Number(eq.shield?.stats?.armorClass) || 0);
+  return character;
+}
+
 function findVisibleCharacter(adventure, run, target) {
   const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
@@ -961,6 +973,7 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
+        applyEquipmentToCombatant(character);
         const combat = resolveCombatRound(character, enemy, deps.rng);
         character.hd = character.hp;
         run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };

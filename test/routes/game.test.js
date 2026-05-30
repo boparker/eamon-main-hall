@@ -766,6 +766,23 @@ test('POST /api/game/command — talking to a hostile foe will not parley (no lo
   assert.doesNotMatch(talk.body.text, /You see/i); // never dumps the look-description as speech
 });
 
+test('POST /api/game/command — equipped weapon damage is used in combat', async () => {
+  const { app } = makeApp(makeDeps({ rng: () => 0.99 })); // max rolls: guaranteed hit + max damage
+  const created = await createAccountCharacter(app, { gold: 300 });
+  const charId = created.body.state.character.id;
+
+  // Buy a two-handed sword (1d10) — it should be auto-equipped.
+  const bought = await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId: charId, input: 'buy two-handed sword' }, accountHeaders);
+  assert.equal(bought.body.state.character.equipment.weapon.slug, 'two-handed-sword');
+
+  const started = await startAccountAdventure(app, charId);
+  const runId = started.body.state.run.id;
+  await accountCommand(app, charId, runId, 'south'); // into the Rat Room
+  const atk = await accountCommand(app, charId, runId, 'attack rat');
+  // 1d10 at max = 10 damage, not the unarmed 1d2 default (which would cap at 2).
+  assert.equal(atk.body.state.combat.round.player.damage, 10);
+});
+
 test('POST /api/game/command pick up synonym takes visible items', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);
