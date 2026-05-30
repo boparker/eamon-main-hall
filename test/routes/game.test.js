@@ -783,6 +783,39 @@ test('POST /api/game/command — equipped weapon damage is used in combat', asyn
   assert.equal(atk.body.state.combat.round.player.damage, 10);
 });
 
+test('POST /api/game/command — casting a learned blast in combat damages the enemy', async () => {
+  const { app } = makeApp(makeDeps({ rng: () => 0 })); // deterministic: learn raises ability, cast rolls 1 (success)
+  const created = await createAccountCharacter(app, { gold: 1500 });
+  const charId = created.body.state.character.id;
+
+  const learned = await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId: charId, input: 'learn blast' }, accountHeaders);
+  assert.ok(learned.body.state.character.spells.blast > 0);
+
+  const started = await startAccountAdventure(app, charId);
+  const runId = started.body.state.run.id;
+  await accountCommand(app, charId, runId, 'south'); // into the Rat Room
+
+  const cast = await accountCommand(app, charId, runId, 'cast blast');
+  assert.equal(cast.status, 200);
+  assert.equal(cast.body.events[0].type, 'cast');
+  assert.equal(cast.body.state.combat.round.player.spell, 'blast');
+  assert.equal(cast.body.state.combat.round.player.success, true);
+  assert.ok(cast.body.state.combat.round.player.damage > 0);
+});
+
+test('POST /api/game/command — casting an unlearned spell is refused', async () => {
+  const { app } = makeApp();
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  const started = await startAccountAdventure(app, charId);
+  const runId = started.body.state.run.id;
+  await accountCommand(app, charId, runId, 'south');
+
+  const cast = await accountCommand(app, charId, runId, 'cast blast');
+  assert.equal(cast.body.events[0].reason, 'not-learned');
+  assert.match(cast.body.text, /not learned/i);
+});
+
 test('POST /api/game/command pick up synonym takes visible items', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);

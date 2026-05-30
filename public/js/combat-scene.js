@@ -37,10 +37,32 @@ function playHit(side, damage) {
   if (damage > 0) df.classList.add('show');
 }
 
+function playHeal(side, amount) {
+  const el = document.getElementById(side === 'enemy' ? 'combatant-enemy' : 'combatant-player');
+  if (!el) return;
+  const hf = el.querySelector('.heal-float');
+  if (!hf) return;
+  hf.classList.remove('show');
+  void el.offsetWidth;
+  hf.textContent = `+${amount}`;
+  hf.classList.add('show');
+}
+
 function setRollReadout(round) {
   const rollEl = document.getElementById('combat-roll');
   const p = round?.player;
-  if (!p || p.roll == null) { rollEl.style.visibility = 'hidden'; return; }
+  if (!p) { rollEl.style.visibility = 'hidden'; return; }
+  // Spell cast: show the d100 roll vs the ability %.
+  if (p.spell) {
+    rollEl.style.visibility = 'visible';
+    document.getElementById('roll-die').textContent = p.roll ?? '?';
+    document.getElementById('roll-calc').textContent = `${p.roll} vs ${p.ability}% · ${cap(p.spell)}`;
+    const rr = document.getElementById('roll-result');
+    rr.textContent = p.success ? 'CAST!' : 'FIZZLE';
+    rr.className = 'roll-result ' + (p.success ? 'hit' : 'miss');
+    return;
+  }
+  if (p.roll == null) { rollEl.style.visibility = 'hidden'; return; }
   rollEl.style.visibility = 'visible';
   document.getElementById('roll-die').textContent = p.roll;
   const ag = (p.total != null && p.roll != null) ? p.total - p.roll : null;
@@ -74,20 +96,32 @@ function singleAction(label, handler, variant = 'primary') {
   el.appendChild(b);
 }
 
-function renderActions(choices) {
+function mkBtn(label, command, variant) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'enter-btn' + (variant ? ' ' + variant : '');
+  b.textContent = label;
+  b.addEventListener('click', () => { if (_onAction) _onAction(command); });
+  return b;
+}
+
+const isMoveChoice = (c) => /^(north|south|east|west|up|down)$/i.test(String(c).trim());
+
+// Action bar order: attack/take/etc → cast spells you know → flee.
+function renderActions(choices, spells) {
   const el = document.getElementById('combat-actions');
   el.replaceChildren();
-  for (const choice of choices ?? []) {
-    const text = String(choice).trim();
-    const isMove = /^(north|south|east|west|up|down)$/i.test(text);
-    const isAttack = /^attack/i.test(text);
-    const b = document.createElement('button');
-    b.type = 'button';
-    // movement = visible "Flee <dir>" secondary button (not a dim link)
-    b.className = 'enter-btn' + (isAttack ? ' primary' : isMove ? ' flee' : '');
-    b.textContent = isMove ? `Flee ${cap(text)}` : formatActionLabel(text);
-    b.addEventListener('click', () => { if (_onAction) _onAction(choice); });
-    el.appendChild(b);
+  const all = choices ?? [];
+
+  for (const choice of all.filter((c) => !isMoveChoice(c))) {
+    const isAttack = /^attack/i.test(String(choice));
+    el.appendChild(mkBtn(formatActionLabel(choice), choice, isAttack ? 'primary' : ''));
+  }
+  for (const [name, ability] of Object.entries(spells ?? {})) {
+    if (Number(ability) > 0) el.appendChild(mkBtn(`Cast ${cap(name)} (${ability}%)`, `cast ${name}`, 'cast'));
+  }
+  for (const dir of all.filter(isMoveChoice)) {
+    el.appendChild(mkBtn(`Flee ${cap(String(dir).trim())}`, dir, 'flee'));
   }
 }
 
@@ -108,7 +142,14 @@ export function renderCombat(combat, choices, text) {
   setHp('enemy', combat.enemy.hp ?? 0, combat.enemy.maxHp ?? 0);
 
   const round = combat.round;
-  if (round?.player?.hit && round.player.damage > 0) playHit('enemy', round.player.damage);
+  // Player's action: a spell (blast damages, heal restores) or a normal attack.
+  if (round?.player?.spell) {
+    if (round.player.damage > 0) playHit('enemy', round.player.damage);
+    if (round.player.heal > 0) playHeal('player', round.player.heal);
+  } else if (round?.player?.hit && round.player.damage > 0) {
+    playHit('enemy', round.player.damage);
+  }
+  // Enemy's counterattack lands a beat later.
   if (round?.enemy?.hit && round.enemy.damage > 0) setTimeout(() => playHit('player', round.enemy.damage), 700);
 
   renderLog(text);
@@ -131,7 +172,7 @@ export function renderCombat(combat, choices, text) {
     singleAction('Return to the Guild Hall', () => { if (_onReturnToHall) _onReturnToHall(); });
   } else {
     banner.hidden = true;
-    renderActions(choices);
+    renderActions(choices, combat.spells);
   }
 }
 
