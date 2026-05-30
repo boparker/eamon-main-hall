@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-const JSON_FIELDS = new Set(['inventory', 'equipment', 'adventuresCompleted']);
+const JSON_FIELDS = new Set(['inventory', 'equipment', 'spells', 'adventuresCompleted']);
 const COLUMN_BY_FIELD = {
   name: 'name',
   className: 'class',
@@ -13,6 +13,7 @@ const COLUMN_BY_FIELD = {
   bankGold: 'bank_gold',
   inventory: 'inventory',
   equipment: 'equipment',
+  spells: 'spells',
   adventuresCompleted: 'adventures_completed',
   isAlive: 'is_alive',
   lastPlayedAt: 'last_played_at',

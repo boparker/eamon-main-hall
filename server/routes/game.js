@@ -14,6 +14,12 @@ import {
 import { resolveCombatRound } from '../engine/combat.js';
 import { convertTreasuresOnReturn, takeTreasure } from '../engine/economy.js';
 import {
+  SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
+  SPELLS, learnSpell, spellAbility,
+  ATTRIBUTES, attributePrice, raiseAttribute,
+  bankDeposit, bankWithdraw,
+} from '../engine/vendors.js';
+import {
   renderCombatResult,
   renderInventory,
   renderMoveBlocked,
@@ -51,21 +57,13 @@ const DEFAULT_CLASS_STATS = {
 
 const BEGINNERS_CAVE_ID = 'beginners-cave';
 
-const HALL_SHOP_ITEMS = [
-  { slug: 'short-sword', name: 'Short Sword', price: 30, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d6', type: 'Sword' } },
-  { slug: 'broadsword', name: 'Broadsword', price: 60, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d6', type: 'Sword' } },
-  { slug: 'battle-axe', name: 'Battle Axe', price: 80, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d8', type: 'Axe' } },
-  { slug: 'mace', name: 'Mace', price: 50, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '2d4', type: 'Mace' } },
-  { slug: 'spear', name: 'Spear', price: 40, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d8', type: 'Spear' } },
-  { slug: 'war-hammer', name: 'War Hammer', price: 90, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '3d6', type: 'Hammer' } },
-  { slug: 'leather-armor', name: 'Leather Armor', price: 50, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+2', type: 'Armor' } },
-  { slug: 'chain-mail', name: 'Chain Mail', price: 120, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+5', agility: '-1', type: 'Armor' } },
-  { slug: 'plate-armor', name: 'Plate Armor', price: 200, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+8', agility: '-3', type: 'Armor' } },
-  { slug: 'shield', name: 'Shield', price: 40, category: 'armor', equipmentSlot: 'shield', stats: { defense: '+2', type: 'Shield' } },
-];
+const HALL_SHOP_ITEMS = SHOP_CATALOG;
 
 const GREAT_HALL_TITLE = 'The Great Hall';
-const MARCOS_WEAPON_SHOP_TITLE = "Marcos Cavielli's Weapon Shop";
+const MARCOS_WEAPON_SHOP_TITLE = "Marcos Cavielli's Weapons & Armour Shoppe";
+const WIZARD_TITLE = "Hokas Tokas' School of Magick";
+const WITCH_TITLE = "The Witch's Shop";
+const BANK_TITLE = 'Bank of Eamon Towne';
 
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
@@ -166,6 +164,7 @@ function rowCharacter(row) {
     bankGold: row.bank_gold,
     inventory: Array.isArray(row.inventory) ? row.inventory : [],
     equipment: row.equipment ?? {},
+    spells: row.spells ?? {},
     adventuresCompleted: Array.isArray(row.adventures_completed) ? row.adventures_completed : [],
     isAlive: row.is_alive,
   };
@@ -282,7 +281,7 @@ function hallChoices(character, unlockedAdventures = []) {
   if (!character) return ['Create Character', 'Sign the Guild Rolls'];
   if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Sign the Guild Rolls'];
   const adventureChoices = unlockedAdventures.map((adventure) => `Begin ${String(adventure.name).replace(/^The\s+/i, '')}`);
-  return ['Create Character', 'Sign the Guild Rolls', 'Visit Weapons Shop', 'Visit Armor Shop', 'View Equipment', ...adventureChoices];
+  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Bank', 'View Equipment', ...adventureChoices];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
@@ -325,17 +324,14 @@ function slugify(value) {
   return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function capitalize(value) {
+  const text = String(value ?? '');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function findShopItem(input) {
   const normalized = slugify(String(input ?? '').replace(/^buy\s+/i, ''));
   return HALL_SHOP_ITEMS.find((item) => item.slug === normalized || slugify(item.name) === normalized) ?? null;
-}
-
-function shopItemsForInput(input) {
-  const normalized = normalizeTarget(input);
-  if (/armor|shield|equipment/.test(normalized)) {
-    return HALL_SHOP_ITEMS.filter((item) => item.category === 'armor');
-  }
-  return HALL_SHOP_ITEMS.filter((item) => item.category === 'weapon');
 }
 
 function hallState({ player, character, characters, adventures, extra = {} }) {
@@ -376,20 +372,20 @@ function equipmentResponse({ player, character, characters, adventures }) {
     intent: { type: 'hall_equipment' },
     event: { type: 'hall_equipment' },
     text: equipmentText(character),
-    choices: ['Visit Weapons Shop', 'Visit Armor Shop', 'Return to Great Hall'],
+    choices: ['Visit the Weapon Shop', 'Return to Great Hall'],
     state: hallState({ player, character, characters, adventures }),
   });
 }
 
-function shopResponse({ player, character, characters, adventures, input }) {
-  const items = shopItemsForInput(input);
-  const section = items.some((item) => item.category === 'armor') ? 'Armor & Shields' : 'Weapons';
-  const catalog = items.map((item) => `• ${item.name} — ${item.price} gold`).join('\n');
+function shopResponse({ player, character, characters, adventures, prefix = '' }) {
   return canonicalResponse({
-    intent: { type: 'hall_shop', input },
-    event: { type: 'hall_shop', input },
-    text: `${MARCOS_WEAPON_SHOP_TITLE}\n${section} available:\n${catalog}\nChoose an item below, or type buy followed by the item name.`,
-    choices: items.map((item) => `Buy ${item.name}`).concat(['Return to Great Hall']),
+    intent: { type: 'hall_shop' },
+    event: { type: 'hall_shop' },
+    text: [
+      prefix || `Marcos Cavielli comes from the back room. "Well, as I live and breathe, if it isn't ${character.name}! What do you need?"`,
+      `You have ${character.gold} gold pieces. Tap an item to buy, or sell from your pack.`,
+    ].join('\n'),
+    choices: ['Sell Equipment', 'Return to Great Hall'],
     state: hallState({
       player,
       character,
@@ -397,9 +393,79 @@ function shopResponse({ player, character, characters, adventures, input }) {
       adventures,
       extra: {
         locationTitle: MARCOS_WEAPON_SHOP_TITLE,
-        shop: { key: 'marcos', title: MARCOS_WEAPON_SHOP_TITLE, section, items },
+        shop: { key: 'marcos', title: 'MARCOS CAVIELLI — WEAPONS & ARMOUR', items: HALL_SHOP_ITEMS },
       },
     }),
+  });
+}
+
+function sellResponse({ player, character, characters, adventures, prefix = '' }) {
+  const sellable = (character.inventory ?? []).filter((item) => item?.type !== 'treasure' && Number.isFinite(item?.price ?? item?.value));
+  const choices = sellable.length
+    ? sellable.map((item) => `Sell ${item.name} (+${Math.floor((item.price ?? item.value ?? 0) / 2)}g)`)
+    : [];
+  return canonicalResponse({
+    intent: { type: 'hall_sell' },
+    event: { type: 'hall_sell' },
+    text: [
+      prefix || `"What do you want to sell? I'll give you half what it's worth," says Marcos.`,
+      `You have ${character.gold} gold pieces.`,
+      sellable.length ? 'Your pack:' : 'You have nothing to sell.',
+    ].join('\n'),
+    choices: [...choices, 'Visit the Weapon Shop', 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: MARCOS_WEAPON_SHOP_TITLE } }),
+  });
+}
+
+function wizardResponse({ player, character, characters, adventures, prefix = '' }) {
+  const lines = SPELLS.map((spell) => {
+    const ability = spellAbility(character, spell.name);
+    const status = ability > 90 ? 'mastered' : ability > 0 ? `${ability}%` : 'unknown';
+    return `• ${capitalize(spell.name)} (${status}) — ${spell.price} gold. ${spell.description}`;
+  });
+  const choices = SPELLS
+    .filter((spell) => spellAbility(character, spell.name) <= 90)
+    .map((spell) => `${spellAbility(character, spell.name) > 0 ? 'Upgrade' : 'Learn'} ${capitalize(spell.name)} (${spell.price}g)`);
+  return canonicalResponse({
+    intent: { type: 'hall_wizard' },
+    event: { type: 'hall_wizard' },
+    text: [
+      prefix || `Hokas Tokas, the old Mage, looks up. "So you want old Hokey to teach you some magic, eh? Here are the spells I teach. Which will it be?"`,
+      `You have ${character.gold} gold pieces.`,
+      ...lines,
+    ].join('\n'),
+    choices: [...choices, 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: WIZARD_TITLE } }),
+  });
+}
+
+function witchResponse({ player, character, characters, adventures, prefix = '' }) {
+  const lines = ATTRIBUTES.map((attr) => `• ${capitalize(attr)} (now ${character[attr]}) — ${attributePrice(character[attr])} gold for +1`);
+  const choices = ATTRIBUTES.map((attr) => `Raise ${capitalize(attr)} (${attributePrice(character[attr])}g)`);
+  return canonicalResponse({
+    intent: { type: 'hall_witch' },
+    event: { type: 'hall_witch' },
+    text: [
+      prefix || `A lovely young woman dressed in black smiles. "My magic potions can increase one of your attributes. My prices are:"`,
+      `You have ${character.gold} gold pieces.`,
+      ...lines,
+    ].join('\n'),
+    choices: [...choices, 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: WITCH_TITLE } }),
+  });
+}
+
+function bankResponse({ player, character, characters, adventures, prefix = '' }) {
+  return canonicalResponse({
+    intent: { type: 'hall_bank' },
+    event: { type: 'hall_bank' },
+    text: [
+      prefix || `Seamus McFenney, the portly banker, ambles over. "Well, ${character.name}! Do you want to make a deposit or a withdrawal?"`,
+      `You have ${character.gold} gold pieces in hand, and ${character.bankGold} gold pieces in the bank.`,
+      'Type an amount, e.g. "deposit 250" or "withdraw 100".',
+    ].join('\n'),
+    choices: ['Deposit 100', 'Deposit All', 'Withdraw 100', 'Withdraw All', 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: BANK_TITLE } }),
   });
 }
 
@@ -599,7 +665,80 @@ export function createGameRouter(rawDeps = {}) {
       if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');
       const character = rowCharacter(characterRow);
       const normalizedInput = normalizeTarget(input);
-      if (/register|account|upgrade|login|sign\s*in/.test(normalizedInput)) {
+      const persist = (patch) => deps.updateCharacter(deps.db, context.owner, characterId, patch);
+      const render = (builder, char, row, prefix) => res.json(builder({ player: hallPlayer, character: char, characters: [row], adventures, prefix }));
+      const findOwned = (raw) => {
+        const target = normalizeTarget(String(raw).replace(/^sell\s+/i, '').replace(/\s*\(.*\)\s*$/, ''));
+        return (character.inventory ?? []).find((owned) => slugify(owned?.slug) === slugify(target) || normalizeTarget(owned?.name) === target) ?? null;
+      };
+
+      // ── Marcos: buy / sell ──────────────────────────────────────────────
+      const buyMatch = /^buy\s+(.+)/i.exec(input);
+      if (buyMatch) {
+        const item = findCatalogItem(buyMatch[1]);
+        if (!item) return error(res, 400, `Marcos does not stock ${buyMatch[1].trim()}.`, 'invalid-purchase');
+        const result = buyFromShop(character, item);
+        if (!result.ok) return error(res, 409, `Not enough gold to buy ${item.name}.`, result.reason);
+        const row = await persist({ gold: result.character.gold, inventory: result.character.inventory, equipment: result.character.equipment });
+        return render(shopResponse, rowCharacter(row), row, `You buy ${item.name} and ready it. "Pleasure doing business!"`);
+      }
+      if (/^sell\s+equipment$|^sell$|^sell\s+from/.test(normalizedInput)) {
+        return render(sellResponse, character, characterRow);
+      }
+      const sellMatch = /^sell\s+(.+)/i.exec(input);
+      if (sellMatch) {
+        const owned = findOwned(input);
+        if (!owned) return error(res, 400, `You are not carrying ${sellMatch[1].replace(/\s*\(.*\)\s*$/, '').trim()}.`, 'missing-item');
+        const result = sellToShop(character, owned.slug);
+        if (!result.ok) return error(res, 409, `You cannot sell ${owned.name}.`, result.reason);
+        const row = await persist({ gold: result.character.gold, inventory: result.character.inventory, equipment: result.character.equipment });
+        return render(sellResponse, rowCharacter(row), row, `Marcos hands you ${result.goldGained} gold for ${owned.name}.`);
+      }
+
+      // ── Hokas Tokas: learn / upgrade spells ─────────────────────────────
+      const spellMatch = /(?:learn|upgrade)\s+(blast|heal|power|speed)/i.exec(normalizedInput);
+      if (spellMatch) {
+        const result = learnSpell(character, spellMatch[1].toLowerCase(), deps.rng);
+        if (!result.ok) {
+          if (result.reason === 'maxed-out') return error(res, 409, `You have already mastered ${capitalize(spellMatch[1])}.`, result.reason);
+          return error(res, 409, `Not enough gold to learn ${capitalize(spellMatch[1])}.`, result.reason);
+        }
+        const row = await persist({ gold: result.character.gold, spells: result.character.spells });
+        const verb = result.learned ? `learn ${capitalize(result.spell.name)}` : `improve ${capitalize(result.spell.name)} to ${result.ability}%`;
+        return render(wizardResponse, rowCharacter(row), row, `Hokas teaches you well; you ${verb}.`);
+      }
+
+      // ── The Witch: raise attributes ─────────────────────────────────────
+      const raiseMatch = /raise\s+(hardiness|agility|charisma)/i.exec(normalizedInput);
+      if (raiseMatch) {
+        const result = raiseAttribute(character, raiseMatch[1].toLowerCase());
+        if (!result.ok) return error(res, 409, `Not enough gold to raise ${capitalize(raiseMatch[1])}.`, result.reason);
+        const patch = { gold: result.character.gold, [raiseMatch[1].toLowerCase()]: result.value };
+        if (raiseMatch[1].toLowerCase() === 'hardiness') { patch.maxHd = result.character.maxHd; patch.hd = result.character.hd; }
+        const row = await persist(patch);
+        return render(witchResponse, rowCharacter(row), row, `The potion works! Your ${capitalize(result.attribute)} rises to ${result.value}.`);
+      }
+
+      // ── Bank: deposit / withdraw ────────────────────────────────────────
+      const depositMatch = /deposit\s+(\d+|all)/i.exec(normalizedInput);
+      if (depositMatch) {
+        const amount = depositMatch[1] === 'all' ? character.gold : parseInt(depositMatch[1], 10);
+        const result = bankDeposit(character, amount);
+        if (!result.ok) return error(res, 409, result.reason === 'insufficient-gold' ? "You don't have that much gold in hand." : 'Enter a positive amount.', result.reason);
+        const row = await persist({ gold: result.character.gold, bankGold: result.character.bankGold });
+        return render(bankResponse, rowCharacter(row), row, `Seamus takes your ${result.amount} gold and listens to it jingle.`);
+      }
+      const withdrawMatch = /withdraw\s+(\d+|all)/i.exec(normalizedInput);
+      if (withdrawMatch) {
+        const amount = withdrawMatch[1] === 'all' ? character.bankGold : parseInt(withdrawMatch[1], 10);
+        const result = bankWithdraw(character, amount);
+        if (!result.ok) return error(res, 409, result.reason === 'insufficient-funds' ? "That's more than you have in your account." : 'Enter a positive amount.', result.reason);
+        const row = await persist({ gold: result.character.gold, bankGold: result.character.bankGold });
+        return render(bankResponse, rowCharacter(row), row, `Seamus hands you ${result.amount} gold and shakes your hand.`);
+      }
+
+      // ── Vendor visits ───────────────────────────────────────────────────
+      if (/register|account|login|sign\s*in/.test(normalizedInput)) {
         return res.json(hallResponse({
           player: hallPlayer,
           characters: [characterRow],
@@ -613,32 +752,20 @@ export function createGameRouter(rawDeps = {}) {
       if (normalizedInput === 'view equipment' || normalizedInput === 'equipment') {
         return res.json(equipmentResponse({ player: hallPlayer, character, characters: [characterRow], adventures }));
       }
-      if (/^(?:visit\s+)?(?:weapon|weapons|armor|shield|shields|equipment)(?:\s+shop)?$/.test(normalizedInput)
-        || /shop/.test(normalizedInput)) {
-        return res.json(shopResponse({ player: hallPlayer, character, characters: [characterRow], adventures, input }));
+      if (/weapon|marcos|^shop$|armou?r\s+shop/.test(normalizedInput)) {
+        return render(shopResponse, character, characterRow);
       }
-      const buyMatch = /^buy\s+/i.test(input);
-      if (!buyMatch) {
-        return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
+      if (/wizard|hokas|magick?|spell/.test(normalizedInput)) {
+        return render(wizardResponse, character, characterRow);
       }
-      const item = findShopItem(input);
-      if (!item) return error(res, 400, `The Great Hall shop does not sell ${String(input).replace(/^buy\s+/i, '')}.`, 'invalid-purchase');
-      if ((character.inventory ?? []).some((owned) => owned?.slug === item.slug || normalizeTarget(owned?.name) === normalizeTarget(item.name))) {
-        return error(res, 409, `You already own ${item.name}.`, 'duplicate-purchase');
+      if (/witch/.test(normalizedInput)) {
+        return render(witchResponse, character, characterRow);
       }
-      if ((character.gold ?? 0) < item.price) {
-        return error(res, 409, `Not enough gold to buy ${item.name}.`, 'insufficient-gold');
+      if (/bank|seamus|mcfenney/.test(normalizedInput)) {
+        return render(bankResponse, character, characterRow);
       }
-      const ownedItem = { slug: item.slug, name: item.name, price: item.price, category: item.category, stats: item.stats };
-      const inventory = [...(character.inventory ?? []), ownedItem];
-      const equipment = { ...(character.equipment ?? {}), [item.equipmentSlot]: ownedItem };
-      const updated = await deps.updateCharacter(deps.db, context.owner, characterId, {
-        gold: character.gold - item.price,
-        inventory,
-        equipment,
-      });
-      const updatedCharacter = rowCharacter(updated);
-      return res.json(hallResponse({ player: hallPlayer, characters: [updated], adventures, character: updatedCharacter, prefix: `You buy ${item.name} and return to the Great Hall.` }));
+
+      return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
     } catch (err) {
       return next(err);
     }
