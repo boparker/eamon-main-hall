@@ -7,6 +7,7 @@ import { parseCommand } from '../engine/commands.js';
 import {
   getCurrentRoom,
   getVisibleRoomEntities,
+  markContainerOpened,
   markEnemyDefeated,
   markItemCollected,
   move,
@@ -90,7 +91,11 @@ function choicesForRoom(room) {
   return DIRECTIONS.filter((direction) => room?.exits?.[direction] !== null && room?.exits?.[direction] !== undefined);
 }
 
-function itemChoice(item) {
+function itemChoice(item, openedContainers = new Set()) {
+  // Containers offer "open" until opened (so the choice doesn't spoil contents).
+  if (item.type === 'container') {
+    return openedContainers.has(item.slug) ? null : `open ${item.name ?? item.slug}`;
+  }
   return `${isCollectible(item) ? 'take' : 'read'} ${item.name ?? item.slug}`;
 }
 
@@ -98,8 +103,9 @@ function choicesForRun(adventure, run) {
   const room = getCurrentRoom(run, adventure);
   const entities = getVisibleRoomEntities(run, adventure);
   const items = visibleItems(adventure, entities);
+  const opened = new Set(run.flags?.openedContainers ?? []);
   const exits = choicesForRoom(room);
-  const itemChoices = items.map(itemChoice);
+  const itemChoices = items.map((item) => itemChoice(item, opened)).filter(Boolean);
   const characterChoices = (entities.characters ?? []).flatMap((character) => {
     if (character.type === 'enemy' || character.type === 'boss') return [`attack ${character.name ?? character.slug}`];
     return [`talk ${character.name ?? character.slug}`];
@@ -131,6 +137,16 @@ function findVisibleItem(adventure, run, target) {
 
 function isCollectible(item) {
   return item?.collectible !== false && item?.weight !== -999;
+}
+
+function findVisibleContainer(adventure, run, target) {
+  const normalized = normalizeTarget(target);
+  const visible = getVisibleRoomEntities(run, adventure);
+  const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
+  return adventure.items.find((item) => (
+    item.type === 'container' && visibleSlugs.has(item.slug)
+    && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
+  )) ?? null;
 }
 
 function findVisibleEnemy(adventure, run, target) {
@@ -1040,6 +1056,25 @@ export function createGameRouter(rawDeps = {}) {
       if (command.type === 'use_item') {
         const spellName = normalizeTarget(command.target);
         const stateNow = () => ({ character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) });
+
+        // Open a container (e.g. a chest) → reveal what's inside.
+        const container = findVisibleContainer(adventure, run, spellName);
+        if (container) {
+          if ((run.flags?.openedContainers ?? []).includes(container.slug)) {
+            return res.json(canonicalResponse({ intent: command, event: { type: 'open_failed', command, reason: 'already-open' }, text: `The ${container.name} is already open.`, choices: choicesForRun(adventure, run), state: stateNow() }));
+          }
+          run = markContainerOpened(run, container.slug);
+          const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(updatedRun) ?? run;
+          const contentNames = getVisibleRoomEntities(run, adventure).placements
+            .filter((placement) => placement.container === container.slug)
+            .map((placement) => adventure.items.find((item) => item.slug === placement.item_slug)?.name ?? placement.item_slug);
+          const text = contentNames.length
+            ? `You lift the lid of the ${container.name}. Inside you find: ${contentNames.join(', ')}.`
+            : `You open the ${container.name}, but it is empty.`;
+          return res.json(roomResponse({ adventure, run, character, text, event: { type: 'open', command, container: container.slug }, intent: command }));
+        }
+
         if (!isSpell(spellName)) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'use_failed', command, reason: 'not-a-spell' }, text: `You can't use ${command.target} that way here.`, choices: choicesForRun(adventure, run), state: stateNow() }));
         }

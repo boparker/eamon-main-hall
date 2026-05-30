@@ -779,6 +779,16 @@
       "source_room_number": 5
     },
     {
+      "id": "beginners-cave-chest",
+      "name": "chest",
+      "slug": "chest",
+      "type": "container",
+      "collectible": false,
+      "value": 0,
+      "weight": -999,
+      "description": "A sturdy iron-bound chest sits against the wall, its lid shut."
+    },
+    {
       "id": "beginners-cave-sword",
       "name": "sword",
       "slug": "sword",
@@ -942,9 +952,15 @@
       "after_defeating": "hermit"
     },
     {
-      "item_slug": "healing-potion",
+      "item_slug": "chest",
       "room_number": 5,
       "hidden": false
+    },
+    {
+      "item_slug": "healing-potion",
+      "room_number": 5,
+      "hidden": true,
+      "container": "chest"
     },
     {
       "item_slug": "sword",

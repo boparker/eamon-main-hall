@@ -108,6 +108,7 @@ export function getVisibleRoomEntities(run, adventure) {
   const room = getCurrentRoom(run, adventure);
   const defeatedEnemies = new Set(run.defeatedEnemies);
   const collectedItems = new Set(run.collectedItems);
+  const openedContainers = new Set(run.flags?.openedContainers ?? []);
   const characterRooms = new Map(
     adventure.characters.map((character) => [character.slug, character.location_room]),
   );
@@ -118,8 +119,11 @@ export function getVisibleRoomEntities(run, adventure) {
     ),
     placements: (adventure.placements ?? []).filter(
       (placement) => {
-        if (collectedItems.has(placement.item_slug) || placement.hidden === true) {
-          return false;
+        if (collectedItems.has(placement.item_slug)) return false;
+        // Hidden items stay hidden — unless they're inside a container the
+        // player has opened (then they become visible/takeable).
+        if (placement.hidden === true) {
+          if (!placement.container || !openedContainers.has(placement.container)) return false;
         }
 
         if (placement.after_defeating) {
@@ -131,6 +135,13 @@ export function getVisibleRoomEntities(run, adventure) {
       },
     ),
   };
+}
+
+export function markContainerOpened(run, containerSlug) {
+  const flags = run.flags ?? {};
+  const opened = Array.isArray(flags.openedContainers) ? flags.openedContainers : [];
+  if (opened.includes(containerSlug)) return run;
+  return { ...run, flags: { ...flags, openedContainers: [...opened, containerSlug] } };
 }
 
 export function markItemCollected(run, itemSlug) {
