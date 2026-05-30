@@ -400,6 +400,8 @@
     .narrative-line.lead::first-letter { font-family: var(--font-head); font-size: 2.9em; line-height: 0.8; float: left; padding: 4px 10px 0 0; color: var(--gold); }
     .narrative-line.player-line { color: var(--gold); font-style: italic; font-size: 0.95em; margin-bottom: 14px; opacity: 0.82; }
     .narrative-line.player-line::before { content: '\203A '; color: var(--gold-dim); }
+    /* Section labels (You see / Items here / Exits …) stand out from the prose */
+    .nl-label { font-family: var(--font-head); color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.82em; }
 
     /* Action highlight — bold gold text for commands/questions */
     .action-highlight {

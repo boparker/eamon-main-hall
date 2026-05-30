@@ -137,11 +137,33 @@ function treasureName(treasure) {
   return name;
 }
 
+// "Items here:" should list only takeable loot — not immovable scenery like
+// inscriptions (collectible:false / weight:-999) — and never the same item
+// twice. When given the full item objects (live flow), filter + dedupe by name.
+function collectibleNames(items) {
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    if (item.collectible === false || item.weight === -999) continue;
+    const name = sentence(item.name ?? item.canonical_name ?? item.slug);
+    const key = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
+function isItemObjectList(items) {
+  return Array.isArray(items) && items.some((i) => i && typeof i === 'object' && ('collectible' in i || 'weight' in i || 'slug' in i));
+}
+
 export function renderRoom(room, entities = {}, items = {}, exits = undefined) {
   const title = sentence(room?.name ?? room?.title, 'Unknown Room');
   const description = sentence(room?.description ?? room?.narration_text ?? room?.text, 'There is nothing notable here.');
   const characters = visibleCharacters(entities);
-  const itemNames = visibleItems(entities, items);
+  const itemNames = isItemObjectList(items) ? collectibleNames(items) : visibleItems(entities, items);
   const exitNames = validExitNames(exits ?? room?.exits);
 
   return [
