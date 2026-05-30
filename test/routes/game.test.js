@@ -24,10 +24,14 @@ const beginner = {
   ],
   items: [
     { id: 'gem-1', slug: 'gem', name: 'Gem', type: 'treasure', value: 5, weight: 1 },
+    // Same display name as the room-2 inscription, different slug, listed first
+    // (reproduces the cross-room duplicate-name read bug).
+    { id: 'inscription-2', slug: 'inscription-entrance', name: 'inscription', type: 'misc', description: 'An inscription reads: "Entrance warning."', value: 0, weight: -999, collectible: false },
     { id: 'inscription-1', slug: 'inscription', name: 'inscription', type: 'misc', description: 'An inscription reads: "Original tutorial text."', value: 0, weight: -999, collectible: false },
   ],
   placements: [
     { item_slug: 'gem', room_number: 2, hidden: false },
+    { item_slug: 'inscription-entrance', room_number: 1, hidden: false },
     { item_slug: 'inscription', room_number: 2, hidden: false },
   ],
 };
@@ -595,7 +599,7 @@ test('POST /api/game/start-adventure creates persistent run and renders starting
   assert.equal(started.status, 201);
   assert.equal(started.body.state.run.currentRoom, 1);
   assert.match(started.body.text, /Entrance/);
-  assert.deepEqual(started.body.choices, ['north', 'south']);
+  assert.deepEqual(started.body.choices, ['north', 'south', 'read inscription']);
 });
 
 test('POST /api/game/start-adventure resumes an existing active run instead of crashing on duplicate active run', async () => {
@@ -710,6 +714,26 @@ test('POST /api/game/command reads original noncollectible artifacts without col
   assert.match(take.body.text, /cannot take/i);
   assert.equal(take.body.state.character.inventory.some((item) => item.slug === 'inscription'), false);
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.collectedItems?.includes('inscription')), false);
+});
+
+test('POST /api/game/command reads the same-named artifact belonging to the current room', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  const runId = started.body.state.run.id;
+  const charId = character.body.state.character.id;
+
+  // Room 1 has its own "inscription"; reading it returns the entrance text.
+  const entrance = await accountCommand(app, charId, runId, 'read inscription');
+  assert.equal(entrance.status, 200);
+  assert.equal(entrance.body.text, 'An inscription reads: "Entrance warning."');
+
+  // Room 2 has a different "inscription" (same name); reading there returns ITS text,
+  // not "there is no inscription here" (the cross-room duplicate-name bug).
+  await accountCommand(app, charId, runId, 'south');
+  const rat = await accountCommand(app, charId, runId, 'read inscription');
+  assert.equal(rat.status, 200);
+  assert.equal(rat.body.text, 'An inscription reads: "Original tutorial text."');
 });
 
 test('POST /api/game/command supports talking to visible non-hostile characters', async () => {

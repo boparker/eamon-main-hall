@@ -116,10 +116,16 @@ function normalizeTarget(value) {
 }
 
 function findVisibleItem(adventure, run, target) {
+  const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
   const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
-  const item = findItem(adventure, target);
-  return item && visibleSlugs.has(item.slug) ? item : null;
+  // Match among items visible in THIS room — several items can share a display
+  // name (e.g. multiple "inscription"s across rooms), so a global lookup picks
+  // the wrong instance and fails the visibility check.
+  return adventure.items.find((item) => (
+    visibleSlugs.has(item.slug)
+    && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
+  )) ?? null;
 }
 
 function isCollectible(item) {
