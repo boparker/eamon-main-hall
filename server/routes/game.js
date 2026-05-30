@@ -379,6 +379,34 @@ function hallResponse({ player, characters = [], adventures = [], character = nu
   });
 }
 
+// The character the Great Hall would show (prefers a living one, else the first).
+function activeCharacterRow(characters) {
+  const alive = characters.find((row) => row.is_alive && (row.hd ?? 0) > 0);
+  return alive ?? characters[0] ?? null;
+}
+
+// Revive-at-the-Hall: a fallen adventurer is dragged back alive and fully
+// healed, but the loot carried on the doomed run is forfeited. Everything
+// permanent — banked gold, bought gear, learned spells — is kept.
+async function reviveFallenCharacter(deps, owner, characters) {
+  const row = activeCharacterRow(characters);
+  if (!row) return { revived: false, characters };
+  const fallen = !row.is_alive || (row.hd ?? 0) <= 0;
+  if (!fallen) return { revived: false, characters };
+
+  const inventory = (Array.isArray(row.inventory) ? row.inventory : []).filter((item) => item?.type !== 'treasure');
+  const updated = await deps.updateCharacter(deps.db, owner, row.id, {
+    hd: row.max_hd ?? row.hd,
+    isAlive: true,
+    inventory,
+  });
+  return {
+    revived: true,
+    name: row.name,
+    characters: characters.map((c) => (c.id === row.id ? (updated ?? c) : c)),
+  };
+}
+
 function slugify(value) {
   return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -660,7 +688,11 @@ export function createGameRouter(rawDeps = {}) {
         deps.listCharacters(deps.db, context.owner),
         Promise.resolve(deps.loadAdventures()),
       ]);
-      return res.json(hallResponse({ player, characters, adventures }));
+      const revival = await reviveFallenCharacter(deps, context.owner, characters);
+      const prefix = revival.revived
+        ? `The Guild healers drag ${revival.name} back from the brink. The loot from that doomed expedition is lost — but your banked gold, your gear, and the spells you learned remain. Live, and adventure again.`
+        : '';
+      return res.json(hallResponse({ player, characters: revival.characters, adventures, prefix }));
     } catch (err) {
       return next(err);
     }

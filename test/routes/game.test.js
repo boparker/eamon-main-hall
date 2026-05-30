@@ -816,6 +816,30 @@ test('POST /api/game/command — casting an unlearned spell is refused', async (
   assert.match(cast.body.text, /not learned/i);
 });
 
+test('POST /api/game/bootstrap revives a fallen character, forfeiting run loot but keeping gear', async () => {
+  const deps = makeDeps();
+  const { app } = makeApp(deps);
+  // A fallen adventurer carrying treasure (run loot) and a bought sword (permanent).
+  await deps.createCharacter(deps.db, {
+    id: 'fallen-1', playerId: 'p1', name: 'Theron', className: 'rogue',
+    hardiness: 12, agility: 12, charisma: 9, hd: 0, maxHd: 12, gold: 50,
+    inventory: [
+      { slug: 'gem', name: 'Gem', type: 'treasure', value: 5 },
+      { slug: 'sword', name: 'Sword', type: 'weapon', price: 75, stats: { damage: '1d8' } },
+    ],
+    isAlive: false,
+  });
+
+  const boot = await request(app, 'POST', '/api/game/bootstrap', { playerId: 'p1' });
+  assert.equal(boot.status, 200);
+  assert.match(boot.body.text, /back from the brink/i);
+  assert.equal(boot.body.state.character.isAlive, true);
+  assert.equal(boot.body.state.character.hd, 12); // healed to max
+  assert.equal(boot.body.state.character.gold, 50); // gold on hand kept
+  assert.equal(boot.body.state.character.inventory.some((i) => i.slug === 'gem'), false); // run loot forfeited
+  assert.equal(boot.body.state.character.inventory.some((i) => i.slug === 'sword'), true); // bought gear kept
+});
+
 test('POST /api/game/command pick up synonym takes visible items', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);
