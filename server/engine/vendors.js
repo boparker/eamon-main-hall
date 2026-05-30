@@ -8,7 +8,7 @@ import { rollDie } from './dice.js';
 // ── Marcos Cavielli's Weapons & Armour Shoppe ────────────────────────────────
 // One combined shop. Buy at value, sell at half value. Faithful catalog and
 // prices from the reference's standard (non-magic) stock.
-export const SHOP_CATALOG = [
+const STANDARD_CATALOG = [
   { slug: 'axe', name: 'Axe', price: 25, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d6', type: 'Axe' } },
   { slug: 'bow', name: 'Bow', price: 40, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d6', type: 'Bow', hands: 2 } },
   { slug: 'club', name: 'Club', price: 15, category: 'weapon', equipmentSlot: 'weapon', stats: { damage: '1d4', type: 'Club' } },
@@ -24,6 +24,52 @@ export const SHOP_CATALOG = [
   { slug: 'plate-armor', name: 'Plate Armor', price: 500, category: 'armor', equipmentSlot: 'armor', stats: { defense: '+5', armorClass: 5, type: 'Armor' } },
   { slug: 'shield', name: 'Shield', price: 50, category: 'armor', equipmentSlot: 'shield', stats: { defense: '+1', armorClass: 1, type: 'Shield' } },
 ];
+
+// ── Marcos's rotating stock of randomly-generated named magic weapons ─────────
+// Faithful to the reference: a random weapon type + unique name, a to-hit bonus
+// (weaponOdds, consumed by combat), scaling damage dice, and a premium price.
+const MAGIC_WEAPON_NAMES = {
+  1: ['Slaymor', 'Falcoor', 'Ironheart', 'Blood Claw', 'Orenmir', 'Shadowfury', 'Mooncleaver'],
+  2: ['Stinger', 'Meteor', 'Featherdraw', 'Heartpiercer', 'Quintain', 'Ashwood', 'Arrowsong'],
+  3: ['Scrunch', 'Warmace', 'Earthshatter', 'Spinefall', 'Justifier', 'Haunted Hammer', 'Guiding Star'],
+  4: ['Centuri', 'Shiverspine', 'Twisted Spike', 'Mithril Lance', 'Blinkstrike', 'Nightbane', 'Ebon Halberd'],
+  5: ['Slasher', 'Freedom', 'Ghost Reaver', 'Doombringer', 'Malevolent Crusader', 'Swiftblade', 'Oathkeeper'],
+};
+const WEAPON_TYPE_LABEL = { 1: 'Axe', 2: 'Bow', 3: 'Mace', 4: 'Spear', 5: 'Sword' };
+
+function slugifyName(value) {
+  return String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+export function generateMagicWeapons(count = 3, rng = Math.random) {
+  const pool = {};
+  for (const [type, names] of Object.entries(MAGIC_WEAPON_NAMES)) pool[type] = [...names];
+  const weapons = [];
+  for (let i = 0; i < count; i += 1) {
+    const type = rollDie(5, rng);
+    const names = pool[type];
+    const name = names.length ? names.splice(rollDie(names.length, rng) - 1, 1)[0] : `Relic ${i + 1}`;
+    let dice = 2;
+    if (i <= count * 0.33) dice = 1;
+    if (i >= count * 0.66) dice = 3;
+    const sides = 8 - dice * 2 + rollDie(4, rng) * 2;
+    const odds = rollDie(7, rng) * 5 - 10; // -5 … +25 to-hit
+    const maxDamage = dice * sides;
+    const price = Math.max(1, Math.floor(Math.pow(maxDamage, 1.5) + odds) * 5);
+    weapons.push({
+      slug: slugifyName(name),
+      name,
+      price,
+      category: 'weapon',
+      equipmentSlot: 'weapon',
+      magic: true,
+      stats: { damage: `${dice}d${sides}`, type: WEAPON_TYPE_LABEL[type], weaponOdds: odds },
+    });
+  }
+  return weapons.sort((a, b) => a.price - b.price);
+}
+
+export const SHOP_CATALOG = [...STANDARD_CATALOG, ...generateMagicWeapons()];
 
 export function findCatalogItem(input) {
   const normalized = String(input ?? '').trim().toLowerCase().replace(/^buy\s+/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

@@ -20,6 +20,10 @@ function getDefense(entity) {
   return Math.max(0, finiteNumber(entity.defense, finiteNumber(entity.armor, 0)));
 }
 
+function getWeaponOdds(entity) {
+  return Number.isFinite(entity?.weaponOdds) ? entity.weaponOdds : 0;
+}
+
 function getDamageDice(entity) {
   if (!entity || typeof entity !== 'object') {
     return null;
@@ -85,7 +89,8 @@ export function isDead(entity) {
 export function resolveAttack(attacker, defender, rng = Math.random) {
   const combatRng = safeRng(rng);
   const roll = rollDie(20, combatRng);
-  const attackTotal = roll + getAgility(attacker);
+  // Magic weapons add their to-hit bonus (weaponOdds %, ~+1 per 5%).
+  const attackTotal = roll + getAgility(attacker) + Math.round(getWeaponOdds(attacker) / 5);
   const targetNumber = 10 + getAgility(defender);
   const defenderHpBefore = getHp(defender);
 

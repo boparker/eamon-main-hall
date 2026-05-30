@@ -229,6 +229,11 @@
     .shop-tile:hover { transform: translateY(-2px); border-color: var(--gold); background: rgba(200,168,75,0.08); box-shadow: 0 0 24px var(--gold-glow); }
     .shop-tile.cant-afford { opacity: 0.4; cursor: not-allowed; }
     .shop-tile.cant-afford:hover { transform: none; border-color: rgba(200,168,75,0.16); background: rgba(255,255,255,0.025); box-shadow: none; }
+    .shop-tile.magic { border-color: rgba(150,125,210,0.45); background: linear-gradient(180deg, rgba(150,125,210,0.07), rgba(255,255,255,0.02)); }
+    .shop-tile.magic:hover { border-color: #b89cff; box-shadow: 0 0 24px rgba(160,130,255,0.3); }
+    .shop-tile.magic .tile-icon { color: #cdbcf2; border-color: rgba(150,125,210,0.4); background: rgba(150,125,210,0.1); }
+    .shop-tile.magic .tile-name { color: #e3d8ff; }
+    .shop-tile.magic .tile-name::after { content: ' ✦'; color: #b89cff; }
     .tile-icon { width: 56px; height: 56px; display: grid; place-items: center; margin-bottom: 4px; border: 1px solid rgba(200,168,75,0.22); border-radius: 6px; background: rgba(200,168,75,0.05); color: var(--gold); font-size: 1.6rem; }
     .tile-name { font-size: 0.92rem; color: var(--text); line-height: 1.2; }
     .tile-stat { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }

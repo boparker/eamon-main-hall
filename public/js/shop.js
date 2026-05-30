@@ -32,7 +32,11 @@ function itemIcon(item) {
 
 function statText(item) {
   const s = item.stats ?? {};
-  if (s.damage) return `DMG ${String(s.damage).toUpperCase()}`;
+  if (s.damage) {
+    const odds = Number(s.weaponOdds);
+    const oddsStr = Number.isFinite(odds) && odds !== 0 ? ` · ${odds > 0 ? '+' : ''}${odds}%` : '';
+    return `DMG ${String(s.damage).toUpperCase()}${oddsStr}`;
+  }
   if (s.armorClass != null) return `AC ${s.armorClass}`;
   if (s.defense) return `DEF ${s.defense}`;
   return s.type ?? item.category ?? '';
@@ -53,7 +57,7 @@ function tile(item, action) {
 
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'shop-tile' + (afford ? '' : ' cant-afford');
+  btn.className = 'shop-tile' + (afford ? '' : ' cant-afford') + (item.magic ? ' magic' : '');
   const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item);
   const name = document.createElement('div'); name.className = 'tile-name'; name.textContent = item.name;
   const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = statText(item);
@@ -77,9 +81,11 @@ function renderGrid() {
 
   if (currentTab === 'buy') {
     const items = currentShop?.items ?? [];
-    const weapons = items.filter((i) => i.category === 'weapon');
+    const weapons = items.filter((i) => i.category === 'weapon' && !i.magic);
+    const magic = items.filter((i) => i.magic);
     const armor = items.filter((i) => i.category !== 'weapon');
     if (weapons.length) { grid.appendChild(catLabel('⚔ Weapons')); weapons.forEach((i) => grid.appendChild(tile(i, 'buy'))); }
+    if (magic.length) { grid.appendChild(catLabel('✦ Enchanted Arms')); magic.forEach((i) => grid.appendChild(tile(i, 'buy'))); }
     if (armor.length) { grid.appendChild(catLabel('🛡 Armor & Shields')); armor.forEach((i) => grid.appendChild(tile(i, 'buy'))); }
   } else {
     const inv = (state.character?.inventory ?? []).filter((i) => i?.type !== 'treasure' && Number.isFinite(i?.price ?? i?.value));
