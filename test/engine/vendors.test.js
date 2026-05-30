@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
+  SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop, generateMagicWeapons,
   SPELLS, learnSpell, spellAbility,
   attributePrice, raiseAttribute,
   bankDeposit, bankWithdraw,
@@ -47,6 +47,26 @@ test('sellToShop pays half value, removes from inventory, and unequips', () => {
   assert.equal(result.character.gold, 1000 - 75 + 37);
   assert.equal(result.character.inventory.length, 0);
   assert.equal(result.character.equipment.weapon, undefined);
+});
+
+test('generateMagicWeapons produces named magic weapons with to-hit and damage', () => {
+  const weapons = generateMagicWeapons(3, () => 0); // deterministic
+  assert.equal(weapons.length, 3);
+  for (const w of weapons) {
+    assert.equal(w.magic, true);
+    assert.equal(w.category, 'weapon');
+    assert.equal(w.equipmentSlot, 'weapon');
+    assert.match(w.stats.damage, /^\dd\d+$/);
+    assert.equal(typeof w.stats.weaponOdds, 'number');
+    assert.ok(w.price > 0);
+    assert.ok(String(w.name).length > 0 && w.slug.length > 0);
+  }
+  // sorted cheapest-first
+  assert.ok(weapons[0].price <= weapons[2].price);
+});
+
+test('the live catalog includes generated magic weapons', () => {
+  assert.ok(SHOP_CATALOG.some((item) => item.magic === true));
 });
 
 // ── Hokas Tokas: percentage buy-up with diminishing returns, capped >90 ──
