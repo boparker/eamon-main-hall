@@ -111,6 +111,7 @@ const portraitCache = {};
 
 export async function showPortrait(name, desc, kind) {
   const frame = document.getElementById('portrait-frame');
+  if (!frame) return; // legacy single-frame path; room rail handles portraits now
   const cacheKey = kind + ':' + name;
   let url = portraitCache[cacheKey];
   if (!url) {
@@ -137,41 +138,50 @@ export async function showPortrait(name, desc, kind) {
   }
 }
 
-// Encounter portrait for the deterministic flow: show whoever you've walked in
-// on (enemy or NPC) in the right-hand frame. Until generated art exists, fall
-// back to an illuminated monogram of the character's name — so the slot is
-// alive on every encounter, and swaps to real art the moment we have it.
-export function showEncounterPortrait(name, kind) {
-  const frame = document.getElementById('portrait-frame');
-  if (!frame) return;
-  const img = document.getElementById('portrait-img');
-  const crest = document.getElementById('portrait-crest');
+const DISPOSITION_LABEL = { monster: '⚔ Hostile', friendly: '✦ Friendly', neutral: '◆ Neutral' };
+
+// Build one character card (monogram placeholder, swaps to portrait art later).
+function characterCard({ name, kind }) {
+  const card = document.createElement('div');
+  card.className = 'room-char-card';
+  card.dataset.kind = kind === 'monster' ? 'monster' : (kind === 'neutral' ? 'neutral' : 'friendly');
+
+  const art = document.createElement('div');
+  art.className = 'rc-art';
   const url = portraitCache[kind + ':' + name];
-
-  document.getElementById('portrait-name').textContent = name;
-  const dispositionLabel = { monster: '⚔ Hostile', friendly: '✦ Friendly', neutral: '◆ Neutral' };
-  document.getElementById('portrait-stats').textContent = dispositionLabel[kind] ?? '◆ Neutral';
-
   if (url) {
+    const img = document.createElement('img');
     img.src = url;
-    img.style.display = '';
-    if (crest) crest.style.display = 'none';
+    img.alt = name;
+    art.appendChild(img);
   } else {
-    img.removeAttribute('src');
-    img.style.display = 'none';
-    if (crest) {
-      crest.textContent = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
-      crest.dataset.kind = kind === 'monster' ? 'monster' : 'friendly';
-      crest.style.display = '';
-    }
+    const crest = document.createElement('span');
+    crest.className = 'rc-crest';
+    crest.textContent = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
+    art.appendChild(crest);
   }
 
-  clearTimeout(frame._hideTimer); // persistent while you're in the room
-  frame.classList.add('visible');
+  const nameEl = document.createElement('div');
+  nameEl.className = 'rc-name';
+  nameEl.textContent = name;
+
+  const disp = document.createElement('div');
+  disp.className = 'rc-disp';
+  disp.textContent = DISPOSITION_LABEL[kind] ?? '◆ Neutral';
+
+  card.append(art, nameEl, disp);
+  return card;
 }
 
-export function hidePortrait() {
-  const frame = document.getElementById('portrait-frame');
-  clearTimeout(frame._hideTimer);
-  frame.classList.remove('visible');
+// Render every character in the room as a portrait card in the right rail.
+// `people` is [{ name, kind }] (kind: monster | friendly | neutral).
+export function renderRoomCharacters(people = []) {
+  const container = document.getElementById('room-characters');
+  if (!container) return;
+  container.replaceChildren(...people.map(characterCard));
+}
+
+export function clearRoomCharacters() {
+  const container = document.getElementById('room-characters');
+  if (container) container.replaceChildren();
 }
