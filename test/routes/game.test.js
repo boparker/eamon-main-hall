@@ -574,6 +574,41 @@ test('POST /api/game/hall — the Healer restores HP for gold', async () => {
   assert.equal(again.status, 409); // already full
 });
 
+test('POST /api/game/hall — View Equipment opens the pack and readies a found weapon', async () => {
+  const deps = makeDeps({ adventures: [beginner] });
+  const { app } = makeApp(deps);
+  await deps.createCharacter(deps.db, {
+    id: 'packrat-1', playerId: 'p1', name: 'Packrat', className: 'rogue',
+    hardiness: 12, agility: 12, charisma: 9, hd: 12, maxHd: 12, gold: 50,
+    inventory: [{ slug: 'trollsfire', name: 'Trollsfire', type: 'weapon', value: 125, damage_dice: '1d12' }],
+    isAlive: true,
+  });
+
+  const view = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'packrat-1', input: 'view equipment' });
+  assert.equal(view.status, 200);
+  assert.equal(view.body.state.shop.mode, 'pack'); // tile view, not a text list
+
+  const ready = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'packrat-1', input: 'ready trollsfire' });
+  assert.equal(ready.status, 200);
+  assert.equal(ready.body.state.character.equipment.weapon.slug, 'trollsfire');
+  assert.equal(ready.body.state.character.equipment.weapon.stats.damage, '1d12'); // synthesised from damage_dice
+});
+
+test('POST /api/game/command — abandoning a run still cashes treasures to gold', async () => {
+  const deps = makeDeps();
+  const { app } = makeApp(deps);
+  await deps.createCharacter(deps.db, {
+    id: 'bail-1', userId: 'user-1', profileId: 'profile-1', playerId: 'account:user-1',
+    name: 'Bail', className: 'rogue', hardiness: 12, agility: 12, charisma: 9, hd: 12, maxHd: 12, gold: 0,
+    inventory: [{ slug: 'diamonds', name: 'diamonds', type: 'treasure', value: 200 }], isAlive: true,
+  });
+  const started = await startAccountAdventure(app, 'bail-1');
+  const left = await accountCommand(app, 'bail-1', started.body.state.run.id, 'leave');
+  assert.equal(left.status, 200);
+  assert.equal(left.body.state.character.gold, 200); // diamonds weighed into gold
+  assert.equal(left.body.state.character.inventory.some((i) => i.slug === 'diamonds'), false);
+});
+
 test('Beginner completion unlocks later adventure metadata in Great Hall', async () => {
   const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
   const created = await request(app, 'POST', '/api/game/characters', {

@@ -7,6 +7,7 @@ import { state } from './state.js';
 
 const VENDOR_INFO = {
   marcos: { name: 'Marcos Cavielli', glyph: '⚒', greeting: '"Well met! What do you need?"' },
+  pack: { name: 'Your Pack', glyph: '🎒', greeting: 'Ready your finds, or sell loot for gold.' },
 };
 
 let _onPurchase = null;
@@ -72,12 +73,55 @@ function tile(item, action) {
 let currentShop = null;
 let currentTab = 'buy';
 
+// One tile in the pack view: equippable gear offers "Equip" (or shows "Equipped"),
+// everything else offers "Sell" for half its value.
+function packTile(item, isEquipped) {
+  const value = item.price ?? item.value ?? 0;
+  const slot = item.equipmentSlot ?? ({ weapon: 'weapon', armor: 'armor', shield: 'shield' }[item.type] ?? null);
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'shop-tile' + (item.magic ? ' magic' : '');
+  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item);
+  const name = document.createElement('div'); name.className = 'tile-name'; name.textContent = item.name;
+  const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = statText(item) || `worth ${value}g`;
+  const action = document.createElement('div'); action.className = 'tile-price';
+  btn.append(icon, name, stat, action);
+
+  if (isEquipped) {
+    action.textContent = '✓ Equipped';
+    btn.classList.add('cant-afford'); // dim, no action
+  } else if (slot) {
+    action.textContent = 'Equip';
+    btn.addEventListener('click', () => { if (_onPurchase) _onPurchase(`ready ${item.name}`); });
+  } else {
+    action.textContent = `Sell +${Math.floor(value / 2)}g`;
+    btn.addEventListener('click', () => { if (_onPurchase) _onPurchase(`sell ${item.name}`); });
+  }
+  return btn;
+}
+
+function renderPack(grid) {
+  const inv = state.character?.inventory ?? [];
+  const equipped = new Set(Object.values(state.character?.equipment ?? {}).map((e) => e?.slug).filter(Boolean));
+  if (!inv.length) { grid.appendChild(catLabel('Your pack is empty.')); return; }
+  const gear = inv.filter((i) => (i.equipmentSlot ?? ['weapon', 'armor', 'shield'].includes(i.type)) && true);
+  const loot = inv.filter((i) => !gear.includes(i));
+  if (gear.length) { grid.appendChild(catLabel('⚔ Arms & Armor — tap to ready')); gear.forEach((i) => grid.appendChild(packTile(i, equipped.has(i.slug)))); }
+  if (loot.length) { grid.appendChild(catLabel('💎 Loot — tap to sell')); loot.forEach((i) => grid.appendChild(packTile(i, false))); }
+}
+
 function renderGrid() {
   const grid = document.getElementById('shop-grid');
   if (!grid) return;
+  const tabs = document.getElementById('shop-tabs');
+  const isPack = currentShop?.mode === 'pack';
+  if (tabs) tabs.style.display = isPack ? 'none' : '';
   document.querySelectorAll('#shop-tabs .shop-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === currentTab));
   document.getElementById('shop-scene-gold').textContent = state.character?.gold ?? 0;
   grid.replaceChildren();
+
+  if (isPack) { renderPack(grid); return; }
 
   if (currentTab === 'buy') {
     const items = currentShop?.items ?? [];
