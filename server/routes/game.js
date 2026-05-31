@@ -551,13 +551,16 @@ function equipmentText(character) {
   ].join('\n');
 }
 
-function equipmentResponse({ player, character, characters, adventures }) {
+function equipmentResponse({ player, character, characters, adventures, prefix = '' }) {
   return canonicalResponse({
     intent: { type: 'hall_equipment' },
     event: { type: 'hall_equipment' },
-    text: equipmentText(character),
+    text: [
+      prefix || `You open your pack, ${character.name}.`,
+      `Tap a weapon or armour to ready it; tap loot to sell it for gold. You have ${character.gold} gold in hand.`,
+    ].join('\n'),
     choices: ['Visit the Weapon Shop', 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures }),
+    state: hallState({ player, character, characters, adventures, extra: { shop: { key: 'pack', mode: 'pack', title: 'Your Pack', items: [] } } }),
   });
 }
 
@@ -932,6 +935,19 @@ export function createGameRouter(rawDeps = {}) {
         if (!result.ok) return error(res, 409, `You cannot sell ${owned.name}.`, result.reason);
         const row = await persist({ gold: result.character.gold, inventory: result.character.inventory, equipment: result.character.equipment });
         return render(shopResponse, rowCharacter(row), row, `Marcos hands you ${result.goldGained} gold for ${owned.name}.`);
+      }
+
+      // ── Pack: ready a found weapon/armour from your inventory ────────────
+      const equipMatch = /^(?:ready|wear|wield|equip)\s+(.+)/i.exec(input);
+      if (equipMatch) {
+        const item = findInventoryItem(character, equipMatch[1]);
+        if (!item) return error(res, 400, `You are not carrying ${equipMatch[1].trim()}.`, 'missing-item');
+        const slot = equipmentSlotForItem(item);
+        if (!slot) return error(res, 400, `You cannot ready ${item.name}.`, 'not-equippable');
+        const equipment = { ...(character.equipment ?? {}), [slot]: toEquipment(item) };
+        const row = await persist({ equipment });
+        const verb = slot === 'weapon' ? 'ready' : 'don';
+        return render(equipmentResponse, rowCharacter(row), row, `You ${verb} ${item.name}.`);
       }
 
       // ── Hokas Tokas: learn / upgrade spells ─────────────────────────────
@@ -1373,12 +1389,20 @@ export function createGameRouter(rawDeps = {}) {
 
       if (command.type === 'leave') {
         const abandoned = await deps.abandonAdventureRun(deps.db, context.owner, run.id);
+        // You walked out alive — your treasures still weigh into gold (only a
+        // death forfeits the haul). Keeps loot from ever becoming dead weight.
+        const conversion = convertTreasuresOnReturn(character);
+        character = conversion.character;
+        const leftRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
+        character = rowCharacter(leftRow) ?? character;
         const hall = hallResponse({
           player: { id: run.playerId },
-          characters: [],
+          characters: leftRow ? [leftRow] : [],
           adventures,
           character,
-          prefix: 'You abandon the adventure and return to the Great Hall.',
+          prefix: conversion.goldGained > 0
+            ? `You abandon the adventure and return to the Great Hall. Sam Slicker weighs your plunder: ${conversion.goldGained} gold.`
+            : 'You abandon the adventure and return to the Great Hall.',
         });
         hall.intent = command;
         hall.events = [{ type: 'abandon', command }];
