@@ -356,6 +356,13 @@
     .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
     .hud-stat-label { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
     .hud-stat-val { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+    /* Readied loadout — what weapon/armor the adventurer currently has at hand */
+    #hud-loadout { display: flex; gap: 10px; align-items: center; }
+    #hud-loadout[hidden] { display: none; }
+    .hud-gear { display: flex; align-items: center; gap: 6px; padding: 4px 11px; border: 1px solid var(--border); border-radius: 14px; background: rgba(200,168,75,0.05); max-width: 200px; }
+    .hud-gear .gear-icon { color: var(--gold); font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
+    .hud-gear .gear-name { font-size: 0.78rem; color: var(--text); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hud-gear .gear-stat { color: var(--text-dim); font-size: 0.72rem; }
     .hud-controls { display: flex; gap: 8px; position: relative; }
     .hud-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; color: var(--text-dim); font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
     .hud-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
@@ -636,6 +643,10 @@
       <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">&mdash;</span></div>
       <div class="hud-stat"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">&mdash;</span></div>
       <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">&mdash;</span></div>
+    </div>
+    <div id="hud-loadout" hidden>
+      <div class="hud-gear" id="gear-weapon" title="Readied weapon"><span class="gear-icon">&#9876;</span><span class="gear-name" id="gear-weapon-name">&mdash;</span></div>
+      <div class="hud-gear" id="gear-armor" title="Worn armor"><span class="gear-icon">&#128737;</span><span class="gear-name" id="gear-armor-name">&mdash;</span></div>
     </div>
     <div class="hud-controls">
       <button class="hud-btn" id="hud-account-btn" title="Account" aria-label="Account">

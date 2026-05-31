@@ -32,6 +32,11 @@ function renderGameResponse(response = {}) {
   else closeShop();
   updateHUD(true);
 
+  // Help text follows the player: shop → vendor tips, in a cave → dungeon
+  // commands, otherwise Great Hall guidance.
+  const helpContext = response.state?.shop ? 'shop' : (response.state?.phase === 'adventure' ? 'adventure' : 'hall');
+  helpMenu?.setContext?.(helpContext);
+
   renderNarrative(response.text ?? '', { locationTitle: response.state?.locationTitle });
   clearChoices();
   for (const choice of response.choices ?? []) addChoice(choice);
@@ -206,7 +211,7 @@ registerCombatReturnToHall(async () => {
 
 // ── Audio controls ──
 initAudioControls();
-initHelpMenu();
+const helpMenu = initHelpMenu();
 
 // ── Boot / Title gateway ──
 titleGateway = createTitleGateway({
