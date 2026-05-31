@@ -105,7 +105,10 @@ function choicesForRun(adventure, run) {
   const items = visibleItems(adventure, entities);
   const opened = new Set(run.flags?.openedContainers ?? []);
   const exits = choicesForRoom(room);
-  const itemChoices = items.map((item) => itemChoice(item, opened)).filter(Boolean);
+  // Dedupe by choice text: a room can hold several items that share a display
+  // name (e.g. two "inscription"s), which would otherwise render the same
+  // button twice. One "Read Inscription" reads them all (see read_item).
+  const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened)).filter(Boolean))];
   const characterChoices = (entities.characters ?? []).flatMap((character) => {
     if (character.type === 'enemy' || character.type === 'boss') return [`attack ${character.name ?? character.slug}`];
     return [`talk ${character.name ?? character.slug}`];
@@ -133,6 +136,19 @@ function findVisibleItem(adventure, run, target) {
     visibleSlugs.has(item.slug)
     && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
   )) ?? null;
+}
+
+// Every visible item in this room matching the target name/slug. Several items
+// can share a display name (e.g. multiple "inscription"s on the same wall), so
+// reading "inscription" should surface all of them, not just the first.
+function findVisibleItems(adventure, run, target) {
+  const normalized = normalizeTarget(target);
+  const visible = getVisibleRoomEntities(run, adventure);
+  const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
+  return adventure.items.filter((item) => (
+    visibleSlugs.has(item.slug)
+    && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
+  ));
 }
 
 function isCollectible(item) {
@@ -991,11 +1007,15 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'read_item') {
-        const item = findVisibleItem(adventure, run, command.target);
-        if (!item) {
+        const matches = findVisibleItems(adventure, run, command.target);
+        if (matches.length === 0) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
-        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item }, text: item.text ?? item.description ?? `There is nothing written on ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        // A wall may carry several inscriptions sharing one name — read them all.
+        const text = matches
+          .map((item) => item.text ?? item.description ?? `There is nothing written on ${item.name}.`)
+          .join('\n\n');
+        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'take') {

@@ -28,11 +28,16 @@ const beginner = {
     // (reproduces the cross-room duplicate-name read bug).
     { id: 'inscription-2', slug: 'inscription-entrance', name: 'inscription', type: 'misc', description: 'An inscription reads: "Entrance warning."', value: 0, weight: -999, collectible: false },
     { id: 'inscription-1', slug: 'inscription', name: 'inscription', type: 'misc', description: 'An inscription reads: "Original tutorial text."', value: 0, weight: -999, collectible: false },
+    // A SECOND inscription on the same room-2 wall, same display name: must
+    // collapse to one "read inscription" button that reads both (the duplicate
+    // "Read Inscription" twice bug).
+    { id: 'inscription-3', slug: 'inscription-extra', name: 'inscription', type: 'misc', description: 'An inscription reads: "Second tutorial note."', value: 0, weight: -999, collectible: false },
   ],
   placements: [
     { item_slug: 'gem', room_number: 2, hidden: false },
     { item_slug: 'inscription-entrance', room_number: 1, hidden: false },
     { item_slug: 'inscription', room_number: 2, hidden: false },
+    { item_slug: 'inscription-extra', room_number: 2, hidden: false },
   ],
 };
 
@@ -705,7 +710,8 @@ test('POST /api/game/command reads original noncollectible artifacts without col
   assert.equal(read.status, 200);
   assert.equal(read.body.intent.type, 'read_item');
   assert.equal(read.body.events[0].type, 'read_item');
-  assert.equal(read.body.text, 'An inscription reads: "Original tutorial text."');
+  // Room 2 holds two inscriptions on the same wall — reading surfaces both.
+  assert.equal(read.body.text, 'An inscription reads: "Original tutorial text."\n\nAn inscription reads: "Second tutorial note."');
 
   const take = await accountCommand(app, character.body.state.character.id, started.body.state.run.id, 'take inscription');
   assert.equal(take.status, 200);
@@ -728,12 +734,24 @@ test('POST /api/game/command reads the same-named artifact belonging to the curr
   assert.equal(entrance.status, 200);
   assert.equal(entrance.body.text, 'An inscription reads: "Entrance warning."');
 
-  // Room 2 has a different "inscription" (same name); reading there returns ITS text,
-  // not "there is no inscription here" (the cross-room duplicate-name bug).
+  // Room 2 has different "inscription"s (same name); reading there returns THEIR
+  // text, not "there is no inscription here" (the cross-room duplicate-name bug).
   await accountCommand(app, charId, runId, 'south');
   const rat = await accountCommand(app, charId, runId, 'read inscription');
   assert.equal(rat.status, 200);
-  assert.equal(rat.body.text, 'An inscription reads: "Original tutorial text."');
+  assert.equal(rat.body.text, 'An inscription reads: "Original tutorial text."\n\nAn inscription reads: "Second tutorial note."');
+});
+
+test('POST /api/game/command shows one Read Inscription button for several same-named inscriptions', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const started = await startAccountAdventure(app, character.body.state.character.id);
+  const runId = started.body.state.run.id;
+  const charId = character.body.state.character.id;
+
+  const moved = await accountCommand(app, charId, runId, 'south'); // room 2 has two inscriptions
+  const readChoices = moved.body.choices.filter((choice) => choice === 'read inscription');
+  assert.deepEqual(readChoices, ['read inscription']); // exactly one, not two
 });
 
 test('POST /api/game/command supports talking to visible non-hostile characters', async () => {
