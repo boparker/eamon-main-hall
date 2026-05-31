@@ -427,8 +427,11 @@ function hallText({ player, character, unlockedAdventures, lockedAdventures, pre
   } else {
     lines.push(`${character.name} is present in the Guild roster and ready for the next expedition.`);
   }
-  if (unlockedAdventures?.length) lines.push(`Unlocked adventures: ${unlockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
-  if (lockedAdventures?.length) lines.push(`Locked adventures: ${lockedAdventures.map((adventure) => adventure.name).join(', ')}.`);
+  // Adventures live behind the Gate now — point the player there rather than
+  // listing them inline (the Gate shows covers, difficulty, and locked entries).
+  if (character && character.isAlive !== false && (character.hd ?? 1) > 0) {
+    lines.push('Visit the vendors to prepare, then approach the Adventure Gate to choose your expedition.');
+  }
   return lines.join('\n');
 }
 

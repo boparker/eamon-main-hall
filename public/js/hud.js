@@ -10,6 +10,7 @@ export function updateHUD(animate) {
     'stat-ag': hasCharacter ? (state.character.agility ?? state.character.ag) : null,
     'stat-ch': hasCharacter ? (state.character.charisma ?? state.character.ch) : null,
     'stat-gold': hasCharacter ? (state.character.gold ?? 0) : 200,
+    'stat-bank': hasCharacter ? (state.character.bankGold ?? 0) : null,
   };
   for (const [id, val] of Object.entries(stats)) {
     const el = document.getElementById(id);
