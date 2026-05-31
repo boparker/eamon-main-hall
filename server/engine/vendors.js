@@ -216,3 +216,30 @@ export function bankWithdraw(character, amount) {
     character: { ...character, gold: (character.gold ?? 0) + value, bankGold: character.bankGold - value },
   };
 }
+
+// The Healer restores HP for gold. Heals as much as the adventurer can afford
+// (partial when short on coin), so a wounded-and-broke character is never gated
+// out of a heal entirely. Returns the cost and HP restored.
+export const HEAL_COST_PER_HP = 3;
+
+export function healCost(character, perHp = HEAL_COST_PER_HP) {
+  const missing = Math.max(0, (character?.maxHd ?? character?.hd ?? 0) - (character?.hd ?? 0));
+  return missing * perHp;
+}
+
+export function healAtTemple(character, perHp = HEAL_COST_PER_HP) {
+  const max = character?.maxHd ?? character?.hd ?? 0;
+  const current = character?.hd ?? 0;
+  const missing = Math.max(0, max - current);
+  if (missing === 0) return { ok: false, character, reason: 'already-full' };
+  const gold = character?.gold ?? 0;
+  const healable = Math.min(missing, Math.floor(gold / perHp));
+  if (healable <= 0) return { ok: false, character, reason: 'insufficient-gold' };
+  const cost = healable * perHp;
+  return {
+    ok: true,
+    healed: healable,
+    cost,
+    character: { ...character, hd: current + healable, gold: gold - cost },
+  };
+}

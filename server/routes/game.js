@@ -21,6 +21,7 @@ import {
   SPELLS, learnSpell, spellAbility,
   ATTRIBUTES, attributePrice, raiseAttribute,
   bankDeposit, bankWithdraw,
+  healAtTemple, healCost,
 } from '../engine/vendors.js';
 import {
   renderCombatResult,
@@ -67,6 +68,7 @@ const MARCOS_WEAPON_SHOP_TITLE = "Marcos Cavielli's Weapons & Armour Shoppe";
 const WIZARD_TITLE = "Hokas Tokas' School of Magick";
 const WITCH_TITLE = "The Witch's Shop";
 const BANK_TITLE = 'Bank of Eamon Towne';
+const HEALER_TITLE = 'The Chapel of the Open Hand';
 const ADVENTURE_GATE_TITLE = 'The Adventure Gate';
 
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
@@ -432,7 +434,7 @@ function hallChoices(character) {
   if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Sign the Guild Rolls'];
   // A single Gate replaces a "Begin <Name>" button per adventure — it scales to
   // the whole Eamon corpus and is the home for adventure cover art.
-  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Bank', 'View Equipment', 'Approach the Adventure Gate'];
+  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Healer', 'Visit the Bank', 'View Equipment', 'Approach the Adventure Gate'];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
@@ -675,6 +677,30 @@ function bankResponse({ player, character, characters, adventures, prefix = '' }
     ].join('\n'),
     choices: ['Deposit 100', 'Deposit All', 'Withdraw 100', 'Withdraw All', 'Return to Great Hall'],
     state: hallState({ player, character, characters, adventures, extra: { locationTitle: BANK_TITLE } }),
+  });
+}
+
+function healerResponse({ player, character, characters, adventures, prefix = '' }) {
+  const max = character.maxHd ?? character.hd ?? 0;
+  const missing = Math.max(0, max - (character.hd ?? 0));
+  const cost = healCost(character);
+  const lines = [
+    prefix || `A robed healer looks up from a guttering candle. "Wounds mend slowly in the wild, child. Here, for a fair price, they mend at once."`,
+    `You have ${character.gold} gold pieces. Health: ${character.hd} / ${max}.`,
+  ];
+  const choices = [];
+  if (missing === 0) {
+    lines.push('"You are hale and whole. Go in peace."');
+  } else {
+    lines.push(`Full healing (+${missing} HP) costs ${cost} gold. Type "heal" to be tended.`);
+    choices.push('Heal');
+  }
+  return canonicalResponse({
+    intent: { type: 'hall_healer' },
+    event: { type: 'hall_healer' },
+    text: lines.join('\n'),
+    choices: [...choices, 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HEALER_TITLE } }),
   });
 }
 
@@ -950,6 +976,21 @@ export function createGameRouter(rawDeps = {}) {
         return render(bankResponse, rowCharacter(row), row, `Seamus hands you ${result.amount} gold and shakes your hand.`);
       }
 
+      // ── The Healer: pay gold to restore HP ──────────────────────────────
+      if (/^heal$/.test(normalizedInput) || /^heal\s+(me|up|fully|all)$/.test(normalizedInput)) {
+        const missingBefore = Math.max(0, (character.maxHd ?? character.hd ?? 0) - (character.hd ?? 0));
+        const result = healAtTemple(character);
+        if (!result.ok) {
+          if (result.reason === 'already-full') return error(res, 409, 'You are already at full health.', result.reason);
+          return error(res, 409, 'You have no gold to pay the healer.', result.reason);
+        }
+        const row = await persist({ gold: result.character.gold, hd: result.character.hd });
+        const msg = result.healed >= missingBefore
+          ? `The healer lays hands on you; warmth spreads through your wounds. ${result.healed} HP restored for ${result.cost} gold.`
+          : `Your coin buys only part of the cure. ${result.healed} HP restored for ${result.cost} gold.`;
+        return render(healerResponse, rowCharacter(row), row, msg);
+      }
+
       // ── Vendor visits ───────────────────────────────────────────────────
       if (/register|account|login|sign\s*in/.test(normalizedInput)) {
         return res.json(hallResponse({
@@ -976,6 +1017,9 @@ export function createGameRouter(rawDeps = {}) {
       }
       if (/bank|seamus|mcfenney/.test(normalizedInput)) {
         return render(bankResponse, character, characterRow);
+      }
+      if (/healer|chapel|temple|infirmary|heal\s+me/.test(normalizedInput)) {
+        return render(healerResponse, character, characterRow);
       }
       if (/adventure\s*gate|^gate$|^adventures?$|approach.*(?:adventure|gate)/.test(normalizedInput)) {
         return render(gateResponse, character, characterRow);
@@ -1077,7 +1121,8 @@ export function createGameRouter(rawDeps = {}) {
         if (result.destination === 'main-hall') {
           const conversion = convertTreasuresOnReturn(character);
           character = conversion.character;
-          character.hd = character.maxHd ?? character.hd; // rest at the Guild restores full health
+          // Wounds persist between adventures — the Healer in the Hall restores
+          // HP for gold, so health is a real resource (not free on return).
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
           const [updatedCharacter, completedRun] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -1328,13 +1373,9 @@ export function createGameRouter(rawDeps = {}) {
 
       if (command.type === 'leave') {
         const abandoned = await deps.abandonAdventureRun(deps.db, context.owner, run.id);
-        // Returning to the Guild alive restores full health (like a completed run).
-        const healed = { ...character, hd: character.maxHd ?? character.hd };
-        const healedRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(healed));
-        character = rowCharacter(healedRow) ?? healed;
         const hall = hallResponse({
           player: { id: run.playerId },
-          characters: healedRow ? [healedRow] : [],
+          characters: [],
           adventures,
           character,
           prefix: 'You abandon the adventure and return to the Great Hall.',

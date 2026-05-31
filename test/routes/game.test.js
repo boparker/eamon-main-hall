@@ -552,6 +552,28 @@ test('POST /api/game/hall — the Bank stores and returns gold', async () => {
   assert.equal(overdraw.status, 409);
 });
 
+test('POST /api/game/hall — the Healer restores HP for gold', async () => {
+  const deps = makeDeps({ adventures: [beginner] });
+  const { app } = makeApp(deps);
+  await deps.createCharacter(deps.db, {
+    id: 'hurt-1', playerId: 'p1', name: 'Hurt', className: 'rogue',
+    hardiness: 15, agility: 12, charisma: 9, hd: 7, maxHd: 15, gold: 100, isAlive: true,
+  });
+
+  const visit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'hurt-1', input: 'visit the healer' });
+  assert.equal(visit.status, 200);
+  assert.equal(visit.body.state.locationTitle, 'The Chapel of the Open Hand');
+  assert.match(visit.body.text, /Health: 7 \/ 15/);
+
+  const heal = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'hurt-1', input: 'heal' });
+  assert.equal(heal.status, 200);
+  assert.equal(heal.body.state.character.hd, 15);          // restored to max
+  assert.equal(heal.body.state.character.gold, 100 - 8 * 3); // 8 HP at 3 gold each
+
+  const again = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'hurt-1', input: 'heal' });
+  assert.equal(again.status, 409); // already full
+});
+
 test('Beginner completion unlocks later adventure metadata in Great Hall', async () => {
   const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
   const created = await request(app, 'POST', '/api/game/characters', {
@@ -701,7 +723,7 @@ test('POST /api/game/command handles movement deterministically and persists run
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.currentRoom === 2), true);
 });
 
-test('returning to the Great Hall restores a wounded adventurer to full health', async () => {
+test('wounds persist after returning from a completed adventure (heal at the Healer instead)', async () => {
   const deps = makeDeps();
   const { app } = makeApp(deps);
   // A wounded adventurer (4 of 12 HD) who survived the cave.
@@ -716,22 +738,7 @@ test('returning to the Great Hall restores a wounded adventurer to full health',
   const out = await accountCommand(app, 'wynn-1', runId, 'north');
   assert.equal(out.status, 200);
   assert.equal(out.body.events[0].type, 'return_to_hall');
-  assert.equal(out.body.state.character.hd, 12); // healed to max on return
-});
-
-test('abandoning an adventure also returns the adventurer to full health', async () => {
-  const deps = makeDeps();
-  const { app } = makeApp(deps);
-  await deps.createCharacter(deps.db, {
-    id: 'wynn-2', userId: 'user-1', profileId: 'profile-1', playerId: 'account:user-1',
-    name: 'Wynn', className: 'rogue', hardiness: 12, agility: 12, charisma: 9, hd: 3, maxHd: 12, gold: 0, isAlive: true,
-  });
-  const started = await startAccountAdventure(app, 'wynn-2');
-  const runId = started.body.state.run.id;
-
-  const left = await accountCommand(app, 'wynn-2', runId, 'leave');
-  assert.equal(left.status, 200);
-  assert.equal(left.body.state.character.hd, 12);
+  assert.equal(out.body.state.character.hd, 4); // wounds persist — not free-healed
 });
 
 test('POST /api/game/command handles take, inventory, and return-to-hall without AI tags', async () => {
