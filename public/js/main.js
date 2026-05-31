@@ -87,7 +87,27 @@ function updateRoomRail(response) {
 
   const hasChars = document.getElementById('room-characters')?.children.length > 0;
   if (rail) rail.hidden = !(hasChars || hasItems);
+  positionRoomRail();
 }
+
+// On wide screens the rail is pinned to the right; align its top with the top of
+// the narrative field (just below the room title) so cards never sit behind the
+// room name. On narrow screens the rail flows in normal order, so clear the top.
+function positionRoomRail() {
+  const rail = document.getElementById('room-rail');
+  const area = document.getElementById('narrative-area');
+  if (!rail || !area) return;
+  if (window.innerWidth >= 1000) {
+    const title = document.getElementById('location-title');
+    const titleBottom = title ? title.getBoundingClientRect().bottom : 0;
+    const areaTop = area.getBoundingClientRect().top;
+    // Sit below the room name (with a small gap), never above the text field.
+    rail.style.top = `${Math.round(Math.max(titleBottom + 14, areaTop))}px`;
+  } else {
+    rail.style.top = '';
+  }
+}
+window.addEventListener('resize', positionRoomRail);
 
 function buildGameClient(identity = null) {
   return createPhase1GameClient({
