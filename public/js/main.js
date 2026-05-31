@@ -60,8 +60,9 @@ function updateEncounterPortrait(response) {
   const characters = response.state?.entities?.characters;
   if (Array.isArray(characters)) {
     const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';
+    const kindOf = (c) => (isHostile(c) ? 'monster' : c.friendliness === 'friendly' ? 'friendly' : 'neutral');
     const headline = characters.find(isHostile) ?? characters.find((c) => c.type !== 'merchant') ?? null;
-    if (headline) showEncounterPortrait(headline.name ?? headline.slug, isHostile(headline) ? 'monster' : 'friendly');
+    if (headline) showEncounterPortrait(headline.name ?? headline.slug, kindOf(headline));
     else hidePortrait();
     return;
   }

@@ -611,10 +611,9 @@
     .shop-category:first-child { border-top: none; margin-top: 0; }
     @keyframes shopSlide { from { right: -380px; } to { right: 0; } }
 
-    /* The encounter portrait lives in the right margin beside the centered prose
-       column. Below ~980px that margin disappears, so hide it rather than let it
-       cover the text — there's no dead space to fill on narrow screens anyway. */
-    @media (max-width: 980px) {
+    /* The encounter portrait lives in the right margin beside the prose column.
+       Below ~880px that margin runs out and it would cover text, so hide it. */
+    @media (max-width: 880px) {
       #portrait-frame { display: none; }
     }
 
