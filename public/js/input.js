@@ -35,7 +35,8 @@ export function formatActionLabel(text) {
   if ((m = /^talk\s+(?:to\s+)?(.+)$/i.exec(t))) return `Talk to ${titleCaseWords(m[1])}`;
   if ((m = /^attack\s+(.+)$/i.exec(t))) return `Attack ${titleCaseWords(m[1])}`;
   if ((m = /^take\s+(.+)$/i.exec(t))) return `Take ${titleCaseWords(m[1])}`;
-  if ((m = /^(?:read|examine|inspect)\s+(.+)$/i.exec(t))) return `Read ${titleCaseWords(m[1])}`;
+  if ((m = /^inspect\s+(.+)$/i.exec(t))) return `Inspect ${titleCaseWords(m[1])}`;
+  if ((m = /^(?:read|examine)\s+(.+)$/i.exec(t))) return `Read ${titleCaseWords(m[1])}`;
   if ((m = /^open\s+(.+)$/i.exec(t))) return `Open ${titleCaseWords(m[1])}`;
   if (/^(north|south|east|west|up|down)$/i.test(t)) return t.charAt(0).toUpperCase() + t.slice(1);
   return t; // already-formatted hall/shop labels pass through unchanged

@@ -9,6 +9,7 @@ import {
   getCurrentRoom,
   getVisibleRoomEntities,
   markContainerOpened,
+  markFeatureInspected,
   markEnemyDefeated,
   markItemCollected,
   move,
@@ -206,7 +207,24 @@ test('after_defeating placements use defeated character location rooms', () => {
   const defeatedHeinrich = markEnemyDefeated(roomRun(adventure, 6), 'heinrich');
   assert.deepEqual(
     getVisibleRoomEntities(defeatedHeinrich, adventure).placements.map((placement) => placement.item_slug),
-    ['sword'],
+    ['loose-flagstone', 'sword'], // the cell's loose flagstone is always visible; Heinrich's sword drops on defeat
+  );
+});
+
+test('a hidden item stays hidden until its room feature is inspected', () => {
+  const adventure = loadBeginnersCave();
+  const run = roomRun(adventure, 6);
+
+  // The loose flagstone (a feature) is visible; the silver beneath it is not.
+  assert.deepEqual(
+    getVisibleRoomEntities(run, adventure).placements.map((placement) => placement.item_slug),
+    ['loose-flagstone'],
+  );
+
+  const inspected = markFeatureInspected(run, 'loose-flagstone');
+  assert.deepEqual(
+    getVisibleRoomEntities(inspected, adventure).placements.map((placement) => placement.item_slug),
+    ['loose-flagstone', 'prisoners-silver'],
   );
 });
 

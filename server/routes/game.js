@@ -8,6 +8,7 @@ import {
   getCurrentRoom,
   getVisibleRoomEntities,
   markContainerOpened,
+  markFeatureInspected,
   markEnemyDefeated,
   markItemCollected,
   move,
@@ -92,10 +93,14 @@ function choicesForRoom(room) {
   return DIRECTIONS.filter((direction) => room?.exits?.[direction] !== null && room?.exits?.[direction] !== undefined);
 }
 
-function itemChoice(item, openedContainers = new Set()) {
+function itemChoice(item, openedContainers = new Set(), inspectedFeatures = new Set()) {
   // Containers offer "open" until opened (so the choice doesn't spoil contents).
   if (item.type === 'container') {
     return openedContainers.has(item.slug) ? null : `open ${item.name ?? item.slug}`;
+  }
+  // Features offer "inspect" until inspected, then step aside.
+  if (item.type === 'feature') {
+    return inspectedFeatures.has(item.slug) ? null : `inspect ${item.name ?? item.slug}`;
   }
   return `${isCollectible(item) ? 'take' : 'read'} ${item.name ?? item.slug}`;
 }
@@ -105,11 +110,12 @@ function choicesForRun(adventure, run) {
   const entities = getVisibleRoomEntities(run, adventure);
   const items = visibleItems(adventure, entities);
   const opened = new Set(run.flags?.openedContainers ?? []);
+  const inspected = new Set(run.flags?.inspectedFeatures ?? []);
   const exits = choicesForRoom(room);
   // Dedupe by choice text: a room can hold several items that share a display
   // name (e.g. two "inscription"s), which would otherwise render the same
   // button twice. One "Read Inscription" reads them all (see read_item).
-  const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened)).filter(Boolean))];
+  const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened, inspected)).filter(Boolean))];
   const characterChoices = (entities.characters ?? []).flatMap((character) => {
     if (character.type === 'enemy' || character.type === 'boss') return [`attack ${character.name ?? character.slug}`];
     return [`talk ${character.name ?? character.slug}`];
@@ -162,6 +168,16 @@ function findVisibleContainer(adventure, run, target) {
   const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
   return adventure.items.find((item) => (
     item.type === 'container' && visibleSlugs.has(item.slug)
+    && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
+  )) ?? null;
+}
+
+function findVisibleFeature(adventure, run, target) {
+  const normalized = normalizeTarget(target);
+  const visible = getVisibleRoomEntities(run, adventure);
+  const visibleSlugs = new Set((visible.placements ?? []).map((placement) => placement.item_slug));
+  return adventure.items.find((item) => (
+    item.type === 'feature' && visibleSlugs.has(item.slug)
     && (normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized)
   )) ?? null;
 }
@@ -1084,6 +1100,23 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'read_item') {
+        // Inspecting a room feature reveals whatever is hidden by/behind it.
+        const feature = findVisibleFeature(adventure, run, command.target);
+        if (feature) {
+          const alreadyInspected = (run.flags?.inspectedFeatures ?? []).includes(feature.slug);
+          run = markFeatureInspected(run, feature.slug);
+          const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(updatedRun) ?? run;
+          const revealed = getVisibleRoomEntities(run, adventure).placements
+            .filter((placement) => placement.revealedBy === feature.slug)
+            .map((placement) => adventure.items.find((item) => item.slug === placement.item_slug)?.name ?? placement.item_slug);
+          const base = feature.text ?? feature.description ?? `You search the ${feature.name} carefully.`;
+          const text = revealed.length
+            ? `${base}\n\nHidden here, you find: ${revealed.join(', ')}.`
+            : `${base}${alreadyInspected ? '' : '\n\nThere is nothing more here.'}`;
+          return res.json(roomResponse({ adventure, run, character, text, event: { type: 'inspect', command, feature: feature.slug, revealed }, intent: command }));
+        }
+
         const matches = findVisibleItems(adventure, run, command.target);
         if (matches.length === 0) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 const MAIN_HALL_SENTINEL = 'main-hall';
 const DIRECTIONS = ['north', 'south', 'east', 'west', 'up', 'down'];
 const ADVENTURE_IMAGE_PREFERENCES = ['generate', 'upload'];
-const ITEM_TYPES = ['weapon', 'armor', 'shield', 'potion', 'spell', 'scroll', 'treasure', 'key', 'misc', 'container'];
+const ITEM_TYPES = ['weapon', 'armor', 'shield', 'potion', 'spell', 'scroll', 'treasure', 'key', 'misc', 'container', 'feature'];
 const CHARACTER_TYPES = ['npc', 'enemy', 'boss', 'merchant'];
 const FRIENDLINESS_VALUES = ['friendly', 'neutral', 'hostile'];
 const DAMAGE_DICE_PATTERN = /^(?:0|[1-9]\d*)d(?:0|[1-9]\d*)$/;

@@ -32,12 +32,17 @@ const beginner = {
     // collapse to one "read inscription" button that reads both (the duplicate
     // "Read Inscription" twice bug).
     { id: 'inscription-3', slug: 'inscription-extra', name: 'inscription', type: 'misc', description: 'An inscription reads: "Second tutorial note."', value: 0, weight: -999, collectible: false },
+    // A feature you inspect to reveal a hidden item (the close-reading reward).
+    { id: 'crack-1', slug: 'wall-crack', name: 'crack in the wall', type: 'feature', description: 'You widen the crack and find a hollow behind it.', value: 0, weight: -999, collectible: false },
+    { id: 'pouch-1', slug: 'coin-pouch', name: 'coin pouch', type: 'treasure', value: 20, weight: 1 },
   ],
   placements: [
     { item_slug: 'gem', room_number: 2, hidden: false },
     { item_slug: 'inscription-entrance', room_number: 1, hidden: false },
     { item_slug: 'inscription', room_number: 2, hidden: false },
     { item_slug: 'inscription-extra', room_number: 2, hidden: false },
+    { item_slug: 'wall-crack', room_number: 2, hidden: false },
+    { item_slug: 'coin-pouch', room_number: 2, hidden: true, revealedBy: 'wall-crack' },
   ],
 };
 
@@ -692,7 +697,7 @@ test('POST /api/game/command handles movement deterministically and persists run
   assert.equal(moved.body.state.adventureRun.currentRoom, 2);
   assert.deepEqual(moved.body.media, { voice: null, background: null, portraits: [] });
   assert.match(moved.body.text, /Rat Room/);
-  assert.deepEqual(moved.body.choices, ['north', 'take Gem', 'read inscription', 'attack Rat', 'talk Hermit']);
+  assert.deepEqual(moved.body.choices, ['north', 'take Gem', 'read inscription', 'inspect crack in the wall', 'attack Rat', 'talk Hermit']);
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.currentRoom === 2), true);
 });
 
@@ -765,6 +770,30 @@ test('POST /api/game/command reads the same-named artifact belonging to the curr
   assert.equal(rat.body.text, 'An inscription reads: "Original tutorial text."\n\nAn inscription reads: "Second tutorial note."');
 });
 
+test('POST /api/game/command inspecting a feature reveals a hidden item you can then take', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const runId = (await startAccountAdventure(app, character.body.state.character.id)).body.state.run.id;
+  const charId = character.body.state.character.id;
+  await accountCommand(app, charId, runId, 'south'); // room 2 has the crack
+
+  // Hidden item is not takeable before inspection.
+  const tooSoon = await accountCommand(app, charId, runId, 'take coin pouch');
+  assert.equal(tooSoon.body.events[0].type, 'take_failed');
+
+  // Inspect the crack → the coin pouch is revealed (and the inspect choice retires).
+  const inspect = await accountCommand(app, charId, runId, 'inspect crack in the wall');
+  assert.equal(inspect.status, 200);
+  assert.equal(inspect.body.events[0].type, 'inspect');
+  assert.match(inspect.body.text, /coin pouch/i);
+  assert.equal(inspect.body.choices.some((c) => /inspect crack/i.test(c)), false);
+  assert.equal(inspect.body.choices.some((c) => /take coin pouch/i.test(c)), true);
+
+  // Now it can be taken.
+  const taken = await accountCommand(app, charId, runId, 'take coin pouch');
+  assert.equal(taken.body.state.character.inventory.some((item) => item.slug === 'coin-pouch'), true);
+});
+
 test('POST /api/game/command shows one Read Inscription button for several same-named inscriptions', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);
@@ -789,7 +818,7 @@ test('POST /api/game/command supports talking to visible non-hostile characters'
   assert.equal(talk.body.intent.type, 'talk');
   assert.equal(talk.body.events[0].type, 'talk');
   assert.match(talk.body.text, /hermit nods/i);
-  assert.deepEqual(talk.body.choices, ['north', 'take Gem', 'read inscription', 'attack Rat', 'talk Hermit']);
+  assert.deepEqual(talk.body.choices, ['north', 'take Gem', 'read inscription', 'inspect crack in the wall', 'attack Rat', 'talk Hermit']);
 });
 
 test('POST /api/game/command — talking to a hostile foe will not parley (no look-dump)', async () => {
