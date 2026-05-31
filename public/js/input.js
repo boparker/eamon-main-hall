@@ -5,8 +5,13 @@ export const inputBox = document.getElementById('input-box');
 const inputLabel = document.getElementById('input-label');
 export const sendBtn = document.getElementById('send-btn');
 const choicesArea = document.getElementById('choices-area');
+const objectTiles = document.getElementById('object-tiles');
 
 export let pendingChoices = [];
+
+// The room's visible item objects (for tile icons), set each render from state.
+let _roomItems = [];
+export function setRoomItems(items) { _roomItems = Array.isArray(items) ? items : []; }
 
 export function clearChoices() {
   pendingChoices = [];
@@ -42,22 +47,83 @@ export function formatActionLabel(text) {
   return t; // already-formatted hall/shop labels pass through unchanged
 }
 
+const VERB_LABELS = { open: 'Open', take: 'Take', inspect: 'Inspect', read: 'Read' };
+
+// An item-interaction choice ("open chest", "take axe", …) becomes a tile;
+// everything else (move, talk, attack, hall/shop labels) stays a button.
+function parseItemChoice(text) {
+  const m = /^(open|take|inspect|read|examine)\s+(.+)$/i.exec(String(text ?? '').trim());
+  if (!m) return null;
+  const verb = m[1].toLowerCase() === 'examine' ? 'read' : m[1].toLowerCase();
+  return { verb, object: m[2].trim() };
+}
+
+const norm = (v) => String(v ?? '').trim().toLowerCase();
+
+// Placeholder glyph for an object tile — by item type when we can match it to a
+// room item, else by name keywords. Swaps to real item art with the pipeline.
+function objectGlyph(object, verb) {
+  const item = _roomItems.find((i) => norm(i.name) === norm(object) || norm(i.slug) === norm(object));
+  const type = item?.type;
+  const n = norm(object);
+  if (type === 'container' || /chest|crate|coffer|box|trunk/.test(n)) return '🧰';
+  if (type === 'feature' || verb === 'inspect') return '🔍';
+  if (type === 'potion' || /potion|flask|vial|elixir/.test(n)) return '🧪';
+  if (type === 'scroll' || /scroll/.test(n)) return '📜';
+  if (type === 'key' || /\bkey\b/.test(n)) return '🗝️';
+  if (type === 'treasure' || /gold|silver|coin|gem|diamond|jewel|ruby|treasure|hoard/.test(n)) return '💎';
+  if (/axe/.test(n)) return '🪓';
+  if (/bow/.test(n)) return '🏹';
+  if (/sword|blade|dagger|sabre|saber/.test(n)) return '⚔️';
+  if (type === 'weapon') return '⚔️';
+  if (type === 'armor' || type === 'shield' || /armou?r|mail|shield|helm/.test(n)) return '🛡️';
+  if (verb === 'read' || /inscription|writing|sign|note|book|tome/.test(n)) return '📖';
+  return '◆';
+}
+
+function send(text) {
+  choicesArea.classList.remove('visible');
+  objectTiles.classList.remove('visible');
+  pendingChoices = [];
+  inputEl.value = text; // send the original command, not the formatted label
+  if (_sendFn) _sendFn();
+}
+
 export function renderChoices() {
   choicesArea.innerHTML = '';
-  if (pendingChoices.length === 0) { choicesArea.classList.remove('visible'); return; }
+  objectTiles.innerHTML = '';
+
+  const tiles = [];
+  const actions = [];
   for (const text of pendingChoices) {
+    const parsed = parseItemChoice(text);
+    if (parsed) tiles.push({ text, ...parsed });
+    else actions.push(text);
+  }
+
+  // Object tiles (the room's interactive things)
+  for (const { text, verb, object } of tiles) {
+    const tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'obj-tile line-enter';
+    const icon = document.createElement('div'); icon.className = 'obj-icon'; icon.textContent = objectGlyph(object, verb);
+    const name = document.createElement('div'); name.className = 'obj-name'; name.textContent = titleCaseWords(object);
+    const tag = document.createElement('div'); tag.className = 'obj-verb'; tag.textContent = VERB_LABELS[verb] ?? verb;
+    tile.append(icon, name, tag);
+    tile.addEventListener('click', () => send(text));
+    objectTiles.appendChild(tile);
+  }
+  objectTiles.classList.toggle('visible', tiles.length > 0);
+
+  // Action buttons (move / talk / attack / hall / shop)
+  for (const text of actions) {
     const card = document.createElement('div');
     card.className = 'choice-card';
     card.textContent = formatActionLabel(text);
-    card.addEventListener('click', () => {
-      choicesArea.classList.remove('visible');
-      pendingChoices = [];
-      inputEl.value = text; // send the original command, not the formatted label
-      if (_sendFn) _sendFn();
-    });
+    card.addEventListener('click', () => send(text));
     choicesArea.appendChild(card);
   }
-  choicesArea.classList.add('visible');
+  choicesArea.classList.toggle('visible', actions.length > 0);
 }
 
 // ── Input Skins ──
