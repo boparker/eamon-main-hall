@@ -149,7 +149,8 @@ export function showEncounterPortrait(name, kind) {
   const url = portraitCache[kind + ':' + name];
 
   document.getElementById('portrait-name').textContent = name;
-  document.getElementById('portrait-stats').textContent = kind === 'monster' ? '⚔ Hostile' : '✦ Friendly';
+  const dispositionLabel = { monster: '⚔ Hostile', friendly: '✦ Friendly', neutral: '◆ Neutral' };
+  document.getElementById('portrait-stats').textContent = dispositionLabel[kind] ?? '◆ Neutral';
 
   if (url) {
     img.src = url;
