@@ -125,7 +125,7 @@
       "id": "beginners-cave-6",
       "room_number": 6,
       "name": "West Cell",
-      "narration_text": "You are in a small stark cell with a door on the east side of the room.",
+      "narration_text": "You are in a small stark cell with a door on the east side of the room. One flagstone in the floor sits slightly proud of the rest, as though it has been pried up and set back many times.",
       "background_description": "You are in a small stark cell with a door on the east side of the room.",
       "light_level": "dim",
       "is_combat_zone": false,
@@ -949,9 +949,39 @@
       "value": 0,
       "weight": -999,
       "collectible": false
+    },
+    {
+      "id": "beginners-cave-loose-flagstone",
+      "name": "loose flagstone",
+      "slug": "loose-flagstone",
+      "type": "feature",
+      "description": "You work your fingers under the loose flagstone and lever it up. Beneath it, scratched into the rock, is a shallow hollow — some prisoner's secret hiding place.",
+      "value": 0,
+      "weight": -999,
+      "collectible": false
+    },
+    {
+      "id": "beginners-cave-prisoners-silver",
+      "name": "silver coins",
+      "slug": "prisoners-silver",
+      "type": "treasure",
+      "description": "A small twist of cloth holds a handful of tarnished silver coins — a prisoner's hidden savings, never spent.",
+      "value": 75,
+      "weight": 1
     }
   ],
   "placements": [
+    {
+      "item_slug": "loose-flagstone",
+      "room_number": 6,
+      "hidden": false
+    },
+    {
+      "item_slug": "prisoners-silver",
+      "room_number": 6,
+      "hidden": true,
+      "revealedBy": "loose-flagstone"
+    },
     {
       "item_slug": "diamonds",
       "room_number": 3,
