@@ -939,6 +939,16 @@
       "source_room_number": 7,
       "collectible": false,
       "text_source": "kdechant/eamon artifact.description"
+    },
+    {
+      "id": "beginners-cave-scroll-passage-home",
+      "name": "scroll",
+      "slug": "scroll-passage-home",
+      "type": "scroll",
+      "description": "You unfurl a scroll from among the pirate's effects. In a hurried hand it reads: \"Stranger — there is no deeper door in this cave, only the way you entered. When your satchel is heavy and your wounds will bear no more, make for the Cave Entrance and head NORTH. Sam Slicker will weigh your plunder into gold and the Guild will mark the deed done. But fall here, or never leave, and you carry nothing home.\"",
+      "value": 0,
+      "weight": -999,
+      "collectible": false
     }
   ],
   "placements": [
@@ -983,6 +993,10 @@
     },
     {
       "item_slug": "trollsfire",
+      "after_defeating": "pirate"
+    },
+    {
+      "item_slug": "scroll-passage-home",
       "after_defeating": "pirate"
     },
     {
