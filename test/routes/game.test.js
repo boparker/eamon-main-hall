@@ -701,6 +701,39 @@ test('POST /api/game/command handles movement deterministically and persists run
   assert.equal(deps.calls.some((call) => call.type === 'updateRun' && call.patch.currentRoom === 2), true);
 });
 
+test('returning to the Great Hall restores a wounded adventurer to full health', async () => {
+  const deps = makeDeps();
+  const { app } = makeApp(deps);
+  // A wounded adventurer (4 of 12 HD) who survived the cave.
+  await deps.createCharacter(deps.db, {
+    id: 'wynn-1', userId: 'user-1', profileId: 'profile-1', playerId: 'account:user-1',
+    name: 'Wynn', className: 'rogue', hardiness: 12, agility: 12, charisma: 9, hd: 4, maxHd: 12, gold: 0, isAlive: true,
+  });
+  const started = await startAccountAdventure(app, 'wynn-1');
+  const runId = started.body.state.run.id;
+
+  // Walk out the entrance (room 1 north → main-hall) — completes the run.
+  const out = await accountCommand(app, 'wynn-1', runId, 'north');
+  assert.equal(out.status, 200);
+  assert.equal(out.body.events[0].type, 'return_to_hall');
+  assert.equal(out.body.state.character.hd, 12); // healed to max on return
+});
+
+test('abandoning an adventure also returns the adventurer to full health', async () => {
+  const deps = makeDeps();
+  const { app } = makeApp(deps);
+  await deps.createCharacter(deps.db, {
+    id: 'wynn-2', userId: 'user-1', profileId: 'profile-1', playerId: 'account:user-1',
+    name: 'Wynn', className: 'rogue', hardiness: 12, agility: 12, charisma: 9, hd: 3, maxHd: 12, gold: 0, isAlive: true,
+  });
+  const started = await startAccountAdventure(app, 'wynn-2');
+  const runId = started.body.state.run.id;
+
+  const left = await accountCommand(app, 'wynn-2', runId, 'leave');
+  assert.equal(left.status, 200);
+  assert.equal(left.body.state.character.hd, 12);
+});
+
 test('POST /api/game/command handles take, inventory, and return-to-hall without AI tags', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);
