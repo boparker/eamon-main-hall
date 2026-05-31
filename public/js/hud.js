@@ -50,7 +50,7 @@ function setGear(nameId, name, stat) {
 // Show the readied weapon and worn armour/shield straight from the character's
 // equipment, so "what do I have readied?" is answered at a glance.
 export function renderLoadout(character) {
-  const wrap = document.getElementById('hud-loadout');
+  const wrap = document.getElementById('readied-bar');
   if (!wrap) return;
   if (!character) { wrap.hidden = true; return; }
   wrap.hidden = false;

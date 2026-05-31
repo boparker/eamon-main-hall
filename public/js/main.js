@@ -7,7 +7,7 @@ import { addPlayerLine, renderNarrative } from './narrative.js';
 import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
-import { setLocation } from './scene.js';
+import { setLocation, showEncounterPortrait, hidePortrait } from './scene.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
@@ -46,6 +46,25 @@ function renderGameResponse(response = {}) {
 
   if (response.state?.combat) renderCombat(response.state.combat, response.choices, response.text);
   else hideCombat();
+
+  updateEncounterPortrait(response);
+}
+
+// Right-hand portrait frame: show whoever shares the room (enemy preferred over
+// NPC) during exploration; clear it in shops, combat, or back at the Hall.
+function updateEncounterPortrait(response) {
+  if (response.state?.shop || response.state?.combat) { hidePortrait(); return; }
+  const characters = response.state?.entities?.characters;
+  if (Array.isArray(characters)) {
+    const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';
+    const headline = characters.find(isHostile) ?? characters.find((c) => c.type !== 'merchant') ?? null;
+    if (headline) showEncounterPortrait(headline.name ?? headline.slug, isHostile(headline) ? 'monster' : 'friendly');
+    else hidePortrait();
+    return;
+  }
+  // No room roster on this response (e.g. a take/equip action) — leave the
+  // current portrait as-is, but clear it once we're no longer adventuring.
+  if (response.state?.phase && response.state.phase !== 'adventure') hidePortrait();
 }
 
 function buildGameClient(identity = null) {
