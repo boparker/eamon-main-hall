@@ -54,6 +54,7 @@ export async function generateSceneBg(location) {
     "Hokas Tokas' School of Magick": 'scenes/magic-shop.jpg',
     "The Witch's Shop": 'scenes/witch-shop.jpg',
     'Bank of Eamon Towne': 'scenes/bank.jpg',
+    'The Chapel of the Open Hand': 'scenes/chapel.jpg',
   };
 
   if (sceneMap[location]) {
