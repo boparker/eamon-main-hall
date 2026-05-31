@@ -4,7 +4,7 @@
 import { PLAYER_ID, state } from './state.js';
 import { updateHUD } from './hud.js';
 import { addPlayerLine, renderNarrative } from './narrative.js';
-import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
+import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices, setRoomItems } from './input.js';
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
 import { registerGateHandler, openGate, closeGate } from './gate.js';
@@ -42,6 +42,7 @@ function renderGameResponse(response = {}) {
 
   renderNarrative(response.text ?? '', { locationTitle: response.state?.locationTitle });
   clearChoices();
+  setRoomItems(response.state?.items);
   for (const choice of response.choices ?? []) addChoice(choice);
   renderChoices();
 
