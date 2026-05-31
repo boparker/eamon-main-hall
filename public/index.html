@@ -373,16 +373,23 @@
     #scene-bg { position: absolute; inset: 0; z-index: 0; background: url('scenes/great-hall.png') center bottom / cover no-repeat, var(--bg); transition: opacity 1.5s ease; }
     #scene-bg-next { position: absolute; inset: 0; z-index: 0; background: center bottom / cover no-repeat var(--bg); opacity: 0; transition: opacity 1.5s ease; }
     #scene-bg::after, #scene-bg-next::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(5,4,4,0.15) 0%, rgba(5,4,4,0.1) 20%, rgba(5,4,4,0.6) 55%, rgba(5,4,4,0.97) 100%); }
-    /* Portrait panel */
-    #portrait-frame { position: absolute; top: 150px; right: 32px; z-index: 6; width: 200px; height: 252px; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; opacity: 0; transform: translateX(30px); transition: opacity 0.6s ease, transform 0.6s ease; background: var(--bg); box-shadow: 0 14px 40px rgba(0,0,0,0.55); }
-    #portrait-frame.visible { opacity: 1; transform: translateX(0); }
-    #portrait-art { position: relative; width: 100%; height: 200px; }
-    #portrait-frame img { width: 100%; height: 200px; object-fit: cover; display: block; }
-    /* Illuminated-monogram placeholder until generated portrait art exists */
-    #portrait-crest { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-head); font-size: 5rem; line-height: 1; color: #e8d39a; background: radial-gradient(120% 120% at 50% 30%, rgba(70,56,34,0.6), rgba(8,6,5,0.96)); text-shadow: 0 0 24px rgba(200,168,75,0.5); }
-    #portrait-crest[data-kind="monster"] { color: #ff9c78; background: radial-gradient(120% 120% at 50% 30%, rgba(86,32,24,0.7), rgba(8,5,5,0.97)); text-shadow: 0 0 24px rgba(255,120,80,0.55); }
-    #portrait-name { padding: 4px 8px; font-family: var(--font-head); font-size: 0.65rem; color: var(--gold); text-align: center; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #portrait-stats { padding: 0 8px 4px; font-size: 0.55rem; color: var(--text-dim); text-align: center; }
+    /* ── The Room rail: characters up top, items below. Stacks below the console
+       on narrow screens; pinned to the right of the prose on wide ones. ── */
+    #room-rail { position: relative; z-index: 8; display: flex; flex-direction: column; gap: 22px; padding: 8px clamp(20px,5vw,80px) 16px; }
+    #room-rail[hidden] { display: none; }
+    @media (min-width: 1000px) {
+      #room-rail { position: absolute; top: 132px; left: calc(clamp(20px,5vw,80px) + 710px); right: 24px; bottom: 84px; padding: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+    }
+    .rail-heading { font-family: var(--font-head); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+    #room-characters { display: flex; flex-wrap: wrap; gap: 16px; }
+    /* Character card — a portrait per person in the room (monogram placeholder) */
+    .room-char-card { width: clamp(150px, 18vw, 210px); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); box-shadow: 0 12px 34px rgba(0,0,0,0.5); animation: lineIn 0.45s ease-out forwards; }
+    .rc-art { position: relative; width: 100%; aspect-ratio: 4 / 5; }
+    .rc-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rc-crest { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-head); font-size: 4.6rem; line-height: 1; color: #e8d39a; background: radial-gradient(120% 120% at 50% 30%, rgba(70,56,34,0.6), rgba(8,6,5,0.96)); text-shadow: 0 0 24px rgba(200,168,75,0.5); }
+    .room-char-card[data-kind="monster"] .rc-crest { color: #ff9c78; background: radial-gradient(120% 120% at 50% 30%, rgba(86,32,24,0.7), rgba(8,5,5,0.97)); text-shadow: 0 0 24px rgba(255,120,80,0.55); }
+    .rc-name { padding: 8px 8px 2px; font-family: var(--font-head); font-size: 0.92rem; color: var(--gold); text-align: center; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rc-disp { padding: 0 8px 9px; font-size: 0.72rem; color: var(--text-dim); text-align: center; }
     /* Generating indicator */
     .img-generating { position: absolute; top: 50%; left: 50%; z-index: 2; transform: translate(-50%,-50%); font-family: var(--font-head); font-size: 0.7rem; letter-spacing: 0.15em; color: var(--gold-dim); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
     .img-generating.active { opacity: 1; }
@@ -503,15 +510,15 @@
 
     /* ── Object tiles — the room's interactive things (open/take/inspect/read).
        Placeholder glyph today; swaps to item art with the asset pipeline. ── */
-    #object-tiles { position: relative; z-index: 10; display: none; flex-wrap: wrap; gap: 10px; padding: 4px clamp(20px,5vw,80px) 10px; }
+    #object-tiles { display: none; flex-wrap: wrap; gap: 12px; }
     #object-tiles.visible { display: flex; }
-    .obj-tile { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 80px; padding: 9px 12px; cursor: pointer;
-      background: rgba(12,10,8,0.72); border: 1px solid var(--gold-dim); border-radius: 8px; color: var(--text);
+    .obj-tile { display: flex; flex-direction: column; align-items: center; gap: 5px; width: clamp(96px, 11vw, 128px); padding: 14px 12px; cursor: pointer;
+      background: rgba(12,10,8,0.72); border: 1px solid var(--gold-dim); border-radius: 9px; color: var(--text);
       font-family: var(--font-body); backdrop-filter: blur(4px); transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s; }
     .obj-tile:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 8px 24px var(--gold-glow); }
-    .obj-icon { font-size: 1.7rem; line-height: 1; }
-    .obj-name { font-size: 0.82rem; color: var(--text); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
-    .obj-verb { font-family: var(--font-head); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .obj-icon { font-size: 2.9rem; line-height: 1; }
+    .obj-name { font-size: 0.86rem; color: var(--text); text-align: center; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+    .obj-verb { font-family: var(--font-head); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
     .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--gold); margin-left: 2px; vertical-align: text-bottom; animation: blink 0.7s step-end infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     @keyframes lineIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -628,10 +635,6 @@
 
     /* The encounter portrait lives in the right margin beside the prose column.
        Below ~880px that margin runs out and it would cover text, so hide it. */
-    @media (max-width: 960px) {
-      #portrait-frame { display: none; }
-    }
-
     @media (max-width: 640px) {
       #shop-panel { width: 100%; right: -100%; }
       #hud-stats { gap: 14px; }
@@ -698,14 +701,6 @@
   <div id="scene-bg"></div>
   <div id="scene-bg-next"></div>
   <div class="img-generating" id="img-generating">&#9670; CONJURING VISION &#9670;</div>
-  <div id="portrait-frame">
-    <div id="portrait-art">
-      <img id="portrait-img" src="" alt="">
-      <span id="portrait-crest" aria-hidden="true"></span>
-    </div>
-    <div id="portrait-name"></div>
-    <div id="portrait-stats"></div>
-  </div>
   <div id="grain"></div>
 
   <div id="hud">
@@ -755,9 +750,6 @@
     <div id="narrative-scroll"></div>
   </div>
 
-  <!-- Objects in the room — interactive tiles (open/take/inspect/read) -->
-  <div id="object-tiles"></div>
-
   <div id="thinking">
     <div class="think-dot"></div><div class="think-dot"></div><div class="think-dot"></div>
   </div>
@@ -799,6 +791,15 @@
       </div>
     </div>
   </div>
+
+  <!-- ═ THE ROOM — characters up top, items below (right rail on wide screens) ═ -->
+  <aside id="room-rail" hidden>
+    <div id="room-characters"></div>
+    <div id="room-items-section" hidden>
+      <div class="rail-heading">Items in the Room</div>
+      <div id="object-tiles"></div>
+    </div>
+  </aside>
 
   <!-- ═ CHARACTER CREATION ═ -->
   <div id="creation-overlay" hidden>

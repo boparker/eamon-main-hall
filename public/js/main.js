@@ -8,7 +8,7 @@ import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoic
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
 import { registerGateHandler, openGate, closeGate } from './gate.js';
-import { setLocation, showEncounterPortrait, hidePortrait } from './scene.js';
+import { setLocation, renderRoomCharacters, clearRoomCharacters } from './scene.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
@@ -51,25 +51,42 @@ function renderGameResponse(response = {}) {
   if (response.state?.combat) renderCombat(response.state.combat, response.choices, response.text);
   else hideCombat();
 
-  updateEncounterPortrait(response);
+  updateRoomRail(response);
 }
 
-// Right-hand portrait frame: show whoever shares the room (enemy preferred over
-// NPC) during exploration; clear it in shops, combat, or back at the Hall.
-function updateEncounterPortrait(response) {
-  if (response.state?.shop || response.state?.combat) { hidePortrait(); return; }
+// The Room rail: a portrait card for every character present (up top) plus the
+// item tiles (below). Cleared in shops, combat, or back at the Hall. The rail
+// is shown whenever there's anyone or anything in the room.
+function updateRoomRail(response) {
+  const rail = document.getElementById('room-rail');
+  if (response.state?.shop || response.state?.combat) {
+    clearRoomCharacters();
+    if (rail) rail.hidden = true;
+    return;
+  }
+
   const characters = response.state?.entities?.characters;
   if (Array.isArray(characters)) {
     const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';
     const kindOf = (c) => (isHostile(c) ? 'monster' : c.friendliness === 'friendly' ? 'friendly' : 'neutral');
-    const headline = characters.find(isHostile) ?? characters.find((c) => c.type !== 'merchant') ?? null;
-    if (headline) showEncounterPortrait(headline.name ?? headline.slug, kindOf(headline));
-    else hidePortrait();
-    return;
+    const people = characters
+      .filter((c) => c.type !== 'merchant')
+      .map((c) => ({ name: c.name ?? c.slug, kind: kindOf(c) }));
+    renderRoomCharacters(people);
+  } else if (response.state?.phase && response.state.phase !== 'adventure') {
+    clearRoomCharacters();
   }
-  // No room roster on this response (e.g. a take/equip action) — leave the
-  // current portrait as-is, but clear it once we're no longer adventuring.
-  if (response.state?.phase && response.state.phase !== 'adventure') hidePortrait();
+  // (When entities are absent mid-adventure — e.g. a take action — leave the
+  // character cards as they are; the item tiles below them still refresh.)
+
+  // The "Items in the Room" section appears only when there are tiles.
+  const tiles = document.getElementById('object-tiles');
+  const itemsSection = document.getElementById('room-items-section');
+  const hasItems = !!tiles && tiles.children.length > 0;
+  if (itemsSection) itemsSection.hidden = !hasItems;
+
+  const hasChars = document.getElementById('room-characters')?.children.length > 0;
+  if (rail) rail.hidden = !(hasChars || hasItems);
 }
 
 function buildGameClient(identity = null) {
