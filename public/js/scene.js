@@ -36,7 +36,7 @@ export function setLocation(name) {
 
   // Switch music based on location
   const lowerName = name.toLowerCase();
-  const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn');
+  const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn') || lowerName.includes('chapel') || lowerName.includes('healer') || lowerName.includes('temple') || lowerName.includes('school') || lowerName.includes('gate');
   switchMusic(isHall ? hallMusic : adventureMusic);
 
   // Generate background image for new locations

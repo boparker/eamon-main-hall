@@ -6,6 +6,7 @@ import {
   SPELLS, learnSpell, spellAbility,
   attributePrice, raiseAttribute,
   bankDeposit, bankWithdraw,
+  healAtTemple, healCost, HEAL_COST_PER_HP,
 } from '../../server/engine/vendors.js';
 
 const baseCharacter = () => ({
@@ -155,4 +156,31 @@ test('bankWithdraw moves gold out of the bank but not more than is banked', () =
   assert.equal(ok.character.gold, 300);
   assert.equal(ok.character.bankGold, 300);
   assert.equal(bankWithdraw(character, 999).reason, 'insufficient-funds');
+});
+
+// ── The Healer: pay gold to restore HP ──
+test('healAtTemple restores HP to max and charges per missing point', () => {
+  const character = { ...baseCharacter(), hd: 7, maxHd: 15, gold: 1000 };
+  const result = healAtTemple(character);
+  assert.equal(result.ok, true);
+  assert.equal(result.healed, 8);
+  assert.equal(result.cost, 8 * HEAL_COST_PER_HP);
+  assert.equal(result.character.hd, 15);
+  assert.equal(result.character.gold, 1000 - 8 * HEAL_COST_PER_HP);
+  assert.equal(healCost(character), 8 * HEAL_COST_PER_HP);
+});
+
+test('healAtTemple heals only what the adventurer can afford (no softlock)', () => {
+  const character = { ...baseCharacter(), hd: 5, maxHd: 15, gold: 9 }; // 9 gold = 3 HP at 3/HP
+  const result = healAtTemple(character);
+  assert.equal(result.ok, true);
+  assert.equal(result.healed, 3);
+  assert.equal(result.cost, 9);
+  assert.equal(result.character.hd, 8);
+  assert.equal(result.character.gold, 0);
+});
+
+test('healAtTemple refuses when already full or truly broke', () => {
+  assert.equal(healAtTemple({ ...baseCharacter(), hd: 15, maxHd: 15 }).reason, 'already-full');
+  assert.equal(healAtTemple({ ...baseCharacter(), hd: 2, maxHd: 15, gold: 0 }).reason, 'insufficient-gold');
 });
