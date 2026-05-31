@@ -416,8 +416,16 @@
       backdrop-filter: blur(7px); box-shadow: 0 16px 50px rgba(0,0,0,0.45);
     }
     #narrative-scroll::-webkit-scrollbar { display: none; }
+    /* Turn blocks — newest stays bright with a gold marker; older turns fade
+       back so the eye lands on where the story currently is. */
+    .narrative-turn { border-left: 2px solid transparent; padding-left: 14px; margin-left: -16px; margin-bottom: 16px; transition: opacity 0.5s ease, border-color 0.5s ease; }
+    .narrative-turn:last-child { margin-bottom: 0; }
+    .narrative-turn.past { opacity: 0.38; }
+    .narrative-turn.active { opacity: 1; border-left-color: var(--gold-dim); }
     .narrative-line { font-size: clamp(1.02rem,1.9vw,1.2rem); line-height: 1.75; color: var(--text); margin-bottom: 13px; white-space: pre-line; letter-spacing: 0.01em; }
     .narrative-line:last-child { margin-bottom: 0; }
+    /* Location header — the room name in the prose, in the scene's display face */
+    .narrative-line.nl-location { font-family: var(--font-head); font-size: 1.32em; line-height: 1.2; color: var(--gold); letter-spacing: 0.05em; margin-bottom: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--gold-dim); text-shadow: 0 0 24px rgba(200,168,75,0.28); }
     /* Storybook drop cap on the opening line of narrator prose */
     .narrative-line.lead::first-letter { font-family: var(--font-head); font-size: 2.9em; line-height: 0.8; float: left; padding: 4px 10px 0 0; color: var(--gold); }
     .narrative-line.player-line { color: var(--gold); font-style: italic; font-size: 0.95em; margin-bottom: 14px; opacity: 0.82; }

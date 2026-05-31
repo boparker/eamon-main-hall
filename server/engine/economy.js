@@ -109,7 +109,7 @@ export function sellItem(character, itemSlug) {
   };
 }
 
-export function takeTreasure(character, item) {
+export function takeTreasure(character, item, options = {}) {
   if (!character) {
     return { ok: false, character, reason: 'missing-character' };
   }
@@ -118,7 +118,11 @@ export function takeTreasure(character, item) {
     return { ok: false, character, reason: 'missing-item' };
   }
 
-  if (hasItem(character, item.slug)) {
+  // Adventure loot is a fresh instance each run — the cave regenerates its
+  // chest, so a character who already carries one healing potion may take
+  // another. Only callers that enforce uniqueness (shop purchases) keep the
+  // already-owned guard. Pass { allowDuplicate: true } to take a duplicate.
+  if (!options.allowDuplicate && hasItem(character, item.slug)) {
     return { ok: false, character, item, reason: 'already-owned' };
   }
 
