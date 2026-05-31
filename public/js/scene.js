@@ -137,6 +137,40 @@ export async function showPortrait(name, desc, kind) {
   }
 }
 
+// Encounter portrait for the deterministic flow: show whoever you've walked in
+// on (enemy or NPC) in the right-hand frame. Until generated art exists, fall
+// back to an illuminated monogram of the character's name — so the slot is
+// alive on every encounter, and swaps to real art the moment we have it.
+export function showEncounterPortrait(name, kind) {
+  const frame = document.getElementById('portrait-frame');
+  if (!frame) return;
+  const img = document.getElementById('portrait-img');
+  const crest = document.getElementById('portrait-crest');
+  const url = portraitCache[kind + ':' + name];
+
+  document.getElementById('portrait-name').textContent = name;
+  document.getElementById('portrait-stats').textContent = kind === 'monster' ? '⚔ Hostile' : '✦ Friendly';
+
+  if (url) {
+    img.src = url;
+    img.style.display = '';
+    if (crest) crest.style.display = 'none';
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    if (crest) {
+      crest.textContent = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
+      crest.dataset.kind = kind === 'monster' ? 'monster' : 'friendly';
+      crest.style.display = '';
+    }
+  }
+
+  clearTimeout(frame._hideTimer); // persistent while you're in the room
+  frame.classList.add('visible');
+}
+
 export function hidePortrait() {
-  document.getElementById('portrait-frame').classList.remove('visible');
+  const frame = document.getElementById('portrait-frame');
+  clearTimeout(frame._hideTimer);
+  frame.classList.remove('visible');
 }
