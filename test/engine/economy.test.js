@@ -157,6 +157,17 @@ test('takeTreasure blocks duplicate item', () => {
   assert.equal(result.character, character);
 });
 
+test('takeTreasure allows a duplicate when allowDuplicate is set', () => {
+  const potion = { slug: 'healing-potion', name: 'healing potion', type: 'potion', value: 50, weight: 2 };
+  const character = { gold: 10, inventory: [potion] };
+
+  const result = takeTreasure(character, potion, { allowDuplicate: true });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.character.inventory.length, 2);
+  assert.deepEqual(result.character.inventory.map((i) => i.slug), ['healing-potion', 'healing-potion']);
+});
+
 test('takeTreasure blocks missing item', () => {
   const character = { gold: 10, inventory: [] };
 

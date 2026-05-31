@@ -1006,7 +1006,7 @@ export function createGameRouter(rawDeps = {}) {
         if (!isCollectible(item)) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'not-collectible' }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
-        const taken = takeTreasure(character, item);
+        const taken = takeTreasure(character, item, { allowDuplicate: true });
         if (!taken.ok) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: taken.reason }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }

@@ -32,7 +32,7 @@ function renderGameResponse(response = {}) {
   else closeShop();
   updateHUD(true);
 
-  renderNarrative(response.text ?? '');
+  renderNarrative(response.text ?? '', { locationTitle: response.state?.locationTitle });
   clearChoices();
   for (const choice of response.choices ?? []) addChoice(choice);
   renderChoices();
