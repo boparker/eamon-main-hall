@@ -24,23 +24,25 @@ function installFakeDocument(ids) {
 }
 
 test('updateHUD keeps shop gold label synced with current character gold', () => {
-  const elements = installFakeDocument(['hud-name', 'stat-hd', 'stat-ag', 'stat-ch', 'stat-gold', 'shop-gold']);
+  const elements = installFakeDocument(['hud-name', 'stat-hd', 'stat-ag', 'stat-ch', 'stat-gold', 'stat-bank', 'shop-gold']);
   state.character = {
     name: 'Borin',
     hd: 17,
     agility: 12,
     charisma: 18,
     gold: 200,
+    bankGold: 500,
   };
 
   updateHUD(false);
 
   assert.equal(elements.get('stat-gold').textContent, 200);
+  assert.equal(elements.get('stat-bank').textContent, 500);
   assert.equal(elements.get('shop-gold').textContent, 'Your gold: 200');
 });
 
 test('updateHUD shows starting gold and dashes for character stats before character creation', () => {
-  const elements = installFakeDocument(['hud-name', 'stat-hd', 'stat-ag', 'stat-ch', 'stat-gold', 'shop-gold']);
+  const elements = installFakeDocument(['hud-name', 'stat-hd', 'stat-ag', 'stat-ch', 'stat-gold', 'stat-bank', 'shop-gold']);
   state.character = {};
 
   updateHUD(false);
@@ -50,5 +52,6 @@ test('updateHUD shows starting gold and dashes for character stats before charac
   assert.equal(elements.get('stat-ag').textContent, '—');
   assert.equal(elements.get('stat-ch').textContent, '—');
   assert.equal(elements.get('stat-gold').textContent, 200);
+  assert.equal(elements.get('stat-bank').textContent, '—');
   assert.equal(elements.get('shop-gold').textContent, 'Your gold: 200');
 });
