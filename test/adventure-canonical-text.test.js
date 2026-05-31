@@ -16,14 +16,24 @@ function item(slug) {
   return manifest.items.find((entry) => entry.slug === slug);
 }
 
-test('Beginner’s Cave room narration keeps original kdechant/Eamon room text separate from tutorial artifacts', () => {
+test('Beginner’s Cave keeps original kdechant/Eamon room narration verbatim', () => {
   assert.equal(room(9).narration_text, 'You are in a small stark cell with a door on the east side.');
   assert.equal(room(11).narration_text, 'You are in a small stark cell with a door on the west side.');
   assert.equal(room(21).narration_text, 'You are in an unremarkable tunnel. You can see torch light in both directions.');
   assert.equal(room(24).narration_text, 'You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.');
+});
 
-  assert.equal(item('inscription-get-all').description, 'You see an inscription on the wall which reads, "You can type GET ALL to pick up everything in the room. This will usually not pick up dead bodies or immovable objects like doors and inscriptions."');
-  assert.equal(item('writing-command-history').description, 'You see some words chiseled into the wall: "To repeat the last command, just hit the Enter key again. To recall previous commands, use the up and down arrow keys."');
+test('Tutorial inscriptions teach OUR controls, not the original teletype commands', () => {
+  // The Beginner's Cave inscriptions are deliberately localized to this engine:
+  // they teach commands that actually work here and must not reference 1980
+  // terminal affordances (arrow-key history, the "boat in the bay", etc.).
+  assert.equal(item('inscription-get-all').description, 'You see an inscription on the wall which reads, "You needn\'t gather treasure one piece at a time. Type TAKE ALL (or GET ALL) to scoop up everything loose in a room at once. Fixtures, the fallen, and signs like this one stay where they are."');
+  assert.match(item('inscription-get-all').description, /TAKE ALL/);
+  assert.match(item('writing-ready-wear').description, /READY|WEAR|REMOVE/);
+  // No inscription should still teach the dead terminal-isms.
+  for (const slug of ['inscription-get-all', 'inscription-case-sensitive', 'inscription-abbreviations', 'writing-command-history', 'inscription-hidden-items', 'writing-ready-wear']) {
+    assert.doesNotMatch(item(slug).description, /arrow keys|boat in the bay|secret doors|AT DR/i);
+  }
 });
 
 test('Beginner’s Cave manifest preserves original kdechant/Eamon character and treasure descriptions', () => {

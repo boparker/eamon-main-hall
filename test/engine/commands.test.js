@@ -90,3 +90,22 @@ test('parseCommand returns unknown for unsupported or empty input', () => {
   assert.deepEqual(parseCommand(''), { type: 'unknown', raw: '', source: 'rules' });
   assert.deepEqual(parseCommand(null), { type: 'unknown', raw: '', source: 'rules' });
 });
+
+test('parseCommand recognizes TAKE ALL / GET ALL as take_all', () => {
+  assert.deepEqual(parseCommand('take all'), { type: 'take_all', source: 'rules' });
+  assert.deepEqual(parseCommand('GET ALL'), { type: 'take_all', source: 'rules' });
+  assert.deepEqual(parseCommand('grab everything'), { type: 'take_all', source: 'rules' });
+  // a named target is still a single take, not take_all
+  assert.deepEqual(parseCommand('take gem'), { type: 'take', target: 'gem', source: 'rules' });
+});
+
+test('parseCommand recognizes READY/WEAR/WIELD as equip', () => {
+  assert.deepEqual(parseCommand('ready sword'), { type: 'equip', target: 'sword', source: 'rules' });
+  assert.deepEqual(parseCommand('WEAR chain mail'), { type: 'equip', target: 'chain mail', source: 'rules' });
+  assert.deepEqual(parseCommand('wield trollsfire'), { type: 'equip', target: 'trollsfire', source: 'rules' });
+});
+
+test('parseCommand recognizes REMOVE and TAKE OFF as unequip', () => {
+  assert.deepEqual(parseCommand('remove shield'), { type: 'unequip', target: 'shield', source: 'rules' });
+  assert.deepEqual(parseCommand('take off armor'), { type: 'unequip', target: 'armor', source: 'rules' });
+});
