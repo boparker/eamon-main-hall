@@ -16,6 +16,9 @@ const DIRECTIONS = new Map([
 const MOVEMENT_VERBS = new Set(['go', 'move', 'walk', 'head']);
 const ATTACK_VERBS = new Set(['attack', 'fight', 'kill', 'hit', 'smack']);
 const TAKE_VERBS = new Set(['get', 'take', 'grab']);
+const TAKE_ALL_OBJECTS = new Set(['all', 'everything']);
+const EQUIP_VERBS = new Set(['ready', 'wear', 'wield', 'equip', 'don']);
+const UNEQUIP_VERBS = new Set(['remove', 'unequip', 'unready', 'doff', 'sheathe']);
 const USE_VERBS = new Set(['use', 'cast', 'open']);
 const READ_VERBS = new Set(['read', 'examine', 'inspect']);
 const LEAVE_COMMANDS = new Set(['leave', 'quit', 'exit', 'back', 'return']);
@@ -115,7 +118,21 @@ export function parseCommand(input) {
   }
 
   if (TAKE_VERBS.has(verb) && objectText) {
+    if (TAKE_ALL_OBJECTS.has(objectText)) {
+      return { type: 'take_all', source: 'rules' };
+    }
+    if (verb === 'take' && objectText.startsWith('off ')) {
+      return { type: 'unequip', target: objectText.slice(4).trim(), source: 'rules' };
+    }
     return { type: 'take', target: objectText, source: 'rules' };
+  }
+
+  if (EQUIP_VERBS.has(verb) && objectText) {
+    return { type: 'equip', target: objectText, source: 'rules' };
+  }
+
+  if (UNEQUIP_VERBS.has(verb) && objectText) {
+    return { type: 'unequip', target: objectText, source: 'rules' };
   }
 
   if (USE_VERBS.has(verb) && objectText) {

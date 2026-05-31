@@ -858,6 +858,49 @@ test('POST /api/game/bootstrap revives a fallen character, forfeiting run loot b
   assert.equal(boot.body.state.character.inventory.some((i) => i.slug === 'sword'), true); // bought gear kept
 });
 
+test('POST /api/game/command take all gathers every loose item but not scenery', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app);
+  const runId = (await startAccountAdventure(app, character.body.state.character.id)).body.state.run.id;
+  const charId = character.body.state.character.id;
+  await accountCommand(app, charId, runId, 'south'); // room 2: gem + two inscriptions
+
+  const all = await accountCommand(app, charId, runId, 'take all');
+  assert.equal(all.status, 200);
+  assert.equal(all.body.intent.type, 'take_all');
+  assert.match(all.body.text, /Gem/);
+  assert.equal(all.body.state.character.inventory.some((item) => item.slug === 'gem'), true);
+  // inscriptions are scenery — never swept up
+  assert.equal(all.body.state.character.inventory.some((item) => String(item.slug).includes('inscription')), false);
+});
+
+test('POST /api/game/command ready and remove swap the readied weapon mid-adventure', async () => {
+  const { app } = makeApp();
+  const character = await createAccountCharacter(app, { gold: 200 });
+  const charId = character.body.state.character.id;
+
+  // Buy a weapon in the Hall (auto-readied), then descend.
+  await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId: charId, input: 'visit the weapon shop' }, accountHeaders);
+  const bought = await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId: charId, input: 'buy short sword' }, accountHeaders);
+  assert.equal(bought.body.state.character.equipment.weapon.slug, 'short-sword');
+
+  const runId = (await startAccountAdventure(app, charId)).body.state.run.id;
+
+  // Remove it — the slot empties.
+  const removed = await accountCommand(app, charId, runId, 'remove short sword');
+  assert.equal(removed.status, 200);
+  assert.equal(removed.body.intent.type, 'unequip');
+  assert.equal(removed.body.state.character.equipment.weapon, undefined);
+
+  // Ready it again from inventory — the slot refills with combat stats intact.
+  const readied = await accountCommand(app, charId, runId, 'ready short sword');
+  assert.equal(readied.status, 200);
+  assert.equal(readied.body.intent.type, 'equip');
+  assert.equal(readied.body.state.character.equipment.weapon.slug, 'short-sword');
+  assert.equal(readied.body.state.character.equipment.weapon.stats.damage, '1d6');
+  assert.match(readied.body.text, /ready short sword/i);
+});
+
 test('POST /api/game/command pick up synonym takes visible items', async () => {
   const { app } = makeApp();
   const character = await createAccountCharacter(app);

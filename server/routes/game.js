@@ -227,6 +227,48 @@ function applyEquipmentToCombatant(character, run = null) {
   return character;
 }
 
+function findInventoryItem(character, target) {
+  const normalized = normalizeTarget(target);
+  return (character.inventory ?? []).find((item) => (
+    normalizeTarget(item.slug) === normalized || normalizeTarget(item.name) === normalized
+  )) ?? null;
+}
+
+function equipmentSlotForItem(item) {
+  if (item?.equipmentSlot) return item.equipmentSlot;
+  if (item?.type === 'weapon') return 'weapon';
+  if (item?.type === 'armor') return 'armor';
+  if (item?.type === 'shield') return 'shield';
+  return null;
+}
+
+// Normalise any inventory item into an equipment entry. Shop gear already
+// carries a stats block; adventure-found gear stores its damage as `damage_dice`,
+// so synthesise stats from that — keeping applyEquipmentToCombatant happy.
+function toEquipment(item) {
+  const equipmentSlot = equipmentSlotForItem(item);
+  if (item.stats) {
+    return { slug: item.slug, name: item.name, equipmentSlot, stats: item.stats, ...(item.category ? { category: item.category } : {}) };
+  }
+  const stats = {};
+  if (item.damage_dice) stats.damage = item.damage_dice;
+  return { slug: item.slug, name: item.name, equipmentSlot, stats };
+}
+
+// Which equipped slot the player means: a slot name (weapon/armor/shield) or
+// the name/slug of whatever is currently in a slot.
+function findEquippedSlot(equipment, target) {
+  const normalized = normalizeTarget(target);
+  if (['weapon', 'armor', 'shield'].includes(normalized) && equipment[normalized]) return normalized;
+  for (const slot of Object.keys(equipment)) {
+    const equipped = equipment[slot];
+    if (equipped && (normalizeTarget(equipped.slug) === normalized || normalizeTarget(equipped.name) === normalized)) {
+      return slot;
+    }
+  }
+  return null;
+}
+
 function findVisibleCharacter(adventure, run, target) {
   const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
@@ -1037,6 +1079,58 @@ export function createGameRouter(rawDeps = {}) {
           deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
         return res.json(canonicalResponse({ intent: command, event: { type: 'take', command, item }, text: `You take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
+      }
+
+      if (command.type === 'take_all') {
+        const entities = getVisibleRoomEntities(run, adventure);
+        const loot = visibleItems(adventure, entities).filter(isCollectible);
+        const taken = [];
+        for (const item of loot) {
+          const result = takeTreasure(character, item, { allowDuplicate: true });
+          if (result.ok) {
+            character = result.character;
+            run = markItemCollected(run, item.slug);
+            taken.push(item.name);
+          }
+        }
+        if (taken.length === 0) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_all_failed', command, reason: 'nothing-here' }, text: 'There is nothing here to take.', choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        const [updatedCharacter, updatedRun] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        return res.json(canonicalResponse({ intent: command, event: { type: 'take_all', command, items: taken }, text: `You gather up everything: ${taken.join(', ')}.`, choices: choicesForRun(adventure, run), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
+      }
+
+      if (command.type === 'equip') {
+        const item = findInventoryItem(character, command.target);
+        if (!item) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'equip_failed', command, reason: 'missing-item' }, text: `You are not carrying ${command.target}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        const slot = equipmentSlotForItem(item);
+        if (!slot) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'equip_failed', command, reason: 'not-equippable' }, text: `You can't ready ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        character = { ...character, equipment: { ...(character.equipment ?? {}), [slot]: toEquipment(item) } };
+        const updatedCharacter = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
+        character = rowCharacter(updatedCharacter) ?? character;
+        const text = slot === 'weapon' ? `You ready ${item.name}.` : `You don ${item.name}.`;
+        return res.json(canonicalResponse({ intent: command, event: { type: 'equip', command, slot, item: item.slug }, text, choices: choicesForRun(adventure, run), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+      }
+
+      if (command.type === 'unequip') {
+        const equipment = { ...(character.equipment ?? {}) };
+        const slot = findEquippedSlot(equipment, command.target);
+        if (!slot) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'unequip_failed', command, reason: 'not-equipped' }, text: `You don't have ${command.target} readied.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        const removedName = equipment[slot]?.name ?? command.target;
+        delete equipment[slot];
+        character = { ...character, equipment };
+        const updatedCharacter = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
+        character = rowCharacter(updatedCharacter) ?? character;
+        return res.json(canonicalResponse({ intent: command, event: { type: 'unequip', command, slot }, text: `You put away ${removedName}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
       }
 
       if (command.type === 'attack') {
