@@ -1077,6 +1077,7 @@ export function createGameRouter(rawDeps = {}) {
         if (result.destination === 'main-hall') {
           const conversion = convertTreasuresOnReturn(character);
           character = conversion.character;
+          character.hd = character.maxHd ?? character.hd; // rest at the Guild restores full health
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
           const [updatedCharacter, completedRun] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -1327,9 +1328,13 @@ export function createGameRouter(rawDeps = {}) {
 
       if (command.type === 'leave') {
         const abandoned = await deps.abandonAdventureRun(deps.db, context.owner, run.id);
+        // Returning to the Guild alive restores full health (like a completed run).
+        const healed = { ...character, hd: character.maxHd ?? character.hd };
+        const healedRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(healed));
+        character = rowCharacter(healedRow) ?? healed;
         const hall = hallResponse({
           player: { id: run.playerId },
-          characters: [],
+          characters: healedRow ? [healedRow] : [],
           adventures,
           character,
           prefix: 'You abandon the adventure and return to the Great Hall.',
