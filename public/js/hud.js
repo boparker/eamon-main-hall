@@ -14,6 +14,7 @@ export function updateHUD(animate) {
   };
   for (const [id, val] of Object.entries(stats)) {
     const el = document.getElementById(id);
+    if (!el) continue;
     if (val != null) {
       el.textContent = val;
       if (animate) {
