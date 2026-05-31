@@ -7,6 +7,7 @@ import { addPlayerLine, renderNarrative } from './narrative.js';
 import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices } from './input.js';
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
+import { registerGateHandler, openGate, closeGate } from './gate.js';
 import { setLocation, showEncounterPortrait, hidePortrait } from './scene.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
@@ -30,6 +31,8 @@ function renderGameResponse(response = {}) {
   if (response.state?.locationTitle) setLocation(response.state.locationTitle);
   if (response.state?.shop) openShop(response.state.shop);
   else closeShop();
+  if (response.state?.gate) openGate(response.state.gate);
+  else closeGate();
   updateHUD(true);
 
   // Help text follows the player: shop → vendor tips, in a cave → dungeon
@@ -205,6 +208,10 @@ async function cancelCharacterCreation() {
 // Choices and shop need to trigger sendMessage without circular imports
 registerSendFn(sendMessage);
 registerPurchaseHandler((text) => {
+  inputEl.value = text;
+  sendMessage();
+});
+registerGateHandler((text) => {
   inputEl.value = text;
   sendMessage();
 });

@@ -187,8 +187,48 @@
     #game-screen.shopping #narrative-area,
     #game-screen.shopping #choices-area,
     #game-screen.shopping #input-zone,
+    #game-screen.shopping #readied-bar,
     #game-screen.shopping #location-title,
     #game-screen.shopping #thinking { display: none; }
+
+    /* ── Adventure Gate (expedition select) ── */
+    #adventure-gate {
+      position: absolute; inset: 0; z-index: 20; display: flex;
+      align-items: center; justify-content: safe center; padding: clamp(16px,3vw,48px);
+      background: linear-gradient(rgba(5,4,4,0.55), rgba(5,4,4,0.78)); backdrop-filter: blur(4px); overflow-y: auto;
+    }
+    #adventure-gate[hidden] { display: none; }
+    #game-screen.at-gate #narrative-area,
+    #game-screen.at-gate #choices-area,
+    #game-screen.at-gate #input-zone,
+    #game-screen.at-gate #readied-bar,
+    #game-screen.at-gate #location-title,
+    #game-screen.at-gate #thinking { display: none; }
+    .gate-inner { width: min(1080px, 100%); display: flex; flex-direction: column; align-items: center; gap: clamp(18px,3vw,30px); }
+    .gate-header { text-align: center; }
+    .gate-title { font-family: var(--font-head); font-size: clamp(1.7rem,4vw,2.6rem); color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 40px rgba(200,168,75,0.25); }
+    .gate-sub { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px; font-family: var(--font-head); font-size: 0.82rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,168,75,0.72); }
+    .gate-sub .rule { width: clamp(24px,8vw,70px); height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim)); }
+    .gate-sub .rule:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
+    .gate-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: clamp(14px,2vw,22px); width: 100%; }
+    .gate-card {
+      position: relative; display: flex; flex-direction: column; text-align: left; cursor: pointer;
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.025);
+      color: var(--text); font-family: var(--font-body); transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .gate-card.unlocked:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 10px 34px var(--gold-glow); }
+    .gate-card.locked { cursor: default; opacity: 0.62; }
+    .gate-cover { height: 132px; display: grid; place-items: center; font-family: var(--font-head); font-size: 3.2rem; color: var(--gold);
+      background: radial-gradient(130% 120% at 50% 25%, rgba(70,56,34,0.6), rgba(8,6,5,0.96)); border-bottom: 1px solid var(--border); }
+    .gate-card.locked .gate-cover { color: var(--text-dim); background: radial-gradient(130% 120% at 50% 25%, rgba(40,38,42,0.6), rgba(8,6,5,0.96)); }
+    .gate-cover .lock-glyph { font-size: 2rem; }
+    .gate-body { padding: 13px 15px 15px; display: flex; flex-direction: column; gap: 6px; }
+    .gate-name { font-family: var(--font-head); font-size: 1.06rem; color: var(--gold); letter-spacing: 0.03em; line-height: 1.2; }
+    .gate-diff { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+    .gate-diff .pip { color: var(--gold); }
+    .gate-desc { font-size: 0.86rem; line-height: 1.45; color: var(--text-dim); }
+    .gate-lock-note { margin-top: 2px; font-size: 0.78rem; color: #c98b6b; font-style: italic; }
+    .gate-go { margin-top: 4px; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--action); }
 
     .shop-scene-inner { display: flex; gap: clamp(18px,3vw,36px); width: min(1040px, 100%); align-items: stretch; }
 
@@ -733,7 +773,7 @@
         <h2>Great Hall Help</h2>
         <ul>
           <li>Create a character by entering a name, choosing a gender, and confirming the roll.</li>
-          <li>Use the choice buttons or type commands such as “visit weapons shop”, “view equipment”, or “begin beginner's cave”.</li>
+          <li>Use the choice buttons or type commands such as “visit weapons shop”, “view equipment”, or “approach the adventure gate”.</li>
           <li>Accounts preserve characters before expeditions; guest play is only a Main Hall preview.</li>
         </ul>
       </div>
@@ -767,6 +807,18 @@
       <div class="shop-grid-wrap">
         <div class="shop-grid" id="shop-grid"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ═ ADVENTURE GATE (expedition select) ═ -->
+  <div id="adventure-gate" hidden>
+    <div class="gate-inner">
+      <header class="gate-header">
+        <div class="gate-title">The Adventure Gate</div>
+        <div class="gate-sub"><span class="rule"></span><span>Choose your expedition</span><span class="rule"></span></div>
+      </header>
+      <div class="gate-cards" id="gate-cards"></div>
+      <button class="enter-btn link" id="gate-leave-btn">&larr; Back to the Great Hall</button>
     </div>
   </div>
 

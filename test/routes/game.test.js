@@ -370,7 +370,8 @@ test('POST /api/game/bootstrap returns Great Hall with existing character, shop 
   assert.equal(response.body.choices.some((choice) => /guild rolls/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /weapon|shop/i.test(choice)), true);
   assert.equal(response.body.choices.some((choice) => /armor|equipment/i.test(choice)), true);
-  assert.equal(response.body.choices.some((choice) => /begin beginner/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /adventure gate/i.test(choice)), true);
+  assert.equal(response.body.choices.some((choice) => /begin/i.test(choice)), false); // per-adventure buttons replaced by the Gate
   assert.deepEqual(response.body.state.unlockedAdventures.map((adventure) => adventure.id), ['beginners-cave']);
   assert.deepEqual(response.body.state.lockedAdventures.map((adventure) => adventure.id), ['dragon-castle']);
   assert.match(response.body.text, /Mara/);
@@ -391,8 +392,30 @@ test('POST /api/game/characters returns to Great Hall and preserves explicit cla
   assert.equal(created.body.state.character.className, 'mystic');
   assert.equal(created.body.state.character.charisma, 13);
   assert.equal(created.body.state.character.gold, 75);
-  assert.equal(created.body.choices.some((choice) => /begin beginner/i.test(choice)), true);
+  assert.equal(created.body.choices.some((choice) => /adventure gate/i.test(choice)), true);
   assert.equal(deps.calls.some((call) => call.type === 'createRun'), false);
+});
+
+test('POST /api/game/hall approach the adventure gate lists unlocked and locked expeditions', async () => {
+  const { app } = makeApp(makeDeps({ adventures: [beginner, advanced] }));
+  const created = await request(app, 'POST', '/api/game/characters', {
+    playerId: 'p1', name: 'Gatekeeper Test', className: 'adventurer', hardiness: 12, agility: 12, charisma: 12, hd: 12, maxHd: 12, gold: 40,
+  });
+  const characterId = created.body.state.character.id;
+
+  const gate = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'approach the adventure gate' });
+  assert.equal(gate.status, 200);
+  assert.equal(gate.body.state.locationTitle, 'The Adventure Gate');
+  assert.ok(gate.body.state.gate, 'gate state present');
+
+  const cards = gate.body.state.gate.adventures;
+  const beginnersCard = cards.find((adventure) => adventure.id === 'beginners-cave');
+  const dragonCard = cards.find((adventure) => adventure.id === 'dragon-castle');
+  assert.equal(beginnersCard.unlocked, true);
+  assert.equal(dragonCard.unlocked, false);
+  assert.match(dragonCard.lockedReason, /Beginner/i);
+  // The Gate offers a way back, and does not bleed per-adventure begin buttons.
+  assert.equal(gate.body.choices.some((choice) => /return to great hall/i.test(choice)), true);
 });
 
 test('POST /api/game/hall buys equipment server-side and blocks invalid or unaffordable purchases', async () => {

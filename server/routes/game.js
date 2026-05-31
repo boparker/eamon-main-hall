@@ -66,6 +66,7 @@ const MARCOS_WEAPON_SHOP_TITLE = "Marcos Cavielli's Weapons & Armour Shoppe";
 const WIZARD_TITLE = "Hokas Tokas' School of Magick";
 const WITCH_TITLE = "The Witch's Shop";
 const BANK_TITLE = 'Bank of Eamon Towne';
+const ADVENTURE_GATE_TITLE = 'The Adventure Gate';
 
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
@@ -410,11 +411,12 @@ function partitionAdventures(adventures, character) {
   return { unlockedAdventures: summaries, lockedAdventures: [] };
 }
 
-function hallChoices(character, unlockedAdventures = []) {
+function hallChoices(character) {
   if (!character) return ['Create Character', 'Sign the Guild Rolls'];
   if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Sign the Guild Rolls'];
-  const adventureChoices = unlockedAdventures.map((adventure) => `Begin ${String(adventure.name).replace(/^The\s+/i, '')}`);
-  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Bank', 'View Equipment', ...adventureChoices];
+  // A single Gate replaces a "Begin <Name>" button per adventure — it scales to
+  // the whole Eamon corpus and is the home for adventure cover art.
+  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Bank', 'View Equipment', 'Approach the Adventure Gate'];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
@@ -555,6 +557,33 @@ function shopResponse({ player, character, characters, adventures, prefix = '' }
       extra: {
         locationTitle: MARCOS_WEAPON_SHOP_TITLE,
         shop: { key: 'marcos', title: 'MARCOS CAVIELLI — WEAPONS & ARMOUR', items: HALL_SHOP_ITEMS },
+      },
+    }),
+  });
+}
+
+function gateResponse({ player, character, characters, adventures, prefix = '' }) {
+  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, character);
+  const cards = [
+    ...unlockedAdventures.map((adventure) => ({ ...adventure, unlocked: true })),
+    ...lockedAdventures.map((adventure) => ({ ...adventure, unlocked: false })),
+  ];
+  return canonicalResponse({
+    intent: { type: 'hall_gate' },
+    event: { type: 'hall_gate' },
+    text: [
+      prefix || 'You approach the Adventure Gate — a great arch of weathered stone whose keystone is carved with a hundred roads.',
+      'Beyond it lie the realms open to you. Choose your expedition, or turn back to the Hall.',
+    ].join('\n'),
+    choices: ['Return to Great Hall'],
+    state: hallState({
+      player,
+      character,
+      characters,
+      adventures,
+      extra: {
+        locationTitle: ADVENTURE_GATE_TITLE,
+        gate: { adventures: cards },
       },
     }),
   });
@@ -928,6 +957,9 @@ export function createGameRouter(rawDeps = {}) {
       }
       if (/bank|seamus|mcfenney/.test(normalizedInput)) {
         return render(bankResponse, character, characterRow);
+      }
+      if (/adventure\s*gate|^gate$|^adventures?$|approach.*(?:adventure|gate)/.test(normalizedInput)) {
+        return render(gateResponse, character, characterRow);
       }
 
       return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));

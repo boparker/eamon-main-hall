@@ -8,7 +8,7 @@ const HELP = {
     items: [
       'Create a character: enter a name, choose a gender, then confirm the roll.',
       'Visit a vendor with the buttons, or type “visit weapons shop”, “view equipment”, or “bank”.',
-      'Begin an expedition with the adventure button or “begin beginner’s cave”.',
+      'Open the Adventure Gate to choose an expedition (or type “begin beginner’s cave” directly).',
       'Accounts preserve characters between expeditions; guest play is a Main Hall preview only.',
     ],
   },
