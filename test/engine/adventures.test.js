@@ -164,16 +164,28 @@ test('after_defeating placement appears in defeated enemy room until collected',
   );
 
   const defeatedPirate = markEnemyDefeated(run, 'pirate');
+  // The pirate also drops a scroll telling the player how to finish the cave.
   assert.deepEqual(
     getVisibleRoomEntities(defeatedPirate, adventure).placements.map((placement) => placement.item_slug),
-    ['trollsfire', 'jewels'],
+    ['trollsfire', 'scroll-passage-home', 'jewels'],
   );
 
   const collectedTrollsfire = markItemCollected(defeatedPirate, 'trollsfire');
   assert.deepEqual(
     getVisibleRoomEntities(collectedTrollsfire, adventure).placements.map((placement) => placement.item_slug),
-    ['jewels'],
+    ['scroll-passage-home', 'jewels'],
   );
+});
+
+test('the pirate scroll tells the player how to finish the cave', () => {
+  const adventure = loadBeginnersCave();
+  const scroll = adventure.items.find((item) => item.slug === 'scroll-passage-home');
+  assert.ok(scroll, 'scroll item exists');
+  const text = scroll.text ?? scroll.description;
+  assert.match(text, /Cave Entrance/i);
+  assert.match(text, /north/i);
+  // It is read in place, not carried off (so the "Read Scroll" prompt appears).
+  assert.equal(scroll.collectible, false);
 });
 
 test('after_defeating placements use defeated character location rooms', () => {
