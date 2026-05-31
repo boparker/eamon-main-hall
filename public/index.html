@@ -407,7 +407,9 @@
        Spans the width to hold more than a weapon + armour (rings, a light, …). */
     #readied-bar { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; padding: 0 clamp(20px,5vw,80px); margin-bottom: 10px; }
     #readied-bar[hidden] { display: none; }
-    .readied-label { font-family: var(--font-head); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin-right: 4px; }
+    /* Label on its own row so the chips below sit flush-left at the same edge as
+       the choice buttons and the text box. */
+    .readied-label { flex-basis: 100%; font-family: var(--font-head); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin: 0 0 5px; }
     .hud-gear { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid rgba(200,168,75,0.3); border-radius: 8px; background: rgba(16,13,10,0.72); backdrop-filter: blur(4px); max-width: 260px; }
     .hud-gear .gear-icon { color: var(--gold); font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
     .hud-gear .gear-name { font-size: 0.78rem; color: var(--text); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
