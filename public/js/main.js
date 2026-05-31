@@ -98,11 +98,13 @@ function positionRoomRail() {
   const area = document.getElementById('narrative-area');
   if (!rail || !area) return;
   if (window.innerWidth >= 1000) {
+    const scroll = document.getElementById('narrative-scroll');
     const title = document.getElementById('location-title');
     const titleBottom = title ? title.getBoundingClientRect().bottom : 0;
-    const areaTop = area.getBoundingClientRect().top;
-    // Sit below the room name (with a small gap), never above the text field.
-    rail.style.top = `${Math.round(Math.max(titleBottom + 14, areaTop))}px`;
+    const proseTop = scroll ? scroll.getBoundingClientRect().top : area.getBoundingClientRect().top;
+    // Line the first card's top up with the narrative box's top edge, but never
+    // let it ride up behind the room title.
+    rail.style.top = `${Math.round(Math.max(proseTop, titleBottom + 12))}px`;
   } else {
     rail.style.top = '';
   }
