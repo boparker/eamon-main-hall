@@ -20,7 +20,7 @@
       "id": "beginners-cave-1",
       "room_number": 1,
       "name": "Cave Entrance",
-      "narration_text": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
+      "narration_text": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north, the road climbs back to town. A weathered signpost beside it reads: \"ADVENTURERS — head NORTH to end your expedition. Sam Slicker will buy whatever treasure you carry out.\"",
       "background_description": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
       "light_level": "dim",
       "is_combat_zone": false,
