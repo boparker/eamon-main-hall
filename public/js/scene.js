@@ -150,25 +150,33 @@ export async function showPortrait(name, desc, kind) {
 
 const DISPOSITION_LABEL = { monster: '⚔ Hostile', friendly: '✦ Friendly', neutral: '◆ Neutral' };
 
-// Build one character card (monogram placeholder, swaps to portrait art later).
-function characterCard({ name, kind }) {
+// Build one character card. Prefers painted portrait art (by explicit `image`
+// path or cache); falls back to a monogram crest if none exists / fails to load.
+function characterCard({ name, kind, image }) {
   const card = document.createElement('div');
   card.className = 'room-char-card';
   card.dataset.kind = kind === 'monster' ? 'monster' : (kind === 'neutral' ? 'neutral' : 'friendly');
 
   const art = document.createElement('div');
   art.className = 'rc-art';
-  const url = portraitCache[kind + ':' + name];
+
+  const crest = () => {
+    const c = document.createElement('span');
+    c.className = 'rc-crest';
+    c.textContent = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
+    return c;
+  };
+
+  const url = image || portraitCache[kind + ':' + name];
   if (url) {
     const img = document.createElement('img');
     img.src = url;
     img.alt = name;
+    // If the portrait 404s (not yet painted), gracefully degrade to a monogram.
+    img.onerror = () => { img.remove(); art.appendChild(crest()); };
     art.appendChild(img);
   } else {
-    const crest = document.createElement('span');
-    crest.className = 'rc-crest';
-    crest.textContent = (String(name || '?').trim().charAt(0) || '?').toUpperCase();
-    art.appendChild(crest);
+    art.appendChild(crest());
   }
 
   const nameEl = document.createElement('div');

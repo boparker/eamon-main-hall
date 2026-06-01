@@ -7,10 +7,10 @@ import { state } from './state.js';
 import { confirmAction } from './confirm.js';
 
 const VENDOR_INFO = {
-  marcos: { name: 'Marcos Cavielli', glyph: '⚒', greeting: '"Well met! What do you need?"' },
+  marcos: { name: 'Marcos Cavielli', glyph: '⚒', img: 'scenes/portraits/marcos.png', greeting: '"Well met! What do you need?"' },
   pack: { name: 'Your Pack', glyph: '🎒', greeting: 'Ready your finds, or sell loot for gold.' },
-  hokas: { name: 'Hokas Tokas', glyph: '📜', greeting: '"So you want old Hokey to teach you some magic, eh?"' },
-  witch: { name: 'The Witch', glyph: '🔮', greeting: '"My potions can raise one of your attributes."' },
+  hokas: { name: 'Hokas Tokas', glyph: '📜', img: 'scenes/portraits/hokas.png', greeting: '"So you want old Hokey to teach you some magic, eh?"' },
+  witch: { name: 'The Witch', glyph: '🔮', img: 'scenes/portraits/witch.png', greeting: '"My potions can raise one of your attributes."' },
 };
 
 // A generic "offering" tile (spell / attribute / etc.): icon, name, sub-label,
@@ -194,7 +194,22 @@ export function openShop(shopOrKey) {
   document.getElementById('shopkeeper-name').textContent = info.name;
   document.getElementById('shopkeeper-line').textContent = shop.line ?? info.greeting;
   const ph = document.querySelector('#shopkeeper-portrait .portrait-placeholder');
-  if (ph) ph.textContent = info.glyph;
+  if (ph) {
+    ph.textContent = info.glyph ?? '⚒';
+    const prev = ph.parentElement.querySelector('img.shopkeeper-img');
+    if (prev) prev.remove();
+    if (info.img) {
+      const img = document.createElement('img');
+      img.className = 'shopkeeper-img';
+      img.src = info.img;
+      img.alt = info.name;
+      ph.style.display = 'none';
+      img.onerror = () => { img.remove(); ph.style.display = ''; };
+      ph.parentElement.appendChild(img);
+    } else {
+      ph.style.display = '';
+    }
+  }
 
   renderGrid();
   document.getElementById('shop-scene').hidden = false;
