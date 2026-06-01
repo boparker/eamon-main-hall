@@ -87,6 +87,6 @@ export function closeGate() {
   document.getElementById('game-screen')?.classList.remove('at-gate');
 }
 
-document.getElementById('gate-leave-btn')?.addEventListener('click', () => {
-  if (_onSelect) _onSelect('Return to Great Hall');
-});
+const leaveGate = () => { if (_onSelect) _onSelect('Return to Great Hall'); };
+document.getElementById('gate-leave-btn')?.addEventListener('click', leaveGate);
+document.getElementById('gate-close-corner')?.addEventListener('click', leaveGate);

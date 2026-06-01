@@ -270,14 +270,14 @@
     .shop-tab { flex: 1; padding: 9px; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); background: transparent; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; transition: all 0.2s; }
     .shop-tab.active { color: var(--action); border-color: var(--gold); background: rgba(200,168,75,0.08); }
     .shop-tab:hover { color: var(--gold); }
-    /* Make "Leave the shop" clearly findable — bold gold, not a faint gray link */
-    #shop-leave-btn { margin-top: 16px; font-family: var(--font-head); font-weight: 700; font-size: 0.86rem; letter-spacing: 0.08em; color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 4px; padding: 10px 16px; background: rgba(200,168,75,0.06); }
-    #shop-leave-btn:hover { color: var(--action); border-color: var(--gold); background: rgba(200,168,75,0.14); }
+    /* Make "Leave" clearly findable — bold gold, not a faint gray link */
+    #shop-leave-btn, #gate-leave-btn { margin-top: 16px; font-family: var(--font-head); font-weight: 700; font-size: 0.86rem; letter-spacing: 0.08em; color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 4px; padding: 10px 16px; background: rgba(200,168,75,0.06); }
+    #shop-leave-btn:hover, #gate-leave-btn:hover { color: var(--action); border-color: var(--gold); background: rgba(200,168,75,0.14); }
     /* Gold "×" in the top-right corner for an obvious exit */
-    #shop-close-corner { position: absolute; top: 18px; right: 20px; z-index: 30; width: 42px; height: 42px; border-radius: 50%;
+    #shop-close-corner, #gate-close-corner { position: absolute; top: 18px; right: 20px; z-index: 30; width: 42px; height: 42px; border-radius: 50%;
       display: grid; place-items: center; font-size: 1.5rem; line-height: 1; cursor: pointer;
       color: var(--gold); background: rgba(8,6,5,0.7); border: 1.5px solid var(--gold); box-shadow: 0 0 22px var(--gold-glow); transition: all 0.18s; }
-    #shop-close-corner:hover { color: var(--action); background: rgba(200,168,75,0.16); transform: scale(1.08); }
+    #shop-close-corner:hover, #gate-close-corner:hover { color: var(--action); background: rgba(200,168,75,0.16); transform: scale(1.08); }
 
     /* Tile grid */
     .shop-grid-wrap { flex: 1; min-width: 0; overflow-y: auto; max-height: 80vh; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
@@ -853,6 +853,7 @@
 
   <!-- ═ ADVENTURE GATE (expedition select) ═ -->
   <div id="adventure-gate" hidden>
+    <button id="gate-close-corner" type="button" aria-label="Back to the Great Hall">&times;</button>
     <div class="gate-inner">
       <header class="gate-header">
         <div class="gate-title">The Adventure Gate</div>
