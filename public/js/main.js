@@ -65,6 +65,16 @@ function updateRoomRail(response) {
     return;
   }
 
+  // A Hall vendor (healer/bank) shows its portrait in the rail beside the text.
+  if (response.state?.vendor) {
+    renderRoomCharacters([{ name: response.state.vendor.name, kind: response.state.vendor.kind ?? 'neutral' }]);
+    const itemsSection = document.getElementById('room-items-section');
+    if (itemsSection) itemsSection.hidden = true;
+    if (rail) rail.hidden = false;
+    positionRoomRail();
+    return;
+  }
+
   const characters = response.state?.entities?.characters;
   if (Array.isArray(characters)) {
     const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';

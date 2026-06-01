@@ -18,7 +18,7 @@ import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
-  SPELLS, learnSpell, spellAbility,
+  SPELLS, SPELL_MAX, learnSpell, spellAbility,
   ATTRIBUTES, attributePrice, raiseAttribute,
   bankDeposit, bankWithdraw,
   healAtTemple, healCost,
@@ -635,40 +635,50 @@ function sellResponse({ player, character, characters, adventures, prefix = '' }
 }
 
 function wizardResponse({ player, character, characters, adventures, prefix = '' }) {
-  const lines = SPELLS.map((spell) => {
-    const ability = spellAbility(character, spell.name);
-    const status = ability > 90 ? 'mastered' : ability > 0 ? `${ability}%` : 'unknown';
-    return `• ${capitalize(spell.name)} (${status}) — ${spell.price} gold. ${spell.description}`;
-  });
-  const choices = SPELLS
-    .filter((spell) => spellAbility(character, spell.name) <= 90)
-    .map((spell) => `${spellAbility(character, spell.name) > 0 ? 'Upgrade' : 'Learn'} ${capitalize(spell.name)} (${spell.price}g)`);
+  // Spells as tiles in the shop scene (portrait + grid).
+  const options = SPELLS
+    .filter((spell) => spellAbility(character, spell.name) <= SPELL_MAX)
+    .map((spell) => {
+      const ability = spellAbility(character, spell.name);
+      return {
+        icon: '✦',
+        name: capitalize(spell.name),
+        stat: ability > 0 ? `now ${ability}% — improve` : spell.description,
+        price: spell.price,
+        command: `${ability > 0 ? 'upgrade' : 'learn'} ${spell.name}`,
+        confirmLabel: `${ability > 0 ? 'Upgrade' : 'Learn'} ${capitalize(spell.name)}`,
+      };
+    });
   return canonicalResponse({
     intent: { type: 'hall_wizard' },
     event: { type: 'hall_wizard' },
-    text: [
-      prefix || `Hokas Tokas, the old Mage, looks up. "So you want old Hokey to teach you some magic, eh? Here are the spells I teach. Which will it be?"`,
-      `You have ${character.gold} gold pieces.`,
-      ...lines,
-    ].join('\n'),
-    choices: [...choices, 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: WIZARD_TITLE } }),
+    text: prefix || `Hokas Tokas, the old Mage, looks up. "So you want old Hokey to teach you some magic, eh?"`,
+    choices: ['Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: {
+      locationTitle: WIZARD_TITLE,
+      shop: { key: 'hokas', title: 'HOKAS TOKAS — SCHOOL OF MAGICK', mode: 'options', line: prefix || '"Here are the spells I teach. Which will it be?"', options },
+    } }),
   });
 }
 
 function witchResponse({ player, character, characters, adventures, prefix = '' }) {
-  const lines = ATTRIBUTES.map((attr) => `• ${capitalize(attr)} (now ${character[attr]}) — ${attributePrice(character[attr])} gold for +1`);
-  const choices = ATTRIBUTES.map((attr) => `Raise ${capitalize(attr)} (${attributePrice(character[attr])}g)`);
+  const options = ATTRIBUTES.map((attr) => ({
+    icon: '◆',
+    name: capitalize(attr),
+    stat: `now ${character[attr]} → ${character[attr] + 1}`,
+    price: attributePrice(character[attr]),
+    command: `raise ${attr}`,
+    confirmLabel: `Raise ${capitalize(attr)}`,
+  }));
   return canonicalResponse({
     intent: { type: 'hall_witch' },
     event: { type: 'hall_witch' },
-    text: [
-      prefix || `A lovely young woman dressed in black smiles. "My magic potions can increase one of your attributes. My prices are:"`,
-      `You have ${character.gold} gold pieces.`,
-      ...lines,
-    ].join('\n'),
-    choices: [...choices, 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: WITCH_TITLE } }),
+    text: prefix || `A lovely young woman dressed in black smiles. "My magic potions can increase one of your attributes."`,
+    choices: ['Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: {
+      locationTitle: WITCH_TITLE,
+      shop: { key: 'witch', title: "THE WITCH'S SHOP", mode: 'options', line: prefix || '"Choose the attribute you would raise."', options },
+    } }),
   });
 }
 
@@ -682,7 +692,7 @@ function bankResponse({ player, character, characters, adventures, prefix = '' }
       'Type an amount, e.g. "deposit 250" or "withdraw 100".',
     ].join('\n'),
     choices: ['Deposit 100', 'Deposit All', 'Withdraw 100', 'Withdraw All', 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: BANK_TITLE } }),
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: BANK_TITLE, vendor: { name: 'Seamus McFenney', kind: 'neutral' } } }),
   });
 }
 
@@ -706,7 +716,7 @@ function healerResponse({ player, character, characters, adventures, prefix = ''
     event: { type: 'hall_healer' },
     text: lines.join('\n'),
     choices: [...choices, 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HEALER_TITLE } }),
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HEALER_TITLE, vendor: { name: 'Brother Aldous', kind: 'neutral' } } }),
   });
 }
 
