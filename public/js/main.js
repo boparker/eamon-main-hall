@@ -8,7 +8,7 @@ import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoic
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
 import { registerGateHandler, openGate, closeGate } from './gate.js';
-import { setLocation, renderRoomCharacters, clearRoomCharacters } from './scene.js';
+import { setLocation, setSceneBackground, renderRoomCharacters, clearRoomCharacters } from './scene.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
 import { createTitleGateway } from './title-gateway.js';
@@ -29,6 +29,7 @@ function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
   if (response.state?.phase) state.gamePhase = response.state.phase;
   if (response.state?.locationTitle) setLocation(response.state.locationTitle);
+  if (response.state?.background) setSceneBackground(response.state.background);
   if (response.state?.shop) openShop(response.state.shop);
   else closeShop();
   if (response.state?.gate) openGate(response.state.gate);
