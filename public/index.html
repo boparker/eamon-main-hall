@@ -193,6 +193,18 @@
     #game-screen.shopping #location-title,
     #game-screen.shopping #thinking { display: none; }
 
+    /* ── Confirmation dialog (buy / sell / drink) ── */
+    #confirm-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(3,2,2,0.66); backdrop-filter: blur(3px); }
+    #confirm-overlay[hidden] { display: none; }
+    .confirm-card { width: min(420px, 100%); padding: 26px 26px 20px; background: rgba(14,11,9,0.98); border: 1px solid var(--gold-dim); border-radius: 8px; box-shadow: 0 24px 70px rgba(0,0,0,0.6); text-align: center; }
+    .confirm-msg { font-size: 1.05rem; line-height: 1.5; color: var(--text); margin-bottom: 22px; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+    .confirm-yes, .confirm-no { padding: 11px 26px; font-family: var(--font-head); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.18s; }
+    .confirm-yes { color: var(--action); background: rgba(200,168,75,0.1); border: 1px solid var(--gold); }
+    .confirm-yes:hover { background: rgba(200,168,75,0.2); }
+    .confirm-no { color: var(--text-dim); background: transparent; border: 1px solid var(--border); }
+    .confirm-no:hover { color: var(--text); border-color: var(--gold-dim); }
+
     /* ── Adventure Gate (expedition select) ── */
     #adventure-gate {
       position: absolute; inset: 0; z-index: 20; display: flex;

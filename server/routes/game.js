@@ -15,7 +15,7 @@ import {
 } from '../engine/adventures.js';
 import { resolveAttack, resolveCombatRound } from '../engine/combat.js';
 import { castSpell, isSpell } from '../engine/spells.js';
-import { convertTreasuresOnReturn, takeTreasure } from '../engine/economy.js';
+import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
   SPELLS, learnSpell, spellAbility,
@@ -223,6 +223,9 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
     enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp },
     player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0 },
     spells: character.spells ?? {}, // so the combat scene can offer cast buttons
+    potions: (character.inventory ?? []) // so combat can offer an emergency drink
+      .filter((item) => item?.type === 'potion')
+      .map((item) => ({ slug: item.slug, name: item.name, heal: item.heal ?? item.heal_amount ?? null })),
     round: round !== undefined ? round : (result ? {
       player: combatSide(result.playerAttack),
       enemy: combatSide(result.enemyAttack),
@@ -950,6 +953,20 @@ export function createGameRouter(rawDeps = {}) {
         return render(equipmentResponse, rowCharacter(row), row, `You ${verb} ${item.name}.`);
       }
 
+      // ── Pack: drink a potion to heal ────────────────────────────────────
+      const drinkMatch = /^(?:drink|quaff|sip)\s+(.+)/i.exec(input);
+      if (drinkMatch) {
+        const carried = findInventoryItem(character, drinkMatch[1]);
+        if (!carried || carried.type !== 'potion') return error(res, 400, `You have no ${drinkMatch[1].trim()} to drink.`, 'no-potion');
+        const result = drinkPotion(character, carried.slug);
+        if (!result.ok) {
+          if (result.reason === 'already-full') return error(res, 409, 'You are already at full health.', result.reason);
+          return error(res, 400, `You have no ${drinkMatch[1].trim()} to drink.`, result.reason);
+        }
+        const row = await persist({ hd: result.character.hd, inventory: result.character.inventory });
+        return render(equipmentResponse, rowCharacter(row), row, `You drink the ${result.potion.name} and recover ${result.restored} HP.`);
+      }
+
       // ── Hokas Tokas: learn / upgrade spells ─────────────────────────────
       const spellMatch = /(?:learn|upgrade)\s+(blast|heal|power|speed)/i.exec(normalizedInput);
       if (spellMatch) {
@@ -1261,6 +1278,48 @@ export function createGameRouter(rawDeps = {}) {
         const updatedCharacter = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
         character = rowCharacter(updatedCharacter) ?? character;
         return res.json(canonicalResponse({ intent: command, event: { type: 'unequip', command, slot }, text: `You put away ${removedName}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+      }
+
+      if (command.type === 'drink') {
+        const carried = findInventoryItem(character, command.target);
+        if (!carried || carried.type !== 'potion') {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'drink_failed', command, reason: 'no-potion' }, text: `You have no ${command.target} to drink.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+        }
+        const result = drinkPotion(character, carried.slug);
+        if (!result.ok) {
+          const msg = result.reason === 'already-full' ? 'You are already at full health.' : `You have no ${command.target} to drink.`;
+          return error(res, 409, msg, result.reason);
+        }
+        character = { ...character, hd: result.character.hd, inventory: result.character.inventory };
+
+        // In combat, drinking costs your action — the enemy strikes back.
+        const enemyTemplate = visibleEnemy(adventure, run);
+        let enemyAttack = null;
+        let characterDefeated = false;
+        if (enemyTemplate) {
+          const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
+          applyEquipmentToCombatant(character, run);
+          enemyAttack = resolveAttack(enemy, character, deps.rng);
+          character.hd = character.hp;
+          if ((character.hd ?? 0) <= 0) { characterDefeated = true; character.isAlive = false; run = { ...run, status: 'dead' }; }
+          run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
+        }
+
+        const [updatedCharacter, updatedRun] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        const enemyText = enemyAttack ? (enemyAttack.hit ? `${enemyTemplate.name} strikes for ${enemyAttack.damage} as you drink.` : `${enemyTemplate.name} lunges but misses.`) : null;
+        const text = [`You drink the ${result.potion.name} and recover ${result.restored} HP.`, enemyText, characterDefeated ? 'You have been defeated.' : null].filter(Boolean).join('\n');
+        const round = enemyTemplate ? { player: { heal: result.restored }, enemy: enemyAttack ? combatSide(enemyAttack) : null, enemyDefeated: false, characterDefeated } : undefined;
+        const combat = enemyTemplate ? combatStateFor({ adventure, run, character, enemyTemplate, round }) : null;
+        return res.json(canonicalResponse({
+          intent: command,
+          events: [{ type: 'drink', command, potion: result.potion.slug, restored: result.restored }],
+          text,
+          choices: characterDefeated ? [] : choicesForRun(adventure, run),
+          state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat, entities: getVisibleRoomEntities(rowRun(updatedRun), adventure), items: visibleItems(adventure, getVisibleRoomEntities(rowRun(updatedRun), adventure)) },
+        }));
       }
 
       if (command.type === 'attack') {

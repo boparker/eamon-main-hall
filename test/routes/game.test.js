@@ -594,6 +594,25 @@ test('POST /api/game/hall — View Equipment opens the pack and readies a found 
   assert.equal(ready.body.state.character.equipment.weapon.stats.damage, '1d12'); // synthesised from damage_dice
 });
 
+test('POST /api/game/hall — drinking a healing potion restores HP and consumes it', async () => {
+  const deps = makeDeps({ adventures: [beginner] });
+  const { app } = makeApp(deps);
+  await deps.createCharacter(deps.db, {
+    id: 'sip-1', playerId: 'p1', name: 'Sip', className: 'rogue', hardiness: 15, agility: 12, charisma: 9,
+    hd: 5, maxHd: 15, gold: 0,
+    inventory: [{ slug: 'healing-potion', name: 'healing potion', type: 'potion', heal_amount: 6, value: 50 }],
+    isAlive: true,
+  });
+
+  const drink = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'sip-1', input: 'drink healing potion' });
+  assert.equal(drink.status, 200);
+  assert.equal(drink.body.state.character.hd, 11); // 5 + 6
+  assert.equal(drink.body.state.character.inventory.some((i) => i.slug === 'healing-potion'), false);
+
+  const again = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId: 'sip-1', input: 'drink healing potion' });
+  assert.equal(again.status, 400); // none left
+});
+
 test('POST /api/game/command — abandoning a run still cashes treasures to gold', async () => {
   const deps = makeDeps();
   const { app } = makeApp(deps);

@@ -4,6 +4,7 @@
 
 import { state } from './state.js';
 import { formatActionLabel } from './input.js';
+import { confirmAction } from './confirm.js';
 
 let _onAction = null;
 export function registerCombatAction(fn) { _onAction = fn; }
@@ -108,7 +109,7 @@ function mkBtn(label, command, variant) {
 const isMoveChoice = (c) => /^(north|south|east|west|up|down)$/i.test(String(c).trim());
 
 // Action bar order: attack/take/etc → cast spells you know → flee.
-function renderActions(choices, spells) {
+function renderActions(choices, spells, potions) {
   const el = document.getElementById('combat-actions');
   el.replaceChildren();
   const all = choices ?? [];
@@ -119,6 +120,14 @@ function renderActions(choices, spells) {
   }
   for (const [name, ability] of Object.entries(spells ?? {})) {
     if (Number(ability) > 0) el.appendChild(mkBtn(`Cast ${cap(name)} (${ability}%)`, `cast ${name}`, 'cast'));
+  }
+  // Emergency drink — confirmed so a panic-tap doesn't waste a precious potion.
+  for (const potion of potions ?? []) {
+    const label = potion.heal ? `Drink ${cap(potion.name)} (+${potion.heal})` : `Drink ${cap(potion.name)}`;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'enter-btn heal'; b.textContent = label;
+    b.addEventListener('click', () => confirmAction(`Drink ${potion.name}?`, () => { if (_onAction) _onAction(`drink ${potion.name}`); }));
+    el.appendChild(b);
   }
   for (const dir of all.filter(isMoveChoice)) {
     el.appendChild(mkBtn(`Flee ${cap(String(dir).trim())}`, dir, 'flee'));
@@ -172,7 +181,7 @@ export function renderCombat(combat, choices, text) {
     singleAction('Return to the Guild Hall', () => { if (_onReturnToHall) _onReturnToHall(); });
   } else {
     banner.hidden = true;
-    renderActions(choices, combat.spells);
+    renderActions(choices, combat.spells, combat.potions);
   }
 }
 
