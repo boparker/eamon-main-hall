@@ -68,7 +68,14 @@ function updateRoomRail(response) {
 
   // A Hall vendor (healer/bank) shows its portrait in the rail beside the text.
   if (response.state?.vendor) {
-    renderRoomCharacters([{ name: response.state.vendor.name, kind: response.state.vendor.kind ?? 'neutral' }]);
+    const v = response.state.vendor;
+    const vslug = v.slug || (/aldous|chapel|healer|hand/i.test(v.name) ? 'aldous'
+      : /seamus|bank|fenney/i.test(v.name) ? 'seamus' : null);
+    renderRoomCharacters([{
+      name: v.name,
+      kind: v.kind ?? 'neutral',
+      image: vslug ? `scenes/portraits/${vslug}.png` : undefined,
+    }]);
     const itemsSection = document.getElementById('room-items-section');
     if (itemsSection) itemsSection.hidden = true;
     if (rail) rail.hidden = false;
@@ -80,9 +87,15 @@ function updateRoomRail(response) {
   if (Array.isArray(characters)) {
     const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';
     const kindOf = (c) => (isHostile(c) ? 'monster' : c.friendliness === 'friendly' ? 'friendly' : 'neutral');
+    // Painted portraits live beside the room art: scenes/<adventure>/portraits/<slug>.png
+    const portraitDir = (response.state?.background || '').replace(/room-\d+\.png.*$/, 'portraits/');
     const people = characters
       .filter((c) => c.type !== 'merchant')
-      .map((c) => ({ name: c.name ?? c.slug, kind: kindOf(c) }));
+      .map((c) => ({
+        name: c.name ?? c.slug,
+        kind: kindOf(c),
+        image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png` : undefined,
+      }));
     renderRoomCharacters(people);
   } else if (response.state?.phase && response.state.phase !== 'adventure') {
     clearRoomCharacters();
