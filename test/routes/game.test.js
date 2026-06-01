@@ -502,7 +502,8 @@ test('POST /api/game/hall — Hokas Tokas teaches spells for a flat price', asyn
 
   const visit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'visit the wizard' });
   assert.equal(visit.body.state.locationTitle, "Hokas Tokas' School of Magick");
-  assert.equal(visit.body.choices.some((c) => /learn power/i.test(c)), true);
+  assert.equal(visit.body.state.shop.mode, 'options'); // pic + tiles
+  assert.equal(visit.body.state.shop.options.some((o) => /learn power/i.test(o.command)), true);
 
   const learned = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'learn power' });
   assert.equal(learned.status, 200);
@@ -523,7 +524,8 @@ test('POST /api/game/hall — the Witch raises attributes at a cubic price', asy
 
   const visit = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'visit the witch' });
   assert.equal(visit.body.state.locationTitle, "The Witch's Shop");
-  assert.equal(visit.body.choices.some((c) => /raise hardiness/i.test(c)), true);
+  assert.equal(visit.body.state.shop.mode, 'options'); // pic + tiles
+  assert.equal(visit.body.state.shop.options.some((o) => /raise hardiness/i.test(o.command)), true);
 
   const raised = await request(app, 'POST', '/api/game/hall', { playerId: 'p1', characterId, input: 'raise hardiness' });
   assert.equal(raised.status, 200);

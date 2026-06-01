@@ -9,14 +9,41 @@ import { confirmAction } from './confirm.js';
 const VENDOR_INFO = {
   marcos: { name: 'Marcos Cavielli', glyph: '⚒', greeting: '"Well met! What do you need?"' },
   pack: { name: 'Your Pack', glyph: '🎒', greeting: 'Ready your finds, or sell loot for gold.' },
+  hokas: { name: 'Hokas Tokas', glyph: '📜', greeting: '"So you want old Hokey to teach you some magic, eh?"' },
+  witch: { name: 'The Witch', glyph: '🔮', greeting: '"My potions can raise one of your attributes."' },
 };
+
+// A generic "offering" tile (spell / attribute / etc.): icon, name, sub-label,
+// price, and the command it fires. Gold-costing options confirm first.
+function optionTile(option) {
+  const gold = state.character?.gold ?? 0;
+  const afford = !option.price || gold >= option.price;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'shop-tile' + (afford ? '' : ' cant-afford');
+  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = option.icon ?? '✦';
+  const name = document.createElement('div'); name.className = 'tile-name'; name.textContent = option.name;
+  const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = option.stat ?? '';
+  const price = document.createElement('div'); price.className = 'tile-price'; price.textContent = option.price ? `${option.price} g` : (option.action ?? '');
+  btn.append(icon, name, stat, price);
+  if (afford) {
+    btn.addEventListener('click', () => {
+      const fire = () => { if (_onPurchase) _onPurchase(option.command); };
+      if (option.price) confirmAction(`${option.confirmLabel ?? option.name} for ${option.price} gold?`, fire);
+      else fire();
+    });
+  }
+  return btn;
+}
 
 let _onPurchase = null;
 export function registerPurchaseHandler(fn) { _onPurchase = fn; }
 
 function normalizeShopPayload(shopOrKey) {
   if (typeof shopOrKey === 'string') return { key: shopOrKey, title: shopOrKey, items: [] };
-  if (!shopOrKey || !Array.isArray(shopOrKey.items)) return null;
+  if (!shopOrKey || typeof shopOrKey !== 'object') return null;
+  // Marcos has an items catalog; pack/options vendors carry a mode instead.
+  if (!Array.isArray(shopOrKey.items) && !shopOrKey.mode) return null;
   return shopOrKey;
 }
 
@@ -131,12 +158,14 @@ function renderGrid() {
   if (!grid) return;
   const tabs = document.getElementById('shop-tabs');
   const isPack = currentShop?.mode === 'pack';
-  if (tabs) tabs.style.display = isPack ? 'none' : '';
+  const isOptions = currentShop?.mode === 'options';
+  if (tabs) tabs.style.display = (isPack || isOptions) ? 'none' : '';
   document.querySelectorAll('#shop-tabs .shop-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === currentTab));
   document.getElementById('shop-scene-gold').textContent = state.character?.gold ?? 0;
   grid.replaceChildren();
 
   if (isPack) { renderPack(grid); return; }
+  if (isOptions) { (currentShop.options ?? []).forEach((o) => grid.appendChild(optionTile(o))); return; }
 
   if (currentTab === 'buy') {
     const items = currentShop?.items ?? [];
@@ -163,7 +192,7 @@ export function openShop(shopOrKey) {
 
   const info = VENDOR_INFO[shop.key] ?? { name: shop.title ?? 'Shopkeeper', glyph: '⚒', greeting: '' };
   document.getElementById('shopkeeper-name').textContent = info.name;
-  document.getElementById('shopkeeper-line').textContent = info.greeting;
+  document.getElementById('shopkeeper-line').textContent = shop.line ?? info.greeting;
   const ph = document.querySelector('#shopkeeper-portrait .portrait-placeholder');
   if (ph) ph.textContent = info.glyph;
 
