@@ -212,4 +212,6 @@ document.getElementById('shop-tabs')?.addEventListener('click', (event) => {
   const tab = event.target.closest('.shop-tab');
   if (tab && tab.dataset.tab !== currentTab) { currentTab = tab.dataset.tab; renderGrid(); }
 });
-document.getElementById('shop-leave-btn')?.addEventListener('click', () => { if (_onPurchase) _onPurchase('Return to Great Hall'); });
+const leaveShop = () => { if (_onPurchase) _onPurchase('Return to Great Hall'); };
+document.getElementById('shop-leave-btn')?.addEventListener('click', leaveShop);
+document.getElementById('shop-close-corner')?.addEventListener('click', leaveShop);
