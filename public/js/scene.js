@@ -92,7 +92,9 @@ export async function generateSceneBg(location) {
   }
 }
 
+let currentBgUrl = '';
 function crossfadeBg(url) {
+  currentBgUrl = url;
   const current = document.getElementById('scene-bg');
   const next = document.getElementById('scene-bg-next');
   const img = new Image();
@@ -105,6 +107,13 @@ function crossfadeBg(url) {
     }, 1600);
   };
   img.src = url;
+}
+
+// Set an explicit scene background by URL (e.g. an adventure room's painted art),
+// independent of the name→sceneMap lookup. No-ops if already showing it.
+export function setSceneBackground(url) {
+  if (!url || url === currentBgUrl) return;
+  crossfadeBg(url);
 }
 
 // ── Portrait System ──

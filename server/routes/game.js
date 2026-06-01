@@ -730,7 +730,7 @@ function roomResponse({ adventure, run, character, text = null, event = { type: 
     events,
     text: text ?? renderRoom(room, entities, items, room.exits),
     choices: choicesForRun(adventure, run),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
   });
 }
 
