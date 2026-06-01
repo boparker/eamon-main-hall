@@ -20,6 +20,15 @@ function card(adventure) {
   cover.className = 'gate-cover';
   if (unlocked) {
     cover.textContent = monogram(adventure.name);
+    // Swap the monogram for painted cover art when one exists for this realm.
+    if (adventure.id) {
+      const img = document.createElement('img');
+      img.className = 'gate-cover-img';
+      img.src = `scenes/${adventure.id}/cover.png`;
+      img.alt = adventure.name ?? '';
+      img.onload = () => { cover.textContent = ''; cover.appendChild(img); };
+      img.onerror = () => {};
+    }
   } else {
     const glyph = document.createElement('span');
     glyph.className = 'lock-glyph';
