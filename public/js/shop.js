@@ -47,6 +47,18 @@ function normalizeShopPayload(shopOrKey) {
   return shopOrKey;
 }
 
+// Swap an emoji icon box for painted item art when scenes/items/<slug>.png exists.
+// Leaves the emoji in place if there's no slug or the art fails to load.
+function applyItemArt(iconEl, item) {
+  const slug = item?.slug;
+  if (!slug) return;
+  const img = new Image();
+  img.className = 'tile-art';
+  img.alt = '';
+  img.onload = () => { iconEl.textContent = ''; iconEl.appendChild(img); };
+  img.src = `scenes/items/${slug}.png`;
+}
+
 function itemIcon(item) {
   const t = String(item.stats?.type ?? item.category ?? '').toLowerCase();
   if (/shield/.test(t) || item.equipmentSlot === 'shield') return '🛡';
@@ -87,7 +99,7 @@ function tile(item, action) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'shop-tile' + (afford ? '' : ' cant-afford') + (item.magic ? ' magic' : '');
-  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item);
+  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item); applyItemArt(icon, item);
   const name = document.createElement('div'); name.className = 'tile-name'; name.textContent = item.name;
   const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = statText(item);
   const pr = document.createElement('div'); pr.className = 'tile-price'; pr.textContent = `${action === 'sell' ? '+' : ''}${price} g`;
@@ -114,7 +126,7 @@ function packTile(item, isEquipped) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'shop-tile' + (item.magic ? ' magic' : '');
-  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item);
+  const icon = document.createElement('div'); icon.className = 'tile-icon'; icon.textContent = itemIcon(item); applyItemArt(icon, item);
   const name = document.createElement('div'); name.className = 'tile-name'; name.textContent = item.name;
   const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = statText(item) || `worth ${value}g`;
   const action = document.createElement('div'); action.className = 'tile-price';

@@ -81,6 +81,19 @@ function objectGlyph(object, verb) {
   return '◆';
 }
 
+// Swap an object tile's emoji for painted item art when one exists for its slug.
+// Resolves the slug from the matched room item, else slugifies the object name.
+function applyObjectArt(iconEl, object) {
+  const item = _roomItems.find((i) => norm(i.name) === norm(object) || norm(i.slug) === norm(object));
+  const slug = item?.slug || norm(object).replace(/\s+/g, '-');
+  if (!slug) return;
+  const img = new Image();
+  img.className = 'obj-art';
+  img.alt = '';
+  img.onload = () => { iconEl.textContent = ''; iconEl.appendChild(img); };
+  img.src = `scenes/items/${slug}.png`;
+}
+
 function send(text) {
   choicesArea.classList.remove('visible');
   objectTiles.classList.remove('visible');
@@ -107,6 +120,7 @@ export function renderChoices() {
     tile.type = 'button';
     tile.className = 'obj-tile line-enter';
     const icon = document.createElement('div'); icon.className = 'obj-icon'; icon.textContent = objectGlyph(object, verb);
+    applyObjectArt(icon, object);
     const name = document.createElement('div'); name.className = 'obj-name'; name.textContent = titleCaseWords(object);
     const tag = document.createElement('div'); tag.className = 'obj-verb'; tag.textContent = VERB_LABELS[verb] ?? verb;
     tile.append(icon, name, tag);
