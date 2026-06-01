@@ -4,6 +4,7 @@
 // normal input path (registerPurchaseHandler), so the engine stays authoritative.
 
 import { state } from './state.js';
+import { confirmAction } from './confirm.js';
 
 const VENDOR_INFO = {
   marcos: { name: 'Marcos Cavielli', glyph: '⚒', greeting: '"Well met! What do you need?"' },
@@ -65,7 +66,11 @@ function tile(item, action) {
   const pr = document.createElement('div'); pr.className = 'tile-price'; pr.textContent = `${action === 'sell' ? '+' : ''}${price} g`;
   btn.append(icon, name, stat, pr);
   if (afford) {
-    btn.addEventListener('click', () => { if (_onPurchase) _onPurchase(`${action === 'sell' ? 'Sell' : 'Buy'} ${item.name}`); });
+    btn.addEventListener('click', () => {
+      const verb = action === 'sell' ? 'Sell' : 'Buy';
+      const msg = action === 'sell' ? `Sell ${item.name} for ${price} gold?` : `Buy ${item.name} for ${price} gold?`;
+      confirmAction(msg, () => { if (_onPurchase) _onPurchase(`${verb} ${item.name}`); });
+    });
   }
   return btn;
 }
@@ -88,15 +93,25 @@ function packTile(item, isEquipped) {
   const action = document.createElement('div'); action.className = 'tile-price';
   btn.append(icon, name, stat, action);
 
+  const heal = item.heal ?? item.heal_amount;
   if (isEquipped) {
     action.textContent = '✓ Equipped';
     btn.classList.add('cant-afford'); // dim, no action
+  } else if (item.type === 'potion') {
+    action.textContent = heal ? `Drink (+${heal})` : 'Drink';
+    stat.textContent = 'healing draught';
+    btn.addEventListener('click', () => {
+      confirmAction(`Drink ${item.name}?`, () => { if (_onPurchase) _onPurchase(`drink ${item.name}`); });
+    });
   } else if (slot) {
-    action.textContent = 'Equip';
+    action.textContent = 'Equip'; // harmless — no confirm
     btn.addEventListener('click', () => { if (_onPurchase) _onPurchase(`ready ${item.name}`); });
   } else {
-    action.textContent = `Sell +${Math.floor(value / 2)}g`;
-    btn.addEventListener('click', () => { if (_onPurchase) _onPurchase(`sell ${item.name}`); });
+    const sellFor = Math.floor(value / 2);
+    action.textContent = `Sell +${sellFor}g`;
+    btn.addEventListener('click', () => {
+      confirmAction(`Sell ${item.name} for ${sellFor} gold?`, () => { if (_onPurchase) _onPurchase(`sell ${item.name}`); });
+    });
   }
   return btn;
 }

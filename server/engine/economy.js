@@ -133,6 +133,33 @@ export function takeTreasure(character, item, options = {}) {
   };
 }
 
+export const DEFAULT_POTION_HEAL = 10;
+
+// Drink a healing potion: consume it from inventory and restore HP (capped at
+// max). The amount comes from the potion's `heal` field, falling back to a
+// sensible default. Refuses if there's no such potion or you're already full
+// (so a precious potion is never wasted).
+export function drinkPotion(character, potionSlug, defaultHeal = DEFAULT_POTION_HEAL) {
+  const inventory = inventoryOf(character);
+  const index = inventory.findIndex((item) => item?.slug === potionSlug && item?.type === 'potion');
+  if (index === -1) return { ok: false, character, reason: 'no-potion' };
+
+  const max = character?.maxHd ?? character?.hd ?? 0;
+  const current = character?.hd ?? 0;
+  if (max - current <= 0) return { ok: false, character, reason: 'already-full' };
+
+  const potion = inventory[index];
+  const heal = Number(potion.heal ?? potion.heal_amount ?? potion.stats?.heal) || defaultHeal;
+  const restored = Math.min(heal, max - current);
+  const nextInventory = [...inventory.slice(0, index), ...inventory.slice(index + 1)];
+  return {
+    ok: true,
+    potion,
+    restored,
+    character: { ...character, inventory: nextInventory, hd: current + restored },
+  };
+}
+
 export function convertTreasuresOnReturn(character) {
   if (!hasValidGold(character)) {
     return { ok: false, character, goldGained: 0, convertedItems: [], reason: 'invalid-gold' };

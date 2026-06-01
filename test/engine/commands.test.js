@@ -109,3 +109,8 @@ test('parseCommand recognizes REMOVE and TAKE OFF as unequip', () => {
   assert.deepEqual(parseCommand('remove shield'), { type: 'unequip', target: 'shield', source: 'rules' });
   assert.deepEqual(parseCommand('take off armor'), { type: 'unequip', target: 'armor', source: 'rules' });
 });
+
+test('parseCommand recognizes drink/quaff as a drink command', () => {
+  assert.deepEqual(parseCommand('drink healing potion'), { type: 'drink', target: 'healing potion', source: 'rules' });
+  assert.deepEqual(parseCommand('quaff potion'), { type: 'drink', target: 'potion', source: 'rules' });
+});

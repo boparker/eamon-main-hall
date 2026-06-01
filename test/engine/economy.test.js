@@ -7,7 +7,25 @@ import {
   sellItem,
   takeTreasure,
   convertTreasuresOnReturn,
+  drinkPotion,
 } from '../../server/engine/economy.js';
+
+test('drinkPotion heals by the potion amount, caps at max, and consumes it', () => {
+  const character = { hd: 5, maxHd: 15, inventory: [{ slug: 'hp', name: 'healing potion', type: 'potion', heal_amount: 6 }] };
+  const r = drinkPotion(character, 'hp');
+  assert.equal(r.ok, true);
+  assert.equal(r.restored, 6);
+  assert.equal(r.character.hd, 11);
+  assert.equal(r.character.inventory.length, 0);
+
+  const nearFull = { hd: 13, maxHd: 15, inventory: [{ slug: 'hp', type: 'potion', heal_amount: 6 }] };
+  assert.equal(drinkPotion(nearFull, 'hp').restored, 2); // capped at max
+});
+
+test('drinkPotion refuses when already full or carrying no such potion', () => {
+  assert.equal(drinkPotion({ hd: 15, maxHd: 15, inventory: [{ slug: 'hp', type: 'potion' }] }, 'hp').reason, 'already-full');
+  assert.equal(drinkPotion({ hd: 5, maxHd: 15, inventory: [] }, 'hp').reason, 'no-potion');
+});
 
 test('canAfford handles true/false boundaries including exact gold', () => {
   assert.equal(canAfford({ gold: 10, inventory: [] }, 0), true);
