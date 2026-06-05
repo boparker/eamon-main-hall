@@ -1363,3 +1363,25 @@ test('passage-home scroll is an informational note, not a teleport', async () =>
   assert.match(read.body.text, /Head NORTH/);
   assert.equal(read.body.state.phase, 'adventure'); // still in the cave, not whisked home
 });
+
+test('TrollsFire ignite/douse surfaces as a room action that flips with lit state', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  await accountCommand(app, charId, runId, 'take trollsfire');
+  const look1 = await accountCommand(app, charId, runId, 'look');
+  assert.ok(look1.body.choices.includes('Ignite TrollsFire'));
+
+  const ignite = await accountCommand(app, charId, runId, 'ignite trollsfire'); // button label
+  assert.ok(ignite.body.events.some((e) => e.type === 'magic_word' && e.lit === true));
+
+  const look2 = await accountCommand(app, charId, runId, 'look');
+  assert.ok(look2.body.choices.includes('Douse TrollsFire'));
+  assert.ok(!look2.body.choices.includes('Ignite TrollsFire'));
+});
+
+test('combat state exposes carried magic-word items for the combat bar', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  await accountCommand(app, charId, runId, 'take trollsfire');
+  await accountCommand(app, charId, runId, 'ready trollsfire');
+  const atk = await accountCommand(app, charId, runId, 'attack dummy');
+  assert.ok((atk.body.state.combat.magicWords ?? []).some((m) => m.slug === 'trollsfire' && m.word === 'trollsfire'));
+});

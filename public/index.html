@@ -368,6 +368,19 @@
     .combat-log-line { font-size: clamp(0.95rem,1.8vw,1.1rem); line-height: 1.5; color: var(--text); }
     .combat-log-line.dim { color: var(--text-dim); font-style: italic; }
     .combat-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .combat-actions .enter-btn.flame { color: #ffd49a; border-color: rgba(220,150,60,0.6); }
+    .combat-actions .enter-btn.flame:hover { border-color: #ffae57; color: #fff0d8; box-shadow: 0 0 18px rgba(255,150,60,0.3); }
+
+    /* Companion party HP strip */
+    .combat-companions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; margin: 4px auto 0; max-width: min(720px,100%); }
+    .combat-companions[hidden] { display: none; }
+    .combat-comp { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid var(--gold-dim); border-radius: 999px; background: rgba(12,10,8,0.6); font-size: 0.78rem; }
+    .combat-comp.fallen { opacity: 0.4; filter: grayscale(1); }
+    .combat-comp-name { font-family: var(--font-head); color: #e8d39a; letter-spacing: 0.04em; }
+    .combat-comp-tag { color: var(--text-dim); font-size: 0.72rem; }
+    .combat-comp-bar { position: relative; width: 84px; height: 12px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+    .combat-comp-fill { position: absolute; inset: 0; width: 100%; background: linear-gradient(90deg,#6fae54,#9ed27a); transition: width 0.4s ease; }
+    .combat-comp-hptext { position: absolute; inset: 0; display: grid; place-items: center; font-size: 0.62rem; color: #06140a; font-weight: 700; }
 
     /* motion */
     .dmg-float { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); font-family: var(--font-head); font-size: 1.8rem; color: #e0573f; text-shadow: 0 2px 8px rgba(0,0,0,0.85); opacity: 0; pointer-events: none; }
@@ -895,6 +908,8 @@
         <div class="hp-bar"><div class="hp-fill enemy" id="combat-enemy-hp" style="width:40%"></div><span class="hp-text" id="combat-enemy-hptext">4 / 10</span></div>
       </div>
     </div>
+
+    <div class="combat-companions" id="combat-companions" hidden></div>
 
     <div class="combat-banner" id="combat-banner" hidden></div>
 
