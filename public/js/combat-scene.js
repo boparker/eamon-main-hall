@@ -26,6 +26,20 @@ function setHp(side, hp, maxHp) {
   if (text) text.textContent = `${Math.max(0, hp)} / ${maxHp}`;
 }
 
+// Show the enemy's painted portrait in the duel (falls back to the glyph if the
+// monster has no art / it fails to load).
+function setEnemyPortrait(image) {
+  const portrait = document.querySelector('#combatant-enemy .combat-portrait');
+  if (!portrait) return;
+  const ph = portrait.querySelector('.portrait-placeholder');
+  let img = portrait.querySelector('img.combat-portrait-img');
+  if (!image) { if (img) img.remove(); if (ph) ph.style.display = ''; return; }
+  if (!img) { img = document.createElement('img'); img.className = 'combat-portrait-img'; img.alt = ''; portrait.insertBefore(img, portrait.firstChild); }
+  img.onload = () => { if (ph) ph.style.display = 'none'; };
+  img.onerror = () => { img.remove(); if (ph) ph.style.display = ''; };
+  img.src = image;
+}
+
 function playHit(side, damage) {
   const el = document.getElementById(side === 'enemy' ? 'combatant-enemy' : 'combatant-player');
   if (!el) return;
@@ -185,6 +199,7 @@ export function renderCombat(combat, choices, text) {
 
   document.getElementById('combat-player-name').textContent = combat.player?.name ?? state.character?.name ?? 'You';
   document.getElementById('combat-enemy-name').textContent = combat.enemy.name;
+  setEnemyPortrait(combat.enemy.image);
 
   setRollReadout(combat.round);
   setHp('player', combat.player?.hp ?? 0, combat.player?.maxHp ?? 0);
