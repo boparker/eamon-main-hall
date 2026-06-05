@@ -306,7 +306,7 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   if (!result && round === undefined && hp <= 0) return null;
   const partyBySlug = new Map((adventure?.characters ?? []).map((c) => [c.slug, c]));
   return {
-    enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp },
+    enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp, image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png` },
     player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0 },
     companions: getCompanions(run).map((c) => {
       const npc = partyBySlug.get(c.slug);

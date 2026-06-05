@@ -1385,3 +1385,11 @@ test('combat state exposes carried magic-word items for the combat bar', async (
   const atk = await accountCommand(app, charId, runId, 'attack dummy');
   assert.ok((atk.body.state.combat.magicWords ?? []).some((m) => m.slug === 'trollsfire' && m.word === 'trollsfire'));
 });
+
+test('combat state exposes the enemy portrait path for the duel scene', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  await accountCommand(app, charId, runId, 'south'); // into the mimic cell
+  const open = await accountCommand(app, charId, runId, 'open chest'); // wakes the mimic
+  const fight = await accountCommand(app, charId, runId, 'attack mimic');
+  assert.equal(fight.body.state.combat.enemy.image, 'scenes/beginners-cave/portraits/mimic.png');
+});
