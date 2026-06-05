@@ -16,6 +16,7 @@ import {
   getCompanions,
   recordEncounter,
   recruitCompanion,
+  freeDefeatedCaptives,
   setCompanionHp,
   removeCompanion,
   relocateCharacter,
@@ -241,6 +242,15 @@ function resolveRoomEncounters(run, adventure, character, rng) {
       notes.push(`${who} eyes you with hostility and reaches for a weapon.`);
       events.push({ type: 'turned_hostile', character: npc.slug });
     }
+  }
+  // Also free any captive whose captor is already dead and who is here with you
+  // but not yet in your party (repairs saves where the captor died earlier).
+  const released = freeDefeatedCaptives(next, adventure);
+  next = released.run;
+  for (const slug of released.freed) {
+    const captive = adventure.characters.find((c) => c.slug === slug);
+    notes.push(`${captive?.name ?? slug}, no longer a captive, falls in gratefully beside you.`);
+    events.push({ type: 'recruit', character: slug });
   }
   return { run: next, note: notes.join(' '), events };
 }
