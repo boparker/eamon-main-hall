@@ -188,6 +188,15 @@ CREATE INDEX IF NOT EXISTS adventure_runs_profile_id_idx ON adventure_runs(profi
 CREATE UNIQUE INDEX IF NOT EXISTS adventure_runs_one_active_per_character_idx
   ON adventure_runs(character_id)
   WHERE status = 'active';
+CREATE TABLE IF NOT EXISTS character_portraits (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES player_characters(id) ON DELETE CASCADE,
+  png BYTEA NOT NULL,
+  meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS character_portraits_character_id_idx ON character_portraits(character_id);
+ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS portrait_url TEXT;
   `);
 
     await client.query(`

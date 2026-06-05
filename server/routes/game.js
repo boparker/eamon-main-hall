@@ -61,6 +61,13 @@ import {
   getAdventureRun as defaultGetAdventureRun,
   updateAdventureRun as defaultUpdateAdventureRun,
 } from '../db/adventureRuns.js';
+import {
+  insertPortrait as defaultInsertPortrait,
+  getPortraitPng as defaultGetPortraitPng,
+  setCharacterPortraitUrl as defaultSetCharacterPortraitUrl,
+} from '../db/portraits.js';
+import { generatePortraitImage as defaultGenerateImage } from '../media/generate.js';
+import { composePortraitPrompt, sanitizeTraits, portraitOptions, isValidClass } from '../engine/portraitTraits.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ADVENTURES_DIR = join(__dirname, '../../data/adventures');
@@ -307,7 +314,7 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   const partyBySlug = new Map((adventure?.characters ?? []).map((c) => [c.slug, c]));
   return {
     enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp, image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png` },
-    player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0, image: character.className ? `scenes/classes/${character.className}.png` : null },
+    player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0, image: character.portraitUrl ?? (character.className ? `scenes/classes/${character.className}.png` : null) },
     companions: getCompanions(run).map((c) => {
       const npc = partyBySlug.get(c.slug);
       return { slug: c.slug, name: npc?.name ?? c.slug, hp: Math.max(0, c.hp ?? 0), maxHp: c.maxHp ?? npc?.hp ?? 0, escort: isEscort(npc) };
@@ -423,6 +430,7 @@ function rowCharacter(row) {
     spells: row.spells ?? {},
     adventuresCompleted: Array.isArray(row.adventures_completed) ? row.adventures_completed : [],
     isAlive: row.is_alive,
+    portraitUrl: row.portrait_url ?? null,
   };
 }
 
@@ -920,6 +928,10 @@ function normalizeDeps(deps = {}) {
     updateAdventureRun: deps.updateAdventureRun ?? defaultUpdateAdventureRun,
     completeAdventureRun: deps.completeAdventureRun ?? defaultCompleteAdventureRun,
     abandonAdventureRun: deps.abandonAdventureRun ?? defaultAbandonAdventureRun,
+    generateImage: deps.generateImage ?? defaultGenerateImage,
+    insertPortrait: deps.insertPortrait ?? defaultInsertPortrait,
+    getPortraitPng: deps.getPortraitPng ?? defaultGetPortraitPng,
+    setCharacterPortraitUrl: deps.setCharacterPortraitUrl ?? defaultSetCharacterPortraitUrl,
     rng: deps.rng ?? Math.random,
   };
 }
@@ -1171,6 +1183,54 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // The portrait builder's trait vocabulary (for rendering the picker UI).
+  router.get('/portrait-options', (_req, res) => res.json({ ok: true, options: portraitOptions() }));
+
+  // Paint a custom character portrait from picked traits. Reward-gated behind
+  // clearing the Beginner's Cave. Traits are an enumerated allowlist, so the
+  // prompt is fully server-composed (no free text to moderate).
+  router.post('/portrait', async (req, res, next) => {
+    try {
+      if (!requireDb(req, res, deps.db)) return;
+      const { characterId, traits } = req.body ?? {};
+      const context = resolveGameContext(req);
+      if (context.error || !characterId) return error(res, 400, context.error ? context.error : 'characterId is required.', 'bad-request');
+      if (!context.isAuthenticated) return error(res, 403, 'Sign in to paint a portrait.', 'account-required');
+      const row = await deps.getCharacter(deps.db, context.owner, characterId);
+      if (!row) return error(res, 404, 'Character not found for this player.', 'not-found');
+      const character = rowCharacter(row);
+      if (!isValidClass(character.className)) return error(res, 400, 'Unknown character class.', 'bad-request');
+      if (!isBeginnerComplete(character)) return error(res, 403, "Clear the Beginner's Cave to unlock your portrait.", 'locked');
+
+      const cleanTraits = sanitizeTraits(traits);
+      const prompt = composePortraitPrompt(cleanTraits, character.className);
+      const gen = await deps.generateImage(prompt);
+      if (!gen?.png) return error(res, 502, 'The portrait could not be painted right now. Try again shortly.', gen?.error ?? 'generation-failed');
+
+      const saved = await deps.insertPortrait(deps.db, { characterId, png: gen.png, meta: { traits: cleanTraits, className: character.className } });
+      // Cache-bust by the new portrait's id so a re-roll shows immediately.
+      const portraitUrl = `/api/game/portrait/${characterId}/render.png?v=${saved?.id ?? gen.png.length}`;
+      const updated = await deps.setCharacterPortraitUrl(deps.db, characterId, portraitUrl);
+      return res.json({ ok: true, portraitUrl, traits: cleanTraits, character: rowCharacter(updated ?? row) });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // Serve a character's saved portrait PNG (public — it's just an avatar image).
+  router.get('/portrait/:characterId/render.png', async (req, res, next) => {
+    try {
+      if (!requireDb(req, res, deps.db)) return;
+      const stored = await deps.getPortraitPng(deps.db, req.params.characterId);
+      if (!stored?.png) return error(res, 404, 'No portrait has been painted yet.', 'not-found');
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(stored.png);
     } catch (err) {
       return next(err);
     }

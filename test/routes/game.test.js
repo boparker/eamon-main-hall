@@ -66,12 +66,34 @@ function makeDeps(options = {}) {
   const players = new Map();
   const characters = new Map();
   const runs = new Map();
+  const portraits = new Map();
   const calls = [];
 
   return {
     calls,
     db: { ok: true },
     loadAdventures: () => options.adventures ?? [beginner],
+    async generateImage(prompt) {
+      calls.push({ type: 'generateImage', prompt });
+      if (options.failGeneration) return { error: 'boom' };
+      return { png: Buffer.from(`PNG:${prompt.slice(0, 16)}`) };
+    },
+    async insertPortrait(_db, { id = `portrait-${portraits.size + 1}`, characterId, png, meta = {} }) {
+      const row = { id, character_id: characterId, png, meta, created_at: new Date().toISOString() };
+      portraits.set(characterId, row);
+      calls.push({ type: 'insertPortrait', characterId });
+      return row;
+    },
+    async getPortraitPng(_db, characterId) {
+      return portraits.get(characterId) ?? null;
+    },
+    async setCharacterPortraitUrl(_db, characterId, portraitUrl) {
+      const row = characters.get(characterId);
+      if (!row) return null;
+      const updated = { ...row, portrait_url: portraitUrl };
+      characters.set(characterId, updated);
+      return updated;
+    },
     async upsertPlayer(_db, player) {
       const row = {
         id: player.id,
@@ -242,6 +264,20 @@ async function request(app, method, path, body, headers = {}) {
     });
     const json = await response.json();
     return { status: response.status, body: json };
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
+// Like request(), but for binary (non-JSON) responses — returns the raw bytes.
+async function requestRaw(app, method, path, headers = {}) {
+  const server = app.listen(0);
+  await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
+  try {
+    const { port } = server.address();
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, { method, headers });
+    const buf = Buffer.from(await response.arrayBuffer());
+    return { status: response.status, contentType: response.headers.get('content-type'), bytes: buf };
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
@@ -1394,4 +1430,74 @@ test('combat state exposes the enemy portrait path for the duel scene', async ()
   assert.equal(fight.body.state.combat.enemy.image, 'scenes/beginners-cave/portraits/mimic.png');
   // The player gets a class portrait too (createAccountCharacter defaults to rogue).
   assert.equal(fight.body.state.combat.player.image, 'scenes/classes/rogue.png');
+});
+
+// ── Custom portrait builder (reward-gated, style-locked generation) ───────────
+async function completeBeginnerCave(app, charId) {
+  const start = await startAccountAdventure(app, charId);
+  // beginner room 1 exits north -> main-hall, which marks the cave complete.
+  await accountCommand(app, charId, start.body.state.adventureRun.id, 'north');
+}
+
+test('portrait-options returns the trait vocabulary for the picker UI', async () => {
+  const { app } = makeApp();
+  const res = await request(app, 'GET', '/api/game/portrait-options');
+  assert.equal(res.status, 200);
+  assert.ok(res.body.options.skin.some((o) => o.key === 'deep' && o.label));
+  assert.ok(res.body.options.hairColor.length >= 4);
+});
+
+test('portrait generation is locked until the Beginner\'s Cave is cleared', async () => {
+  const { app } = makeApp();
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  const res = await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: { skin: 'deep' } }, accountHeaders);
+  assert.equal(res.status, 403);
+  assert.equal(res.body.error, 'locked');
+});
+
+test('after clearing the cave, picked traits generate + save a portrait the combat scene uses', async () => {
+  const { app, deps } = makeApp();
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  await completeBeginnerCave(app, charId);
+
+  const res = await request(app, 'POST', '/api/game/portrait', {
+    profileId: 'profile-1', characterId: charId, traits: { skin: 'deep', hairColor: 'red', mark: 'scar', evil: 'yes' },
+  }, accountHeaders);
+  assert.equal(res.status, 200);
+  assert.match(res.body.portraitUrl, /^\/api\/game\/portrait\/.+\/render\.png/);
+  assert.equal(res.body.traits.skin, 'deep');
+  assert.equal(res.body.traits.evil, undefined); // out-of-vocabulary dropped
+  assert.equal(res.body.character.portraitUrl, res.body.portraitUrl);
+  // The locked style + picked traits reached the generator.
+  const gen = deps.calls.find((c) => c.type === 'generateImage');
+  assert.match(gen.prompt, /deep ebony skin/);
+  assert.match(gen.prompt, /Eyvind Earle/);
+});
+
+test('the saved portrait PNG is served as an image', async () => {
+  const { app } = makeApp();
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  await completeBeginnerCave(app, charId);
+  await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: {} }, accountHeaders);
+
+  const img = await requestRaw(app, 'GET', `/api/game/portrait/${charId}/render.png`);
+  assert.equal(img.status, 200);
+  assert.equal(img.contentType, 'image/png');
+  assert.ok(img.bytes.length > 0);
+
+  // A character with no portrait 404s.
+  const none = await requestRaw(app, 'GET', '/api/game/portrait/nobody/render.png');
+  assert.equal(none.status, 404);
+});
+
+test('a generation failure surfaces a 502 and saves nothing', async () => {
+  const { app } = makeApp(makeDeps({ failGeneration: true }));
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  await completeBeginnerCave(app, charId);
+  const res = await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: {} }, accountHeaders);
+  assert.equal(res.status, 502);
 });
