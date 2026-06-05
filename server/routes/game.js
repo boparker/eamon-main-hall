@@ -314,6 +314,12 @@ function applyEquipmentToCombatant(character, run = null) {
   const damage = eq.weapon?.stats?.damage;
   character.weapon = damage ? { damage } : undefined;
   character.weaponOdds = Number(eq.weapon?.stats?.weaponOdds) || 0;
+  // A lit magic blade (e.g. TrollsFire, kindled by its magic word) burns hotter:
+  // bigger damage dice + a to-hit bonus, but ONLY while it is the wielded weapon.
+  if (run?.flags?.litItems?.[eq.weapon?.slug] && eq.weapon?.stats?.flameDamage) {
+    character.weapon = { damage: eq.weapon.stats.flameDamage };
+    character.weaponOdds += Number(eq.weapon.stats.flameOdds) || 0;
+  }
   character.defense = (Number(eq.armor?.stats?.armorClass) || 0) + (Number(eq.shield?.stats?.armorClass) || 0);
   // Speed spell doubles agility for the rest of the run.
   if (run?.flags?.haste) character.agility = (Number(character.agility) || 0) * 2;
@@ -1215,6 +1221,37 @@ export function createGameRouter(rawDeps = {}) {
         return error(res, 409, `Adventure run ${run.id} is no longer active.`, 'run-inactive');
       }
 
+      // Magic words: speaking a carried item's word toggles its power. TrollsFire
+      // kindles/douses its green flame; lighting it unwielded singes you.
+      const spokenWord = normalizeTarget(req.body.input ?? '');
+      const magicItem = spokenWord && (character.inventory ?? []).find((it) => it.magic_word && normalizeTarget(it.magic_word) === spokenWord);
+      if (magicItem) {
+        const nowLit = !run.flags?.litItems?.[magicItem.slug];
+        run = { ...run, flags: { ...(run.flags ?? {}), litItems: { ...(run.flags?.litItems ?? {}), [magicItem.slug]: nowLit } } };
+        const wielded = character.equipment?.weapon?.slug === magicItem.slug;
+        let burn = 0;
+        let line;
+        if (nowLit && wielded) line = `You speak the word, and ${magicItem.name} blazes up with green fire!`;
+        else if (nowLit) { burn = 3; line = `You speak the word, and ${magicItem.name} blazes with green fire — but it is not in your hand, and the flames sear you for ${burn}!`; }
+        else line = `You speak the word, and the green flame of ${magicItem.name} gutters out.`;
+        if (burn) {
+          character.hd = Math.max(0, (character.hd ?? 0) - burn);
+          if (character.hd <= 0) { character.isAlive = false; run = { ...run, status: 'dead' }; }
+        }
+        const [uc, ur] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        const defeated = (character.hd ?? 0) <= 0;
+        return res.json(canonicalResponse({
+          intent: command,
+          events: [{ type: 'magic_word', word: magicItem.magic_word, item: magicItem.slug, lit: nowLit }, ...(defeated ? [{ type: 'character_defeated', characterId: character.id }] : [])],
+          text: defeated ? `${line}\nYou have been defeated.` : line,
+          choices: defeated ? [] : choicesForRun(adventure, run),
+          state: { character: rowCharacter(uc), adventureRun: rowRun(ur), combat: combatStateFor({ adventure, run, character }) },
+        }));
+      }
+
       if (command.type === 'look') {
         // Resolve any not-yet-rolled random encounters here (e.g. a resumed run).
         const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
@@ -1497,6 +1534,13 @@ export function createGameRouter(rawDeps = {}) {
           run = markContainerOpened(run, container.slug);
           const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
           run = rowRun(updatedRun) ?? run;
+          // A disguised monster sprung by opening this "chest" ambushes you.
+          const ambush = adventure.characters.find((c) => c.hidden_until_opened === container.slug
+            && !run.defeatedEnemies.includes(c.slug));
+          if (ambush) {
+            const text = `You lift the lid of the ${container.name} — and it ERUPTS! ${ambush.first_encounter_text ?? ambush.description ?? `A ${ambush.name} springs out!`}`;
+            return res.json(roomResponse({ adventure, run, character, text, event: { type: 'ambush', command, character: ambush.slug }, events: [{ type: 'open', command, container: container.slug }, { type: 'ambush', character: ambush.slug }], intent: command }));
+          }
           const contentNames = getVisibleRoomEntities(run, adventure).placements
             .filter((placement) => placement.container === container.slug)
             .map((placement) => adventure.items.find((item) => item.slug === placement.item_slug)?.name ?? placement.item_slug);
