@@ -119,23 +119,27 @@ function itemChoice(item, openedContainers = new Set(), inspectedFeatures = new 
   return `${isCollectible(item) ? 'take' : 'read'} ${item.name ?? item.slug}`;
 }
 
-function choicesForRun(adventure, run) {
+function choicesForRun(adventure, run, character = null) {
   const room = getCurrentRoom(run, adventure);
   const entities = getVisibleRoomEntities(run, adventure);
   const items = visibleItems(adventure, entities);
   const opened = new Set(run.flags?.openedContainers ?? []);
   const inspected = new Set(run.flags?.inspectedFeatures ?? []);
   const exits = choicesForRoom(room);
+  // A carried magic-word item (TrollsFire) offers a tap-to-ignite/douse action.
+  const magicChoices = (character?.inventory ?? [])
+    .filter((it) => it.magic_word)
+    .map((it) => `${run.flags?.litItems?.[it.slug] ? 'Douse' : 'Ignite'} ${it.name}`);
   // Dedupe by choice text: a room can hold several items that share a display
   // name (e.g. two "inscription"s), which would otherwise render the same
   // button twice. One "Read Inscription" reads them all (see read_item).
   const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened, inspected)).filter(Boolean))];
-  const characterChoices = (entities.characters ?? []).flatMap((character) => {
-    const disposition = character.disposition ?? dispositionOf(character, run);
-    if (disposition === 'hostile') return [`attack ${character.name ?? character.slug}`];
-    return [`talk ${character.name ?? character.slug}`];
+  const characterChoices = (entities.characters ?? []).flatMap((entity) => {
+    const disposition = entity.disposition ?? dispositionOf(entity, run);
+    if (disposition === 'hostile') return [`attack ${entity.name ?? entity.slug}`];
+    return [`talk ${entity.name ?? entity.slug}`];
   });
-  return [...exits, ...itemChoices, ...characterChoices];
+  return [...exits, ...itemChoices, ...characterChoices, ...magicChoices];
 }
 
 function findItem(adventure, slugOrName) {
@@ -298,6 +302,11 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
       const npc = partyBySlug.get(c.slug);
       return { slug: c.slug, name: npc?.name ?? c.slug, hp: Math.max(0, c.hp ?? 0), maxHp: c.maxHp ?? npc?.hp ?? 0, escort: isEscort(npc) };
     }),
+    // Carried magic-word items (e.g. TrollsFire) + lit state, so the combat bar
+    // can offer a tap-to-ignite/douse button.
+    magicWords: (character.inventory ?? []).filter((it) => it.magic_word).map((it) => ({
+      slug: it.slug, name: it.name, word: it.magic_word, lit: !!run.flags?.litItems?.[it.slug],
+    })),
     spells: character.spells ?? {}, // so the combat scene can offer cast buttons
     potions: (character.inventory ?? []) // so combat can offer an emergency drink
       .filter((item) => item?.type === 'potion')
@@ -812,7 +821,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     event,
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
-    choices: choicesForRun(adventure, run),
+    choices: choicesForRun(adventure, run, character),
     state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
   });
 }
@@ -1227,9 +1236,15 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       // Magic words: speaking a carried item's word toggles its power. TrollsFire
-      // kindles/douses its green flame; lighting it unwielded singes you.
-      const spokenWord = normalizeTarget(req.body.input ?? '');
-      const magicItem = spokenWord && (character.inventory ?? []).find((it) => it.magic_word && normalizeTarget(it.magic_word) === spokenWord);
+      // kindles/douses its green flame; lighting it unwielded singes you. Accepts
+      // the bare word ("trollsfire") or a button label ("Ignite/Douse TrollsFire").
+      const rawWord = normalizeTarget(req.body.input ?? '');
+      const strippedWord = rawWord.replace(/^(ignite|light|kindle|douse|extinguish|snuff|say|speak)\s+/, '');
+      const magicItem = rawWord && (character.inventory ?? []).find((it) => it.magic_word && (
+        normalizeTarget(it.magic_word) === rawWord
+        || normalizeTarget(it.magic_word) === strippedWord
+        || normalizeTarget(it.name) === strippedWord
+      ));
       if (magicItem) {
         const nowLit = !run.flags?.litItems?.[magicItem.slug];
         run = { ...run, flags: { ...(run.flags ?? {}), litItems: { ...(run.flags?.litItems ?? {}), [magicItem.slug]: nowLit } } };

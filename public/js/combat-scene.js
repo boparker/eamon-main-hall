@@ -108,8 +108,8 @@ function mkBtn(label, command, variant) {
 
 const isMoveChoice = (c) => /^(north|south|east|west|up|down)$/i.test(String(c).trim());
 
-// Action bar order: attack/take/etc → cast spells you know → flee.
-function renderActions(choices, spells, potions) {
+// Action bar order: attack/take/etc → ignite magic blade → cast spells → flee.
+function renderActions(choices, spells, potions, magicWords) {
   const el = document.getElementById('combat-actions');
   el.replaceChildren();
   const all = choices ?? [];
@@ -117,6 +117,10 @@ function renderActions(choices, spells, potions) {
   for (const choice of all.filter((c) => !isMoveChoice(c))) {
     const isAttack = /^attack/i.test(String(choice));
     el.appendChild(mkBtn(formatActionLabel(choice), choice, isAttack ? 'primary' : ''));
+  }
+  // Tap-to-ignite a carried magic blade (TrollsFire).
+  for (const mw of magicWords ?? []) {
+    el.appendChild(mkBtn(`${mw.lit ? '🔥 Douse' : '🔥 Ignite'} ${cap(mw.name)}`, mw.word, 'flame'));
   }
   for (const [name, ability] of Object.entries(spells ?? {})) {
     if (Number(ability) > 0) el.appendChild(mkBtn(`Cast ${cap(name)} (${ability}%)`, `cast ${name}`, 'cast'));
@@ -131,6 +135,42 @@ function renderActions(choices, spells, potions) {
   }
   for (const dir of all.filter(isMoveChoice)) {
     el.appendChild(mkBtn(`Flee ${cap(String(dir).trim())}`, dir, 'flee'));
+  }
+}
+
+// Party HP strip: a small bar per companion fighting beside you. Escorts (who
+// flee and can't be harmed) show a "sheltering" tag instead of a health bar.
+function renderCompanions(companions) {
+  const el = document.getElementById('combat-companions');
+  if (!el) return;
+  el.replaceChildren();
+  const list = companions ?? [];
+  el.hidden = list.length === 0;
+  for (const c of list) {
+    const row = document.createElement('div');
+    row.className = 'combat-comp' + (c.hp <= 0 ? ' fallen' : '');
+    const name = document.createElement('span');
+    name.className = 'combat-comp-name';
+    name.textContent = c.name;
+    row.appendChild(name);
+    if (c.escort) {
+      const tag = document.createElement('span');
+      tag.className = 'combat-comp-tag';
+      tag.textContent = '↩ sheltering';
+      row.appendChild(tag);
+    } else {
+      const bar = document.createElement('div');
+      bar.className = 'combat-comp-bar';
+      const fill = document.createElement('div');
+      fill.className = 'combat-comp-fill';
+      fill.style.width = pct(c.hp, c.maxHp) + '%';
+      const t = document.createElement('span');
+      t.className = 'combat-comp-hptext';
+      t.textContent = `${Math.max(0, c.hp)}/${c.maxHp}`;
+      bar.append(fill, t);
+      row.appendChild(bar);
+    }
+    el.appendChild(row);
   }
 }
 
@@ -149,6 +189,7 @@ export function renderCombat(combat, choices, text) {
   setRollReadout(combat.round);
   setHp('player', combat.player?.hp ?? 0, combat.player?.maxHp ?? 0);
   setHp('enemy', combat.enemy.hp ?? 0, combat.enemy.maxHp ?? 0);
+  renderCompanions(combat.companions);
 
   const round = combat.round;
   // Player's action: a spell (blast damages, heal restores) or a normal attack.
@@ -181,7 +222,7 @@ export function renderCombat(combat, choices, text) {
     singleAction('Return to the Guild Hall', () => { if (_onReturnToHall) _onReturnToHall(); });
   } else {
     banner.hidden = true;
-    renderActions(choices, combat.spells, combat.potions);
+    renderActions(choices, combat.spells, combat.potions, combat.magicWords);
   }
 }
 
@@ -191,6 +232,8 @@ export function hideCombat() {
   document.getElementById('game-screen')?.classList.remove('in-combat');
   const banner = document.getElementById('combat-banner');
   if (banner) banner.hidden = true;
+  const comps = document.getElementById('combat-companions');
+  if (comps) comps.hidden = true;
   document.getElementById('combatant-enemy')?.classList.remove('defeated');
   document.getElementById('combatant-player')?.classList.remove('defeated');
 }
