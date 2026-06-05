@@ -58,6 +58,17 @@ function visibleCharacters(entities) {
   return namesFrom(entities?.characters ?? entities?.entities ?? []);
 }
 
+// Split the room's characters into companions travelling with you vs. everyone
+// else, so room text reads "Travelling with you: Cynthia." rather than implying
+// she is a stranger standing in the room.
+function partyAndRoomCharacters(entities) {
+  const list = Array.isArray(entities) ? entities : (entities?.characters ?? entities?.entities ?? []);
+  const objs = Array.isArray(list) ? list : [];
+  const companions = namesFrom(objs.filter((c) => c && typeof c === 'object' && c.following));
+  const others = namesFrom(objs.filter((c) => !(c && typeof c === 'object' && c.following)));
+  return { companions, others };
+}
+
 function visibleItems(entities, items) {
   const sources = [];
 
@@ -164,17 +175,18 @@ function isItemObjectList(items) {
 export function renderRoom(room, entities = {}, items = {}, exits = undefined) {
   const title = sentence(room?.name ?? room?.title, 'Unknown Room');
   const description = sentence(room?.description ?? room?.narration_text ?? room?.text, 'There is nothing notable here.');
-  const characters = visibleCharacters(entities);
+  const { companions, others } = partyAndRoomCharacters(entities);
   const itemNames = isItemObjectList(items) ? collectibleNames(items) : visibleItems(entities, items);
   const exitNames = validExitNames(exits ?? room?.exits);
 
   return [
     title,
     description,
-    characters.length > 0 ? `You see: ${characters.join(', ')}.` : 'You see no one else here.',
+    others.length > 0 ? `You see: ${others.join(', ')}.` : 'You see no one else here.',
+    companions.length > 0 ? `Travelling with you: ${companions.join(', ')}.` : null,
     itemNames.length > 0 ? `Items here: ${itemNames.join(', ')}.` : 'Items here: none.',
     exitNames.length > 0 ? `Exits: ${exitNames.join(', ')}.` : 'Exits: none.',
-  ].join('\n');
+  ].filter((line) => line !== null).join('\n');
 }
 
 export function renderCombatResult(result = {}) {

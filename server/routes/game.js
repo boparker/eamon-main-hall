@@ -12,8 +12,15 @@ import {
   markEnemyDefeated,
   markItemCollected,
   move,
+  dispositionOf,
+  getCompanions,
+  recordEncounter,
+  recruitCompanion,
+  setCompanionHp,
+  removeCompanion,
 } from '../engine/adventures.js';
-import { resolveAttack, resolveCombatRound } from '../engine/combat.js';
+import { resolveAttack, resolveCombatRound, resolvePartyRound } from '../engine/combat.js';
+import { resolveEncounter, isEscort, buildFighter } from '../engine/companions.js';
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
 import {
@@ -119,7 +126,8 @@ function choicesForRun(adventure, run) {
   // button twice. One "Read Inscription" reads them all (see read_item).
   const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened, inspected)).filter(Boolean))];
   const characterChoices = (entities.characters ?? []).flatMap((character) => {
-    if (character.type === 'enemy' || character.type === 'boss') return [`attack ${character.name ?? character.slug}`];
+    const disposition = character.disposition ?? dispositionOf(character, run);
+    if (disposition === 'hostile') return [`attack ${character.name ?? character.slug}`];
     return [`talk ${character.name ?? character.slug}`];
   });
   return [...exits, ...itemChoices, ...characterChoices];
@@ -188,7 +196,7 @@ function findVisibleEnemy(adventure, run, target) {
   const normalized = normalizeTarget(target);
   const visible = getVisibleRoomEntities(run, adventure);
   return (visible.characters ?? []).find((character) => (
-    character.type === 'enemy' || character.type === 'boss'
+    (character.disposition ?? dispositionOf(character, run)) === 'hostile'
   ) && (
     normalizeTarget(character.slug) === normalized || normalizeTarget(character.name) === normalized
   )) ?? null;
@@ -196,7 +204,65 @@ function findVisibleEnemy(adventure, run, target) {
 
 function visibleEnemy(adventure, run) {
   const visible = getVisibleRoomEntities(run, adventure);
-  return (visible.characters ?? []).find((c) => c.type === 'enemy' || c.type === 'boss') ?? null;
+  return (visible.characters ?? []).find((c) => (c.disposition ?? dispositionOf(c, run)) === 'hostile') ?? null;
+}
+
+// Roll friend-or-foe for any unresolved "random" NPCs in the player's current
+// room (charisma-gated), recruiting the friendly ones. Pure: returns the updated
+// run + a narration note + events. Caller persists.
+function resolveRoomEncounters(run, adventure, character, rng) {
+  const room = getCurrentRoom(run, adventure);
+  const defeated = new Set(run.defeatedEnemies);
+  const resolved = run.flags?.encounters ?? {};
+  const notes = [];
+  const events = [];
+  let next = run;
+  for (const npc of adventure.characters) {
+    if (npc.location_room !== room.room_number) continue;
+    if (npc.encounter_behavior !== 'random') continue;
+    if (defeated.has(npc.slug) || resolved[npc.slug]) continue;
+    const outcome = resolveEncounter(npc, character.charisma, rng);
+    next = recordEncounter(next, npc.slug, outcome);
+    const who = npc.name ?? npc.slug;
+    if (outcome === 'friend') {
+      next = recruitCompanion(next, npc);
+      notes.push(`${who} sizes you up, decides you are a friend, and joins your party.`);
+      events.push({ type: 'recruit', character: npc.slug });
+    } else {
+      notes.push(`${who} eyes you with hostility and reaches for a weapon.`);
+      events.push({ type: 'turned_hostile', character: npc.slug });
+    }
+  }
+  return { run: next, note: notes.join(' '), events };
+}
+
+// Transient combat entities for the fighting companions (escorts like Cynthia
+// flee and are excluded). HP comes from the persisted party state.
+function companionFighters(run, adventure) {
+  const bySlug = new Map(adventure.characters.map((c) => [c.slug, c]));
+  return getCompanions(run)
+    .map((c) => {
+      const npc = bySlug.get(c.slug);
+      if (!npc || isEscort(npc)) return null;
+      return buildFighter(npc, c.hp);
+    })
+    .filter(Boolean);
+}
+
+// Any escort companions (Cynthia) delivered alive to the Hall pay out 10×Charisma
+// gold from their grateful patron. Returns the gold gained + a narration line.
+function deliverEscorts(character, run, adventure) {
+  const bySlug = new Map(adventure.characters.map((c) => [c.slug, c]));
+  let gold = 0;
+  const lines = [];
+  for (const c of getCompanions(run)) {
+    const npc = bySlug.get(c.slug);
+    if (!npc || !isEscort(npc)) continue;
+    const reward = 10 * (Number(character.charisma) || 0);
+    gold += reward;
+    lines.push(`You return ${npc.name ?? npc.slug} safely. ${npc.patron ?? 'Her grateful father'} rewards you with ${reward} gold.`);
+  }
+  return { gold, message: lines.join(' ') };
 }
 
 function combatSide(attack) {
@@ -219,9 +285,14 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   const maxHp = enemy.hp ?? 0;
   const hp = Math.max(0, run.enemyHp?.[enemy.slug] ?? maxHp);
   if (!result && round === undefined && hp <= 0) return null;
+  const partyBySlug = new Map((adventure?.characters ?? []).map((c) => [c.slug, c]));
   return {
     enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp },
     player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0 },
+    companions: getCompanions(run).map((c) => {
+      const npc = partyBySlug.get(c.slug);
+      return { slug: c.slug, name: npc?.name ?? c.slug, hp: Math.max(0, c.hp ?? 0), maxHp: c.maxHp ?? npc?.hp ?? 0, escort: isEscort(npc) };
+    }),
     spells: character.spells ?? {}, // so the combat scene can offer cast buttons
     potions: (character.inventory ?? []) // so combat can offer an emergency drink
       .filter((item) => item?.type === 'potion')
@@ -720,15 +791,16 @@ function healerResponse({ player, character, characters, adventures, prefix = ''
   });
 }
 
-function roomResponse({ adventure, run, character, text = null, event = { type: 'look' }, intent = null, events = null }) {
+function roomResponse({ adventure, run, character, text = null, prefix = null, event = { type: 'look' }, intent = null, events = null }) {
   const room = getCurrentRoom(run, adventure);
   const entities = getVisibleRoomEntities(run, adventure);
   const items = visibleItems(adventure, entities);
+  const body = text ?? renderRoom(room, entities, items, room.exits);
   return canonicalResponse({
     intent,
     event,
     events,
-    text: text ?? renderRoom(room, entities, items, room.exits),
+    text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run),
     state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
   });
@@ -1144,7 +1216,14 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'look') {
-        return res.json(roomResponse({ adventure, run, character, event: { type: 'look', command }, intent: command }));
+        // Resolve any not-yet-rolled random encounters here (e.g. a resumed run).
+        const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
+        if (encounter.run !== run) {
+          run = encounter.run;
+          const saved = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(saved) ?? run;
+        }
+        return res.json(roomResponse({ adventure, run, character, prefix: encounter.note || null, event: { type: 'look', command }, intent: command }));
       }
 
       if (command.type === 'inventory' || command.type === 'stats') {
@@ -1164,6 +1243,9 @@ export function createGameRouter(rawDeps = {}) {
         if (result.destination === 'main-hall') {
           const conversion = convertTreasuresOnReturn(character);
           character = conversion.character;
+          // Escort companions (Cynthia) delivered alive pay their patron's reward.
+          const escort = deliverEscorts(character, run, adventure);
+          if (escort.gold > 0) character = { ...character, gold: (character.gold ?? 0) + escort.gold };
           // Wounds persist between adventures — the Healer in the Hall restores
           // HP for gold, so health is a real resource (not free on return).
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
@@ -1176,16 +1258,26 @@ export function createGameRouter(rawDeps = {}) {
             characters: [updatedCharacter],
             adventures,
             character: rowCharacter(updatedCharacter),
-            prefix: renderReturnToHall({ ...conversion, completed: true }),
+            prefix: [renderReturnToHall({ ...conversion, completed: true }), escort.message].filter(Boolean).join(' '),
           });
           hall.intent = command;
-          hall.events = [{ type: 'return_to_hall', command }];
+          hall.events = escort.gold > 0
+            ? [{ type: 'return_to_hall', command }, { type: 'escort_reward', gold: escort.gold }]
+            : [{ type: 'return_to_hall', command }];
           hall.event = hall.events[0];
           hall.state.adventureRun = rowRun(completedRun);
           return res.json(hall);
         }
+        // Entering a room rolls friend-or-foe for any "random" NPCs there.
+        const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
+        run = encounter.run;
         const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
-        return res.json(roomResponse({ adventure, run: rowRun(updatedRun), character, event: { type: 'move', command }, intent: command }));
+        return res.json(roomResponse({
+          adventure, run: rowRun(updatedRun), character,
+          prefix: encounter.note || null,
+          event: { type: 'move', command }, events: encounter.events.length ? [{ type: 'move', command }, ...encounter.events] : null,
+          intent: command,
+        }));
       }
 
       if (command.type === 'read_item') {
@@ -1339,13 +1431,39 @@ export function createGameRouter(rawDeps = {}) {
         }
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
         applyEquipmentToCombatant(character, run);
-        const combat = resolveCombatRound(character, enemy, deps.rng);
+        const fighters = companionFighters(run, adventure);
+        // With fighting companions, the whole party trades blows; otherwise the
+        // classic player↔enemy round (keeps existing behaviour identical).
+        const combat = fighters.length
+          ? resolvePartyRound({ character, fighters, enemy, rng: deps.rng })
+          : resolveCombatRound(character, enemy, deps.rng);
         character.hd = character.hp;
         run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
+        // Persist companion HP + cull any who fell this round.
+        for (const f of fighters) run = setCompanionHp(run, f.slug, f.hp);
         const events = [{ type: 'combat', command, enemy: enemyTemplate.slug }];
+        const extraText = [];
+        for (const att of combat.companionAttacks ?? []) {
+          extraText.push(att.attack.hit ? `${att.name} strikes ${enemyTemplate.name} for ${att.attack.damage}.` : `${att.name} swings at ${enemyTemplate.name} and misses.`);
+        }
+        for (const slug of combat.fallen ?? []) {
+          run = removeCompanion(run, slug);
+          const who = adventure.characters.find((c) => c.slug === slug)?.name ?? slug;
+          extraText.push(`${who} falls in battle!`);
+          events.push({ type: 'companion_fallen', character: slug });
+        }
         if (combat.enemyDefeated) {
           run = markEnemyDefeated(run, enemyTemplate.slug);
           events.push({ type: 'enemy_defeated', enemy: enemyTemplate.slug });
+          // Defeating a captor frees their prisoner, who joins your party.
+          if (enemyTemplate.frees_on_defeat) {
+            const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
+            if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) {
+              run = recruitCompanion(run, captive);
+              extraText.push(`${captive.name ?? captive.slug} is free, and gratefully joins you.`);
+              events.push({ type: 'recruit', character: captive.slug });
+            }
+          }
         }
         if (combat.characterDefeated) {
           character.isAlive = false;
@@ -1360,7 +1478,7 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(canonicalResponse({
           intent: command,
           events,
-          text: renderCombatResult(combat),
+          text: [renderCombatResult(combat), ...extraText].filter(Boolean).join('\n'),
           choices: combat.characterDefeated ? [] : choicesForRun(adventure, run),
           state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat: combatState },
         }));
@@ -1411,6 +1529,11 @@ export function createGameRouter(rawDeps = {}) {
           if (enemy.hp <= 0) {
             enemyDefeated = true;
             run = markEnemyDefeated(run, enemyTemplate.slug);
+            // A spell-killed captor still frees their prisoner.
+            if (enemyTemplate.frees_on_defeat) {
+              const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
+              if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) run = recruitCompanion(run, captive);
+            }
           } else {
             enemyAttack = resolveAttack(enemy, character, deps.rng);
             character.hd = character.hp;
@@ -1449,7 +1572,7 @@ export function createGameRouter(rawDeps = {}) {
         }
         const name = target.name ?? target.slug ?? 'They';
         // Hostile foes won't parley — talking doesn't dump their look-description.
-        if (target.type === 'enemy' || target.type === 'boss' || target.friendliness === 'hostile' || target.is_hostile === true) {
+        if ((target.disposition ?? dispositionOf(target, run)) === 'hostile') {
           return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'hostile', character: target.slug ?? name }, text: `${name} answers only with a snarl — words will not help you here.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const dialogue = target.dialogue ?? target.text ?? `${name} gives you a quiet nod but has little to say.`;
@@ -1462,6 +1585,8 @@ export function createGameRouter(rawDeps = {}) {
         // death forfeits the haul). Keeps loot from ever becoming dead weight.
         const conversion = convertTreasuresOnReturn(character);
         character = conversion.character;
+        const escort = deliverEscorts(character, run, adventure);
+        if (escort.gold > 0) character = { ...character, gold: (character.gold ?? 0) + escort.gold };
         const leftRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
         character = rowCharacter(leftRow) ?? character;
         const hall = hallResponse({
@@ -1469,9 +1594,12 @@ export function createGameRouter(rawDeps = {}) {
           characters: leftRow ? [leftRow] : [],
           adventures,
           character,
-          prefix: conversion.goldGained > 0
-            ? `You abandon the adventure and return to the Great Hall. Sam Slicker weighs your plunder: ${conversion.goldGained} gold.`
-            : 'You abandon the adventure and return to the Great Hall.',
+          prefix: [
+            conversion.goldGained > 0
+              ? `You abandon the adventure and return to the Great Hall. Sam Slicker weighs your plunder: ${conversion.goldGained} gold.`
+              : 'You abandon the adventure and return to the Great Hall.',
+            escort.message,
+          ].filter(Boolean).join(' '),
         });
         hall.intent = command;
         hall.events = [{ type: 'abandon', command }];

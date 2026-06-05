@@ -409,6 +409,8 @@
     .room-char-card { width: clamp(150px, 18vw, 210px); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); box-shadow: 0 12px 34px rgba(0,0,0,0.5); animation: lineIn 0.45s ease-out forwards; }
     .rc-art { position: relative; width: 100%; aspect-ratio: 4 / 5; }
     .rc-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rc-follow-badge { position: absolute; top: 6px; left: 6px; z-index: 2; font-family: var(--font-head); font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: #1a1206; background: linear-gradient(180deg, #e8d39a, #c8a84b); padding: 2px 7px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .room-char-card.following { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim), 0 12px 34px rgba(0,0,0,0.5); }
     .rc-crest { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-head); font-size: 4.6rem; line-height: 1; color: #e8d39a; background: radial-gradient(120% 120% at 50% 30%, rgba(70,56,34,0.6), rgba(8,6,5,0.96)); text-shadow: 0 0 24px rgba(200,168,75,0.5); }
     .room-char-card[data-kind="monster"] .rc-crest { color: #ff9c78; background: radial-gradient(120% 120% at 50% 30%, rgba(86,32,24,0.7), rgba(8,5,5,0.97)); text-shadow: 0 0 24px rgba(255,120,80,0.55); }
     .rc-name { padding: 8px 8px 2px; font-family: var(--font-head); font-size: 0.92rem; color: var(--gold); text-align: center; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

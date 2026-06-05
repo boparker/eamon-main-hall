@@ -604,7 +604,9 @@
       "location_room": 18,
       "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style.",
       "canonical_name": "Priest",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "frees_on_defeat": "cynthia",
+      "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman."
     },
     {
       "id": "beginners-cave-cynthia",
@@ -626,7 +628,8 @@
       "location_room": 18,
       "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style.",
       "canonical_name": "Cynthia",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "escort": true
     },
     {
       "id": "beginners-cave-hermit",
