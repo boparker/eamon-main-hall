@@ -1218,3 +1218,70 @@ test('a low roll turns the hermit hostile and attackable instead of friendly', a
   assert.ok(east.body.events.some((e) => e.type === 'turned_hostile' && e.character === 'hermit'));
   assert.ok(east.body.choices.includes('attack Hermit'));
 });
+
+// ── Beginner's Cave twists: TrollsFire magic word + mimic chest ───────────────
+const twistsAdventure = {
+  adventure: { id: 'beginners-cave', name: "The Beginner's Cave", start_room: 1 },
+  locations: [
+    { id: 't1', room_number: 1, name: 'Entrance', narration_text: 'A blade lies here.', exits: { north: 'main-hall', south: 2, east: null, west: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 't2', room_number: 2, name: 'Cell', narration_text: 'A chest waits.', exits: { north: 1, south: null, east: null, west: null, up: null, down: null }, treasure: [], requires: null },
+  ],
+  characters: [
+    { id: 'dummy-1', slug: 'dummy', name: 'Dummy', type: 'enemy', friendliness: 'hostile', hp: 100, agility: 0, damage_dice: '1d1', location_room: 1, current_hp_from: 'hp' },
+    { id: 'mimic-1', slug: 'mimic', name: 'Mimic', type: 'enemy', friendliness: 'hostile', hp: 7, agility: 0, damage_dice: '1d2', location_room: 2, hidden_until_opened: 'mimic-chest', first_encounter_text: 'A tentacled horror lunges from the chest!', current_hp_from: 'hp' },
+  ],
+  items: [
+    { id: 'tf-1', slug: 'trollsfire', name: 'TrollsFire', type: 'weapon', value: 125, weight: 8, damage_dice: '2d10', magic_word: 'trollsfire', stats: { damage: '2d10', weaponOdds: 0, flameDamage: '3d12', flameOdds: 40 } },
+    { id: 'mc-1', slug: 'mimic-chest', name: 'chest', type: 'container', description: 'A wooden chest.', value: 0, weight: -999, collectible: false },
+  ],
+  placements: [
+    { item_slug: 'trollsfire', room_number: 1, hidden: false },
+    { item_slug: 'mimic-chest', room_number: 2, hidden: false },
+  ],
+};
+
+async function startTwistsRun(rng) {
+  const { app } = makeApp(makeDeps({ adventures: [twistsAdventure], rng }));
+  const created = await createAccountCharacter(app, { agility: 12 });
+  const charId = created.body.state.character.id;
+  const start = await startAccountAdventure(app, charId);
+  return { app, charId, runId: start.body.state.adventureRun.id };
+}
+
+test('TrollsFire: speaking its name ignites green flame and boosts a wielded blade', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  await accountCommand(app, charId, runId, 'take trollsfire');
+  await accountCommand(app, charId, runId, 'ready trollsfire');
+  const unlit = await accountCommand(app, charId, runId, 'attack dummy');
+  assert.equal(unlit.body.state.combat.round.player.damage, 20); // 2d10 max
+
+  const say = await accountCommand(app, charId, runId, 'trollsfire');
+  assert.ok(say.body.events.some((e) => e.type === 'magic_word' && e.lit === true));
+  assert.match(say.body.text, /green fire/i);
+
+  const lit = await accountCommand(app, charId, runId, 'attack dummy');
+  assert.equal(lit.body.state.combat.round.player.damage, 36); // 3d12 max while lit
+});
+
+test('TrollsFire: lighting it while not wielding it singes you', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  const took = await accountCommand(app, charId, runId, 'take trollsfire'); // carried, not readied
+  const hpBefore = took.body.state.character.hd;
+  const say = await accountCommand(app, charId, runId, 'trollsfire');
+  assert.match(say.body.text, /sear/i);
+  assert.equal(say.body.state.character.hd, hpBefore - 3);
+});
+
+test('Mimic: the chest is harmless until opened, then erupts into an attackable mimic', async () => {
+  const { app, charId, runId } = await startTwistsRun(() => 0.99);
+  await accountCommand(app, charId, runId, 'south');
+  const early = await accountCommand(app, charId, runId, 'attack mimic');
+  assert.match(early.body.text, /no mimic/i); // still disguised
+
+  const open = await accountCommand(app, charId, runId, 'open chest');
+  assert.match(open.body.text, /ERUPTS/);
+  assert.ok(open.body.events.some((e) => e.type === 'ambush' && e.character === 'mimic'));
+
+  const fight = await accountCommand(app, charId, runId, 'attack mimic');
+  assert.ok(fight.body.events.some((e) => e.type === 'combat' && e.enemy === 'mimic'));
+});

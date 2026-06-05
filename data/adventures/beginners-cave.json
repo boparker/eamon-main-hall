@@ -717,7 +717,8 @@
       "location_room": 14,
       "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style.",
       "canonical_name": "Mimic",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "hidden_until_opened": "mimic-chest"
     },
     {
       "id": "beginners-cave-pirate",
@@ -851,7 +852,14 @@
       "weight": 8,
       "damage_dice": "2d10",
       "canonical_name": "TrollsFire",
-      "text_source": "kdechant/eamon artifact.description"
+      "text_source": "kdechant/eamon artifact.description",
+      "magic_word": "trollsfire",
+      "stats": {
+        "damage": "2d10",
+        "weaponOdds": 0,
+        "flameDamage": "3d12",
+        "flameOdds": 40
+      }
     },
     {
       "id": "beginners-cave-jewels",
@@ -971,6 +979,25 @@
       "description": "A small twist of cloth holds a handful of tarnished silver coins — a prisoner's hidden savings, never spent.",
       "value": 75,
       "weight": 1
+    },
+    {
+      "id": "beginners-cave-mimic-chest",
+      "slug": "mimic-chest",
+      "name": "chest",
+      "type": "container",
+      "description": "A wooden chest sits invitingly against the cavern wall, its lid slightly ajar.",
+      "value": 0,
+      "weight": -999,
+      "collectible": false
+    },
+    {
+      "id": "beginners-cave-gold-ring",
+      "slug": "gold-ring",
+      "name": "gold ring",
+      "type": "treasure",
+      "description": "A heavy gold ring lies among the mimic's remains.",
+      "value": 60,
+      "weight": 1
     }
   ],
   "placements": [
@@ -1066,6 +1093,15 @@
       "item_slug": "writing-ready-wear",
       "room_number": 7,
       "hidden": false
+    },
+    {
+      "item_slug": "mimic-chest",
+      "room_number": 14,
+      "hidden": false
+    },
+    {
+      "item_slug": "gold-ring",
+      "after_defeating": "mimic"
     }
   ]
 }

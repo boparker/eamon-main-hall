@@ -147,7 +147,9 @@ export function getVisibleRoomEntities(run, adventure) {
     characters: [
       ...adventure.characters
         .filter((character) => character.location_room === room.room_number
-          && !defeatedEnemies.has(character.slug) && !companionSlugs.has(character.slug))
+          && !defeatedEnemies.has(character.slug) && !companionSlugs.has(character.slug)
+          // A disguised monster (e.g. a mimic) stays hidden until its container is opened.
+          && (!character.hidden_until_opened || openedContainers.has(character.hidden_until_opened)))
         .map((character) => ({ ...character, disposition: dispositionOf(character, run) })),
       ...companionEntities,
     ],
