@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isDead, resolveAttack, resolveCombatRound } from '../../server/engine/combat.js';
+import { isDead, resolveAttack, resolveCombatRound, resolvePartyRound } from '../../server/engine/combat.js';
 
 function sequenceRng(values) {
   const rolls = [...values];
@@ -147,4 +147,52 @@ test('resolveAttack handles invalid rng by falling back to deterministic minimum
   assert.equal(result.rawDamage, 1);
   assert.equal(result.damage, 1);
   assert.equal(result.defenderHp, 4);
+});
+
+test('resolvePartyRound: player + companion both strike the enemy, then the enemy hits one party member', () => {
+  // Constant high rng -> every attack hits; d20 -> 20, 1d4 -> 4 damage.
+  const rng = () => 0.99;
+  const character = { agility: 5, damage_dice: '1d4', hp: 20 };
+  const enemy = { hp: 50, agility: 0, defense: 0, damage_dice: '1d4' };
+  const hermit = { slug: 'hermit', name: 'Hermit', agility: 0, damage_dice: '1d4', hp: 10, defense: 0 };
+
+  const round = resolvePartyRound({ character, fighters: [hermit], enemy, rng });
+
+  assert.equal(round.playerAttack.hit, true);
+  assert.equal(round.playerAttack.damage, 4);
+  assert.equal(round.companionAttacks.length, 1);
+  assert.equal(round.companionAttacks[0].slug, 'hermit');
+  assert.equal(round.companionAttacks[0].attack.damage, 4);
+  assert.equal(enemy.hp, 42); // 50 - 4 (player) - 4 (hermit)
+  assert.equal(round.enemyDefeated, false);
+  // party = [player, hermit]; floor(0.99*2) = 1 -> enemy strikes the hermit.
+  assert.equal(round.enemyTarget, 'hermit');
+  assert.equal(round.enemyAttack.hit, true);
+  assert.equal(hermit.hp, 6);
+  assert.equal(round.characterDefeated, false);
+  assert.deepEqual(round.fallen, []);
+});
+
+test('resolvePartyRound: a companion struck below zero is reported as fallen', () => {
+  const rng = () => 0.99;
+  const character = { agility: 5, damage_dice: '1d4', hp: 20 };
+  const enemy = { hp: 50, agility: 0, defense: 0, damage_dice: '1d4' };
+  const hermit = { slug: 'hermit', name: 'Hermit', agility: 0, damage_dice: '1d4', hp: 3, defense: 0 };
+
+  const round = resolvePartyRound({ character, fighters: [hermit], enemy, rng });
+
+  assert.equal(round.enemyTarget, 'hermit');
+  assert.equal(hermit.hp, 0); // 3 - 4, clamped
+  assert.deepEqual(round.fallen, ['hermit']);
+});
+
+test('resolvePartyRound with no fighters matches the classic player↔enemy exchange', () => {
+  const rng = () => 0.99;
+  const character = { agility: 5, damage_dice: '1d4', hp: 20 };
+  const enemy = { hp: 50, agility: 0, defense: 0, damage_dice: '1d4' };
+
+  const round = resolvePartyRound({ character, fighters: [], enemy, rng });
+  assert.equal(round.companionAttacks.length, 0);
+  assert.equal(round.enemyTarget, 'player'); // only the player to hit
+  assert.equal(enemy.hp, 46);
 });

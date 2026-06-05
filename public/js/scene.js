@@ -152,13 +152,21 @@ const DISPOSITION_LABEL = { monster: '⚔ Hostile', friendly: '✦ Friendly', ne
 
 // Build one character card. Prefers painted portrait art (by explicit `image`
 // path or cache); falls back to a monogram crest if none exists / fails to load.
-function characterCard({ name, kind, image }) {
+function characterCard({ name, kind, image, following }) {
   const card = document.createElement('div');
-  card.className = 'room-char-card';
+  card.className = 'room-char-card' + (following ? ' following' : '');
   card.dataset.kind = kind === 'monster' ? 'monster' : (kind === 'neutral' ? 'neutral' : 'friendly');
 
   const art = document.createElement('div');
   art.className = 'rc-art';
+
+  // A companion travelling with you gets a gold "Following" ribbon.
+  if (following) {
+    const badge = document.createElement('span');
+    badge.className = 'rc-follow-badge';
+    badge.textContent = '✦ Following';
+    art.appendChild(badge);
+  }
 
   const crest = () => {
     const c = document.createElement('span');

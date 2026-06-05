@@ -85,8 +85,14 @@ function updateRoomRail(response) {
 
   const characters = response.state?.entities?.characters;
   if (Array.isArray(characters)) {
-    const isHostile = (c) => c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile';
-    const kindOf = (c) => (isHostile(c) ? 'monster' : c.friendliness === 'friendly' ? 'friendly' : 'neutral');
+    // Prefer the server's resolved disposition (handles charisma friend-or-foe
+    // rolls); fall back to the static fields for older payloads.
+    const kindOf = (c) => {
+      const d = c.disposition
+        ?? (c.type === 'enemy' || c.type === 'boss' || c.friendliness === 'hostile' ? 'hostile'
+          : c.friendliness === 'friendly' ? 'friendly' : 'neutral');
+      return d === 'hostile' ? 'monster' : d === 'friendly' ? 'friendly' : 'neutral';
+    };
     // Painted portraits live beside the room art: scenes/<adventure>/portraits/<slug>.png
     const portraitDir = (response.state?.background || '').replace(/room-\d+\.png.*$/, 'portraits/');
     const people = characters
@@ -94,6 +100,7 @@ function updateRoomRail(response) {
       .map((c) => ({
         name: c.name ?? c.slug,
         kind: kindOf(c),
+        following: c.following === true,
         image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png` : undefined,
       }));
     renderRoomCharacters(people);

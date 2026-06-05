@@ -121,6 +121,50 @@ export function resolveAttack(attacker, defender, rng = Math.random) {
   };
 }
 
+// A full combat round for the player AND any fighting companions against one
+// enemy. Companions strike after the player; then the enemy strikes back at a
+// randomly chosen party member (player or a living companion). Escort companions
+// (e.g. Cynthia) are NOT passed in here — they flee and cannot be targeted.
+//
+// `fighters` are transient combat entities (see companions.buildFighter); their
+// hp is mutated in place so the caller can persist it. Returns a payload shaped
+// like resolveCombatRound plus companion detail.
+export function resolvePartyRound({ character, fighters = [], enemy, rng = Math.random }) {
+  const combatRng = safeRng(rng);
+  const playerAttack = resolveAttack(character, enemy, combatRng);
+
+  const companionAttacks = [];
+  for (const fighter of fighters) {
+    if (isDead(enemy)) break;
+    if (isDead(fighter)) continue;
+    companionAttacks.push({ slug: fighter.slug, name: fighter.name, attack: resolveAttack(fighter, enemy, combatRng) });
+  }
+
+  const enemyDefeated = isDead(enemy);
+  let enemyAttack = null;
+  let enemyTarget = null;
+  const fallen = [];
+
+  if (!enemyDefeated) {
+    // The enemy lashes out at one random member of the party still standing.
+    const party = [{ key: 'player', ent: character }, ...fighters.filter((f) => !isDead(f)).map((f) => ({ key: f.slug, ent: f }))];
+    const pick = party[Math.floor(combatRng() * party.length)] ?? party[0];
+    enemyTarget = pick.key;
+    enemyAttack = resolveAttack(enemy, pick.ent, combatRng);
+    if (pick.key !== 'player' && isDead(pick.ent)) fallen.push(pick.key);
+  }
+
+  return {
+    playerAttack,
+    companionAttacks,
+    enemyAttack,
+    enemyTarget,
+    enemyDefeated: isDead(enemy),
+    characterDefeated: isDead(character),
+    fallen,
+  };
+}
+
 export function resolveCombatRound(character, enemy, rng = Math.random) {
   const playerAttack = resolveAttack(character, enemy, rng);
   const enemyDefeated = isDead(enemy);

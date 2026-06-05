@@ -1156,3 +1156,65 @@ test('POST /api/game/start-adventure rejects dead characters', async () => {
   assert.equal(started.status, 409);
   assert.match(started.body.text, /dead|defeated/i);
 });
+
+// ── Companion / NPC follower system ───────────────────────────────────────────
+const companionAdventure = {
+  adventure: { id: 'beginners-cave', name: "The Beginner's Cave", start_room: 1 },
+  locations: [
+    { id: 'c1', room_number: 1, name: 'Entrance', narration_text: 'A cave mouth waits.', exits: { north: 'main-hall', south: 2, east: null, west: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 'c2', room_number: 2, name: 'Temple', narration_text: 'An altar looms.', exits: { north: 1, south: null, east: 3, west: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 'c3', room_number: 3, name: 'Nook', narration_text: 'A grizzled figure waits.', exits: { west: 2, north: null, south: null, east: null, up: null, down: null }, treasure: [], requires: null },
+  ],
+  characters: [
+    { id: 'priest-1', slug: 'priest', name: 'Priest', type: 'enemy', friendliness: 'hostile', hp: 1, agility: 0, damage_dice: '1d1', location_room: 2, frees_on_defeat: 'cynthia', current_hp_from: 'hp' },
+    { id: 'cynthia-1', slug: 'cynthia', name: 'Cynthia', type: 'npc', friendliness: 'friendly', escort: true, hp: 5, agility: 5, damage_dice: '0d0', location_room: 2, dialogue: 'Take me to my father!' },
+    { id: 'hermit-1', slug: 'hermit', name: 'Hermit', type: 'npc', friendliness: 'neutral', encounter_behavior: 'random', hp: 5, agility: 0, damage_dice: '1d4', location_room: 3, dialogue: 'Hmph.' },
+  ],
+  items: [],
+  placements: [],
+};
+
+async function startCompanionRun(rng, charisma = 15) {
+  const { app } = makeApp(makeDeps({ adventures: [companionAdventure], rng }));
+  const created = await createAccountCharacter(app, { charisma });
+  const charId = created.body.state.character.id;
+  const start = await startAccountAdventure(app, charId);
+  return { app, charId, runId: start.body.state.adventureRun.id };
+}
+
+test('defeating the priest frees Cynthia, who then travels with you and pays out on return', async () => {
+  const { app, charId, runId } = await startCompanionRun(() => 0.99, 15);
+  await accountCommand(app, charId, runId, 'south'); // into the temple
+  const kill = await accountCommand(app, charId, runId, 'attack priest');
+  assert.ok(kill.body.events.some((e) => e.type === 'enemy_defeated' && e.enemy === 'priest'));
+  assert.ok(kill.body.events.some((e) => e.type === 'recruit' && e.character === 'cynthia'));
+  assert.ok((kill.body.state.combat?.companions ?? []).some((c) => c.slug === 'cynthia' && c.escort === true));
+
+  const back = await accountCommand(app, charId, runId, 'north'); // back to entrance
+  assert.match(back.body.text, /Travelling with you: Cynthia\./);
+
+  const hall = await accountCommand(app, charId, runId, 'north'); // out to the Hall
+  assert.ok(hall.body.events.some((e) => e.type === 'escort_reward' && e.gold === 150)); // 10 × charisma 15
+  assert.match(hall.body.text, /Cynthia/);
+  assert.ok(hall.body.state.character.gold >= 150);
+});
+
+test('a high-charisma adventurer befriends the random hermit, who joins as a companion', async () => {
+  // charisma 15 -> 75% friendly; rng 0.10 -> roll 10 < 75 -> friend.
+  const { app, charId, runId } = await startCompanionRun(() => 0.10, 15);
+  await accountCommand(app, charId, runId, 'south');
+  const east = await accountCommand(app, charId, runId, 'east'); // into the hermit's nook
+  assert.ok(east.body.events.some((e) => e.type === 'recruit' && e.character === 'hermit'));
+  assert.match(east.body.text, /joins your party/);
+  const hermit = east.body.state.entities.characters.find((c) => c.slug === 'hermit');
+  assert.equal(hermit.following, true);
+});
+
+test('a low roll turns the hermit hostile and attackable instead of friendly', async () => {
+  // charisma 7 -> 35% friendly; rng 0.99 -> roll 99 >= 35 -> foe.
+  const { app, charId, runId } = await startCompanionRun(() => 0.99, 7);
+  await accountCommand(app, charId, runId, 'south');
+  const east = await accountCommand(app, charId, runId, 'east');
+  assert.ok(east.body.events.some((e) => e.type === 'turned_hostile' && e.character === 'hermit'));
+  assert.ok(east.body.choices.includes('attack Hermit'));
+});

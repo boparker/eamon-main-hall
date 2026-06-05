@@ -104,6 +104,22 @@ export function move(run, adventure, direction) {
   };
 }
 
+// Resolve a character's effective disposition, honouring a recorded random
+// encounter outcome (hermit/Heinrich rolled friend-or-foe on first meeting).
+export function dispositionOf(character, run) {
+  const outcome = run?.flags?.encounters?.[character?.slug];
+  if (outcome === 'friend') return 'friendly';
+  if (outcome === 'foe') return 'hostile';
+  if (character?.type === 'enemy' || character?.type === 'boss'
+    || character?.is_hostile === true || character?.friendliness === 'hostile') return 'hostile';
+  if (character?.friendliness === 'friendly') return 'friendly';
+  return 'neutral';
+}
+
+export function getCompanions(run) {
+  return Array.isArray(run?.flags?.companions) ? run.flags.companions : [];
+}
+
 export function getVisibleRoomEntities(run, adventure) {
   const room = getCurrentRoom(run, adventure);
   const defeatedEnemies = new Set(run.defeatedEnemies);
@@ -114,10 +130,27 @@ export function getVisibleRoomEntities(run, adventure) {
     adventure.characters.map((character) => [character.slug, character.location_room]),
   );
 
+  // Companions travel WITH you — they appear in whatever room you are in,
+  // regardless of where they were first met, and never as a room native.
+  const companions = getCompanions(run);
+  const companionSlugs = new Set(companions.map((c) => c.slug));
+  const bySlug = new Map(adventure.characters.map((c) => [c.slug, c]));
+  const companionEntities = companions
+    .map((c) => {
+      const npc = bySlug.get(c.slug);
+      if (!npc) return null;
+      return { ...npc, hp: c.hp, maxHp: c.maxHp ?? npc.hp, disposition: 'friendly', companion: true, following: true };
+    })
+    .filter(Boolean);
+
   return {
-    characters: adventure.characters.filter(
-      (character) => character.location_room === room.room_number && !defeatedEnemies.has(character.slug),
-    ),
+    characters: [
+      ...adventure.characters
+        .filter((character) => character.location_room === room.room_number
+          && !defeatedEnemies.has(character.slug) && !companionSlugs.has(character.slug))
+        .map((character) => ({ ...character, disposition: dispositionOf(character, run) })),
+      ...companionEntities,
+    ],
     placements: (adventure.placements ?? []).filter(
       (placement) => {
         if (collectedItems.has(placement.item_slug)) return false;
@@ -165,5 +198,46 @@ export function markEnemyDefeated(run, enemySlug) {
   return {
     ...run,
     defeatedEnemies: addUnique(run.defeatedEnemies, enemySlug),
+  };
+}
+
+// Record a resolved random-encounter outcome ('friend' | 'foe') so it stays
+// stable for the rest of the run.
+export function recordEncounter(run, slug, outcome) {
+  const flags = run.flags ?? {};
+  const encounters = flags.encounters ?? {};
+  if (encounters[slug] === outcome) return run;
+  return { ...run, flags: { ...flags, encounters: { ...encounters, [slug]: outcome } } };
+}
+
+// Add an NPC to the travelling party (idempotent). Stores current + max HP so
+// combat damage persists across rooms/rounds.
+export function recruitCompanion(run, npc) {
+  const flags = run.flags ?? {};
+  const companions = Array.isArray(flags.companions) ? flags.companions : [];
+  if (companions.some((c) => c.slug === npc.slug)) return run;
+  const entry = { slug: npc.slug, hp: npc.hp ?? npc.maxHp ?? 1, maxHp: npc.hp ?? npc.maxHp ?? 1 };
+  return { ...run, flags: { ...flags, companions: [...companions, entry] } };
+}
+
+export function setCompanionHp(run, slug, hp) {
+  const flags = run.flags ?? {};
+  const companions = Array.isArray(flags.companions) ? flags.companions : [];
+  const next = companions.map((c) => (c.slug === slug ? { ...c, hp: Math.max(0, hp) } : c));
+  return { ...run, flags: { ...flags, companions: next } };
+}
+
+// Remove a fallen companion from the party and remember them as fallen.
+export function removeCompanion(run, slug) {
+  const flags = run.flags ?? {};
+  const companions = Array.isArray(flags.companions) ? flags.companions : [];
+  const fallen = Array.isArray(flags.fallenCompanions) ? flags.fallenCompanions : [];
+  return {
+    ...run,
+    flags: {
+      ...flags,
+      companions: companions.filter((c) => c.slug !== slug),
+      fallenCompanions: fallen.includes(slug) ? fallen : [...fallen, slug],
+    },
   };
 }
