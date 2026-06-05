@@ -18,8 +18,13 @@ import {
   recruitCompanion,
   setCompanionHp,
   removeCompanion,
+  relocateCharacter,
+  markFleeing,
+  isFleeing,
+  bumpCombatRound,
+  combatRoundsFought,
 } from '../engine/adventures.js';
-import { resolveAttack, resolveCombatRound, resolvePartyRound } from '../engine/combat.js';
+import { resolveAttack, resolveCombatRound, resolvePartyRound, isDead } from '../engine/combat.js';
 import { resolveEncounter, isEscort, buildFighter } from '../engine/companions.js';
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
@@ -1335,6 +1340,30 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(roomResponse({ adventure, run, character, text, event: { type: 'inspect', command, feature: feature.slug, revealed }, intent: command }));
         }
 
+        // A cursed book: reading it transforms the reader and kills them. The
+        // book is readable on the ground OR once carried; the cove gets its own
+        // (funnier) death text.
+        const invMatch = (character.inventory ?? []).find((it) => normalizeTarget(it.slug) === normalizeTarget(command.target) || normalizeTarget(it.name) === normalizeTarget(command.target));
+        const fatalItem = findVisibleItems(adventure, run, command.target).find((it) => it.read_effect === 'fatal_transform')
+          ?? (invMatch?.read_effect === 'fatal_transform' ? invMatch : null);
+        if (fatalItem) {
+          const roomNo = String(getCurrentRoom(run, adventure).room_number);
+          const deathText = fatalItem.read_effect_text_at?.[roomNo] ?? fatalItem.read_effect_text ?? 'The book’s curse takes you.';
+          character = { ...character, isAlive: false, hd: 0 };
+          run = { ...run, status: 'dead' };
+          const [uc, ur] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          return res.json(canonicalResponse({
+            intent: command,
+            events: [{ type: 'read_item', command, item: fatalItem.slug }, { type: 'character_defeated', characterId: character.id, cause: 'cursed-book' }],
+            text: `${deathText}\n\nYou have died.`,
+            choices: [],
+            state: { character: rowCharacter(uc), adventureRun: rowRun(ur) },
+          }));
+        }
+
         const matches = findVisibleItems(adventure, run, command.target);
         if (matches.length === 0) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'read_failed', command, reason: 'missing-item' }, text: `There is no ${command.target} here to read.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
@@ -1466,14 +1495,39 @@ export function createGameRouter(rawDeps = {}) {
         if (!enemyTemplate) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
+        // Scatter creatures (the rats): the first strike fells the leader and the
+        // rest break and flee to another room — no stand-up fight here.
+        if (enemyTemplate.flees_to_room && combatRoundsFought(run, enemyTemplate.slug) === 0) {
+          run = bumpCombatRound(run, enemyTemplate.slug).run;
+          run = relocateCharacter(run, enemyTemplate.slug, enemyTemplate.flees_to_room);
+          const destName = adventure.locations.find((l) => l.room_number === enemyTemplate.flees_to_room)?.name ?? 'the next chamber';
+          const savedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(savedRun) ?? run;
+          return res.json(roomResponse({
+            adventure, run, character,
+            prefix: `You strike down the nearest ${(enemyTemplate.name ?? 'creature').toLowerCase()} as the pack lunges — the survivors break and flee toward ${destName}!`,
+            event: { type: 'enemy_fled', command, enemy: enemyTemplate.slug, to: enemyTemplate.flees_to_room },
+            events: [{ type: 'enemy_fled', enemy: enemyTemplate.slug, to: enemyTemplate.flees_to_room }],
+            intent: command,
+          }));
+        }
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
         applyEquipmentToCombatant(character, run);
         const fighters = companionFighters(run, adventure);
-        // With fighting companions, the whole party trades blows; otherwise the
-        // classic player↔enemy round (keeps existing behaviour identical).
-        const combat = fighters.length
-          ? resolvePartyRound({ character, fighters, enemy, rng: deps.rng })
-          : resolveCombatRound(character, enemy, deps.rng);
+        // An enemy already in flight (flees_after_round) no longer turns to fight:
+        // a one-sided pursuit. Otherwise the normal party/solo exchange.
+        const pursuing = isFleeing(run, enemyTemplate.slug);
+        let combat;
+        if (pursuing) {
+          const playerAttack = resolveAttack(character, enemy, deps.rng);
+          const companionAttacks = [];
+          for (const f of fighters) { if (isDead(enemy)) break; companionAttacks.push({ slug: f.slug, name: f.name, attack: resolveAttack(f, enemy, deps.rng) }); }
+          combat = { playerAttack, companionAttacks, enemyAttack: null, enemyTarget: null, enemyDefeated: isDead(enemy), characterDefeated: isDead(character), fallen: [] };
+        } else {
+          combat = fighters.length
+            ? resolvePartyRound({ character, fighters, enemy, rng: deps.rng })
+            : resolveCombatRound(character, enemy, deps.rng);
+        }
         character.hd = character.hp;
         run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
         // Persist companion HP + cull any who fell this round.
@@ -1488,6 +1542,16 @@ export function createGameRouter(rawDeps = {}) {
           const who = adventure.characters.find((c) => c.slug === slug)?.name ?? slug;
           extraText.push(`${who} falls in battle!`);
           events.push({ type: 'companion_fallen', character: slug });
+        }
+        // Track rounds; an enemy that survives past its nerve breaks and flees
+        // (the pirate after his first swing). Thereafter combat is a pursuit.
+        const bumped = bumpCombatRound(run, enemyTemplate.slug);
+        run = bumped.run;
+        if (!combat.enemyDefeated && enemyTemplate.flees_after_round
+          && bumped.rounds >= enemyTemplate.flees_after_round && !isFleeing(run, enemyTemplate.slug)) {
+          run = markFleeing(run, enemyTemplate.slug);
+          extraText.push(`${enemyTemplate.name} turns and bolts — you give chase!`);
+          events.push({ type: 'enemy_fleeing', enemy: enemyTemplate.slug });
         }
         if (combat.enemyDefeated) {
           run = markEnemyDefeated(run, enemyTemplate.slug);
