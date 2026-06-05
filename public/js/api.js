@@ -53,3 +53,11 @@ export function startGameAdventure({ playerId, characterId, adventureId, session
 export function sendGameCommand({ playerId, characterId, adventureRunId, input, sessionToken, profileId }) {
   return gameFetch('/command', { method: 'POST', sessionToken, body: cleanBody({ playerId, profileId, characterId, adventureRunId, input }) });
 }
+
+export function getPortraitOptions() {
+  return gameFetch('/portrait-options');
+}
+
+export function generatePortrait({ characterId, traits, sessionToken, profileId }) {
+  return gameFetch('/portrait', { method: 'POST', sessionToken, body: cleanBody({ profileId, characterId, traits }) });
+}

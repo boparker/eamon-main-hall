@@ -1,10 +1,23 @@
 // hud.js — HUD rendering and stat animations
 
 import { state } from './state.js';
+import { openPortraitBuilder, canPaintPortrait } from './portrait-builder.js';
 
 export function updateHUD(animate) {
   const hasCharacter = Boolean(state.character?.id || state.character?.name);
   document.getElementById('hud-name').textContent = hasCharacter ? state.character.name : '—';
+
+  // Custom portrait avatar + the reward-gated "Paint Portrait" entry point.
+  const avatar = document.getElementById('hud-avatar');
+  if (avatar) {
+    if (hasCharacter && state.character.portraitUrl) { avatar.src = state.character.portraitUrl; avatar.hidden = false; }
+    else avatar.hidden = true;
+  }
+  const pbBtn = document.getElementById('hud-portrait-btn');
+  if (pbBtn) {
+    pbBtn.hidden = !(hasCharacter && canPaintPortrait(state.character));
+    if (!pbBtn.dataset.wired) { pbBtn.dataset.wired = '1'; pbBtn.addEventListener('click', () => openPortraitBuilder()); }
+  }
   const stats = {
     'stat-hd': hasCharacter ? state.character.hd : null,
     'stat-ag': hasCharacter ? (state.character.agility ?? state.character.ag) : null,
