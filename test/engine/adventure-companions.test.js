@@ -80,3 +80,23 @@ test('a foe-rolled hermit is annotated hostile in the room entities', () => {
   const hermit = getVisibleRoomEntities(run, adventure).characters.find((c) => c.slug === 'hermit');
   assert.equal(hermit.disposition, 'hostile');
 });
+
+test('freeDefeatedCaptives recruits a captive whose captor is already dead (repairs old saves)', async () => {
+  const { freeDefeatedCaptives } = await import('../../server/engine/adventures.js');
+  const adventure = loadAdventureFromFile(manifest);
+  // Priest already slain, Cynthia never recruited, player standing in the temple (18).
+  let run = { ...runAt(adventure, 18), defeatedEnemies: ['priest'] };
+  assert.equal(getCompanions(run).length, 0);
+  const out = freeDefeatedCaptives(run, adventure);
+  assert.deepEqual(out.freed, ['cynthia']);
+  assert.ok(getCompanions(out.run).some((c) => c.slug === 'cynthia'));
+});
+
+test('freeDefeatedCaptives does nothing if the captor still lives or you are elsewhere', async () => {
+  const { freeDefeatedCaptives } = await import('../../server/engine/adventures.js');
+  const adventure = loadAdventureFromFile(manifest);
+  // Captor alive
+  assert.deepEqual(freeDefeatedCaptives({ ...runAt(adventure, 18), defeatedEnemies: [] }, adventure).freed, []);
+  // Captor dead but player not in Cynthia's room
+  assert.deepEqual(freeDefeatedCaptives({ ...runAt(adventure, 3), defeatedEnemies: ['priest'] }, adventure).freed, []);
+});

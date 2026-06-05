@@ -205,6 +205,29 @@ export function markEnemyDefeated(run, enemySlug) {
   };
 }
 
+// Free any captive whose captor is already dead and who is in the player's
+// current room but not yet travelling with them. State-based (not tied to the
+// exact kill event), so it repairs runs where the captor was slain before the
+// companion system existed, and is robust if a recruit is ever missed.
+export function freeDefeatedCaptives(run, adventure) {
+  const defeated = new Set(run.defeatedEnemies);
+  const companions = new Set(getCompanions(run).map((c) => c.slug));
+  const room = getCurrentRoom(run, adventure);
+  const relocated = run.flags?.relocated ?? {};
+  const freed = [];
+  let next = run;
+  for (const captor of adventure.characters) {
+    const captiveSlug = captor.frees_on_defeat;
+    if (!captiveSlug || !defeated.has(captor.slug) || companions.has(captiveSlug)) continue;
+    const captive = adventure.characters.find((c) => c.slug === captiveSlug);
+    if (!captive) continue;
+    if ((relocated[captiveSlug] ?? captive.location_room) !== room.room_number) continue;
+    next = recruitCompanion(next, captive);
+    freed.push(captiveSlug);
+  }
+  return { run: next, freed };
+}
+
 // Record a resolved random-encounter outcome ('friend' | 'foe') so it stays
 // stable for the rest of the run.
 export function recordEncounter(run, slug, outcome) {
