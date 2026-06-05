@@ -1285,3 +1285,81 @@ test('Mimic: the chest is harmless until opened, then erupts into an attackable 
   const fight = await accountCommand(app, charId, runId, 'attack mimic');
   assert.ok(fight.body.events.some((e) => e.type === 'combat' && e.enemy === 'mimic'));
 });
+
+// ── Final twists: cursed book, fleeing rats, fleeing pirate, passage scroll ───
+const lastTwists = {
+  adventure: { id: 'beginners-cave', name: "The Beginner's Cave", start_room: 1 },
+  locations: [
+    { id: 'L1', room_number: 1, name: 'Library', narration_text: 'A glowing book rests here.', exits: { north: 'main-hall', south: 2, east: 3, west: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 'L2', room_number: 2, name: 'Rat Den', narration_text: 'Rats!', exits: { north: 1, east: 4, south: null, west: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 'L3', room_number: 3, name: 'Cove', narration_text: 'Waves lap the rock.', exits: { west: 1, north: null, south: null, east: null, up: null, down: null }, treasure: [], requires: null },
+    { id: 'L4', room_number: 4, name: 'Great Chamber', narration_text: 'A vast cavern.', exits: { west: 2, north: null, south: null, east: null, up: null, down: null }, treasure: [], requires: null },
+  ],
+  characters: [
+    { id: 'rat-x', slug: 'rat', name: 'Rats', type: 'enemy', friendliness: 'hostile', hp: 2, agility: 0, damage_dice: '1d1', location_room: 2, flees_to_room: 4, current_hp_from: 'hp' },
+    { id: 'pir-x', slug: 'pirate', name: 'Pirate', type: 'enemy', friendliness: 'hostile', hp: 100, agility: 0, damage_dice: '1d1', location_room: 3, flees_after_round: 1, current_hp_from: 'hp' },
+  ],
+  items: [
+    { id: 'book-x', slug: 'glowing-book', name: 'glowing book', type: 'misc', value: 80, weight: 1, read_effect: 'fatal_transform', read_effect_text: 'You become a fish and suffocate on dry rock.', read_effect_text_at: { 3: 'You flop into the sea — and a gull swallows you whole.' } },
+    { id: 'scroll-x', slug: 'scroll-passage-home', name: 'scroll', type: 'scroll', value: 0, weight: 1, description: 'Head NORTH at the entrance to leave. No magic here.' },
+  ],
+  placements: [
+    { item_slug: 'glowing-book', room_number: 1, hidden: false },
+    { item_slug: 'scroll-passage-home', room_number: 1, hidden: false },
+  ],
+};
+
+async function startLastTwists(rng) {
+  const { app } = makeApp(makeDeps({ adventures: [lastTwists], rng }));
+  const created = await createAccountCharacter(app, { agility: 12 });
+  const charId = created.body.state.character.id;
+  const start = await startAccountAdventure(app, charId);
+  return { app, charId, runId: start.body.state.adventureRun.id };
+}
+
+test('cursed book: reading it transforms you into a fish and kills you', async () => {
+  const { app, charId, runId } = await startLastTwists(() => 0.99);
+  const read = await accountCommand(app, charId, runId, 'read glowing book');
+  assert.match(read.body.text, /fish and suffocate/);
+  assert.match(read.body.text, /You have died/);
+  assert.ok(read.body.events.some((e) => e.type === 'character_defeated' && e.cause === 'cursed-book'));
+  assert.equal(read.body.state.character.hd, 0);
+  assert.deepEqual(read.body.choices, []);
+});
+
+test('cursed book: the seashore gets its own special death text', async () => {
+  const { app, charId, runId } = await startLastTwists(() => 0.99);
+  await accountCommand(app, charId, runId, 'take glowing book');
+  await accountCommand(app, charId, runId, 'east'); // carry it to the Cove (room 3)
+  const read = await accountCommand(app, charId, runId, 'read glowing book');
+  assert.match(read.body.text, /a gull swallows you whole/);
+});
+
+test('rats scatter on the first strike and must be finished in the next chamber', async () => {
+  const { app, charId, runId } = await startLastTwists(() => 0.99);
+  await accountCommand(app, charId, runId, 'south'); // into the rat den
+  const strike = await accountCommand(app, charId, runId, 'attack rats');
+  assert.match(strike.body.text, /flee toward Great Chamber/);
+  assert.ok(strike.body.events.some((e) => e.type === 'enemy_fled' && e.to === 4));
+  const gone = await accountCommand(app, charId, runId, 'attack rats');
+  assert.match(gone.body.text, /no rats/i); // they've left this room
+  await accountCommand(app, charId, runId, 'east'); // follow into the Great Chamber
+  const finish = await accountCommand(app, charId, runId, 'attack rats');
+  assert.ok(finish.body.events.some((e) => e.type === 'enemy_defeated' && e.enemy === 'rat'));
+});
+
+test('pirate flees after his first swing, then is run down without fighting back', async () => {
+  const { app, charId, runId } = await startLastTwists(() => 0.99);
+  await accountCommand(app, charId, runId, 'east'); // into the Cove
+  const r1 = await accountCommand(app, charId, runId, 'attack pirate');
+  assert.ok(r1.body.events.some((e) => e.type === 'enemy_fleeing' && e.enemy === 'pirate'));
+  const r2 = await accountCommand(app, charId, runId, 'attack pirate');
+  assert.equal(r2.body.state.combat.round.enemy, null); // no counterattack while fleeing
+});
+
+test('passage-home scroll is an informational note, not a teleport', async () => {
+  const { app, charId, runId } = await startLastTwists(() => 0.99);
+  const read = await accountCommand(app, charId, runId, 'read scroll');
+  assert.match(read.body.text, /Head NORTH/);
+  assert.equal(read.body.state.phase, 'adventure'); // still in the cave, not whisked home
+});

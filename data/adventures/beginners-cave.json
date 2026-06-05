@@ -583,7 +583,8 @@
       "location_room": 3,
       "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style.",
       "canonical_name": "Rat",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "flees_to_room": 4
     },
     {
       "id": "beginners-cave-priest",
@@ -739,7 +740,8 @@
       "location_room": 26,
       "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style.",
       "canonical_name": "Pirate",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "flees_after_round": 1
     }
   ],
   "items": [
@@ -840,7 +842,12 @@
       "effect_description": "Readable lore item; contains ancient scholarship about the cave.",
       "canonical_name": "book",
       "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 19
+      "source_room_number": 19,
+      "read_effect": "fatal_transform",
+      "read_effect_text": "You open the glowing book and read its first line aloud. The air shivers — your arms fuse to your sides, your skin runs to silver scales, and you drop to the cold stone a tiny gasping fish. There is no water here. You suffocate on dry rock within moments.",
+      "read_effect_text_at": {
+        "26": "You read the glowing book aloud at the water's edge. You shrink to a tiny silver fish and flop — by sheer dumb luck — into the sea! For one triumphant instant you think you've cheated the curse... then a passing gull plucks you from the waves and swallows you whole. An amusing, and rather sticky, end."
+      }
     },
     {
       "id": "beginners-cave-trollsfire",

@@ -126,8 +126,10 @@ export function getVisibleRoomEntities(run, adventure) {
   const collectedItems = new Set(run.collectedItems);
   const openedContainers = new Set(run.flags?.openedContainers ?? []);
   const inspectedFeatures = new Set(run.flags?.inspectedFeatures ?? []);
+  const relocated = run.flags?.relocated ?? {};
+  const effectiveRoom = (character) => relocated[character.slug] ?? character.location_room;
   const characterRooms = new Map(
-    adventure.characters.map((character) => [character.slug, character.location_room]),
+    adventure.characters.map((character) => [character.slug, effectiveRoom(character)]),
   );
 
   // Companions travel WITH you — they appear in whatever room you are in,
@@ -146,7 +148,7 @@ export function getVisibleRoomEntities(run, adventure) {
   return {
     characters: [
       ...adventure.characters
-        .filter((character) => character.location_room === room.room_number
+        .filter((character) => effectiveRoom(character) === room.room_number
           && !defeatedEnemies.has(character.slug) && !companionSlugs.has(character.slug)
           // A disguised monster (e.g. a mimic) stays hidden until its container is opened.
           && (!character.hidden_until_opened || openedContainers.has(character.hidden_until_opened)))
@@ -227,6 +229,34 @@ export function setCompanionHp(run, slug, hp) {
   const companions = Array.isArray(flags.companions) ? flags.companions : [];
   const next = companions.map((c) => (c.slug === slug ? { ...c, hp: Math.max(0, hp) } : c));
   return { ...run, flags: { ...flags, companions: next } };
+}
+
+// Move a character to a different room for the rest of the run (e.g. rats that
+// scatter to the great chamber). Overrides their manifest location_room.
+export function relocateCharacter(run, slug, room) {
+  const flags = run.flags ?? {};
+  return { ...run, flags: { ...flags, relocated: { ...(flags.relocated ?? {}), [slug]: room } } };
+}
+
+// Mark an enemy as fleeing — it no longer turns to fight (one-sided pursuit).
+export function markFleeing(run, slug) {
+  const flags = run.flags ?? {};
+  return { ...run, flags: { ...flags, fleeing: { ...(flags.fleeing ?? {}), [slug]: true } } };
+}
+
+export function isFleeing(run, slug) {
+  return !!run?.flags?.fleeing?.[slug];
+}
+
+// Bump and return how many combat rounds have been fought against an enemy.
+export function bumpCombatRound(run, slug) {
+  const flags = run.flags ?? {};
+  const rounds = (flags.combatRounds?.[slug] ?? 0) + 1;
+  return { run: { ...run, flags: { ...flags, combatRounds: { ...(flags.combatRounds ?? {}), [slug]: rounds } } }, rounds };
+}
+
+export function combatRoundsFought(run, slug) {
+  return run?.flags?.combatRounds?.[slug] ?? 0;
 }
 
 // Remove a fallen companion from the party and remember them as fallen.
