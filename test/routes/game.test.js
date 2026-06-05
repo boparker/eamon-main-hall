@@ -1392,4 +1392,6 @@ test('combat state exposes the enemy portrait path for the duel scene', async ()
   const open = await accountCommand(app, charId, runId, 'open chest'); // wakes the mimic
   const fight = await accountCommand(app, charId, runId, 'attack mimic');
   assert.equal(fight.body.state.combat.enemy.image, 'scenes/beginners-cave/portraits/mimic.png');
+  // The player gets a class portrait too (createAccountCharacter defaults to rogue).
+  assert.equal(fight.body.state.combat.player.image, 'scenes/classes/rogue.png');
 });
