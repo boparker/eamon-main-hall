@@ -94,6 +94,9 @@ function makeDeps(options = {}) {
       characters.set(characterId, updated);
       return updated;
     },
+    async countRecentPortraits(_db, _characterId, _since) {
+      return options.portraitUsage ?? { count: 0, oldest: null };
+    },
     async upsertPlayer(_db, player) {
       const row = {
         id: player.id,
@@ -1500,4 +1503,30 @@ test('a generation failure surfaces a 502 and saves nothing', async () => {
   await completeBeginnerCave(app, charId);
   const res = await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: {} }, accountHeaders);
   assert.equal(res.status, 502);
+});
+
+test('portrait generation is capped per character per day (cost guard)', async () => {
+  const oldest = '2024-01-01T00:00:00.000Z';
+  const { app, deps } = makeApp(makeDeps({ portraitUsage: { count: 8, oldest } }));
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  await completeBeginnerCave(app, charId);
+
+  const res = await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: {} }, accountHeaders);
+  assert.equal(res.status, 429);
+  assert.equal(res.body.error, 'rate-limited');
+  assert.ok(res.body.retryAt); // when the cap frees up
+  // Hitting the cap must NOT spend a generation.
+  assert.ok(!deps.calls.some((c) => c.type === 'generateImage'));
+});
+
+test('a successful portrait reports how many repaints remain today', async () => {
+  const { app } = makeApp(makeDeps({ portraitUsage: { count: 2, oldest: null } }));
+  const created = await createAccountCharacter(app);
+  const charId = created.body.state.character.id;
+  await completeBeginnerCave(app, charId);
+  const res = await request(app, 'POST', '/api/game/portrait', { profileId: 'profile-1', characterId: charId, traits: {} }, accountHeaders);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.dailyLimit, 8);
+  assert.equal(res.body.remaining, 5); // 8 - (2 prior + 1 just now)
 });

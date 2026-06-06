@@ -59,6 +59,7 @@ function renderPickers(options, body) {
 async function doGenerate(previewImg, status, generateBtn) {
   const session = getStoredAuthSession();
   if (!session?.sessionToken) { status.textContent = 'Sign in to paint a portrait.'; return; }
+  let capped = false;
   generateBtn.disabled = true;
   status.textContent = 'Painting your portrait…';
   previewImg.parentElement.classList.add('loading');
@@ -73,14 +74,23 @@ async function doGenerate(previewImg, status, generateBtn) {
     state.character.portraitUrl = url;
     previewImg.src = url;
     previewImg.hidden = false;
-    status.textContent = 'Looking good! Keep it, or tweak and repaint.';
+    const left = typeof res.remaining === 'number'
+      ? ` ${res.remaining} repaint${res.remaining === 1 ? '' : 's'} left today.`
+      : '';
+    status.textContent = `Looking good! Keep it, or tweak and repaint.${left}`;
+    capped = res.remaining === 0;
     updateHUD(false);
   } catch (err) {
-    status.textContent = err?.status === 403
-      ? "Clear the Beginner's Cave first to unlock your portrait."
-      : 'The portrait could not be painted right now. Try again shortly.';
+    if (err?.status === 429) {
+      status.textContent = err.payload?.text || 'You have repainted enough for today — come back tomorrow.';
+      capped = true;
+    } else {
+      status.textContent = err?.status === 403
+        ? "Clear the Beginner's Cave first to unlock your portrait."
+        : 'The portrait could not be painted right now. Try again shortly.';
+    }
   } finally {
-    generateBtn.disabled = false;
+    generateBtn.disabled = capped;
     previewImg.parentElement.classList.remove('loading');
   }
 }

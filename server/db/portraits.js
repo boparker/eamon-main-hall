@@ -26,6 +26,19 @@ export async function getPortraitPng(db, characterId) {
   return result.rows[0] ?? null;
 }
 
+// How many portraits a character has generated since `sinceIso` (for rate
+// limiting), plus the oldest one in that window (to compute when the cap frees up).
+export async function countRecentPortraits(db, characterId, sinceIso) {
+  const result = await db.query(
+    `SELECT COUNT(*)::int AS count, MIN(created_at) AS oldest
+     FROM character_portraits
+     WHERE character_id = $1 AND created_at >= $2`,
+    [characterId, sinceIso],
+  );
+  const row = result.rows[0] ?? {};
+  return { count: Number(row.count ?? 0), oldest: row.oldest ?? null };
+}
+
 export async function setCharacterPortraitUrl(db, characterId, portraitUrl) {
   const result = await db.query(
     `UPDATE player_characters SET portrait_url = $2, updated_at = NOW()

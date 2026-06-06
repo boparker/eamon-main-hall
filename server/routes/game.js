@@ -65,6 +65,7 @@ import {
   insertPortrait as defaultInsertPortrait,
   getPortraitPng as defaultGetPortraitPng,
   setCharacterPortraitUrl as defaultSetCharacterPortraitUrl,
+  countRecentPortraits as defaultCountRecentPortraits,
 } from '../db/portraits.js';
 import { generatePortraitImage as defaultGenerateImage } from '../media/generate.js';
 import { composePortraitPrompt, sanitizeTraits, portraitOptions, isValidClass } from '../engine/portraitTraits.js';
@@ -72,6 +73,9 @@ import { composePortraitPrompt, sanitizeTraits, portraitOptions, isValidClass } 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_ADVENTURES_DIR = join(__dirname, '../../data/adventures');
 const DIRECTIONS = ['north', 'south', 'east', 'west', 'up', 'down'];
+// Cap AI portrait generations per character per rolling 24h window (cost guard).
+const PORTRAIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const PORTRAIT_DAILY_LIMIT = Number(process.env.PORTRAIT_DAILY_LIMIT) || 8;
 const DEFAULT_CLASS_STATS = {
   adventurer: { hardiness: 15, agility: 12, charisma: 15 },
   warrior: { hardiness: 12, agility: 9, charisma: 8 },
@@ -932,6 +936,7 @@ function normalizeDeps(deps = {}) {
     insertPortrait: deps.insertPortrait ?? defaultInsertPortrait,
     getPortraitPng: deps.getPortraitPng ?? defaultGetPortraitPng,
     setCharacterPortraitUrl: deps.setCharacterPortraitUrl ?? defaultSetCharacterPortraitUrl,
+    countRecentPortraits: deps.countRecentPortraits ?? defaultCountRecentPortraits,
     rng: deps.rng ?? Math.random,
   };
 }
@@ -1207,6 +1212,19 @@ export function createGameRouter(rawDeps = {}) {
       if (!isValidClass(character.className)) return error(res, 400, 'Unknown character class.', 'bad-request');
       if (!isBeginnerComplete(character)) return error(res, 403, "Clear the Beginner's Cave to unlock your portrait.", 'locked');
 
+      // Cost guard: cap generations per character per rolling 24h.
+      const since = new Date(Date.now() - PORTRAIT_WINDOW_MS).toISOString();
+      const usage = await deps.countRecentPortraits(deps.db, characterId, since);
+      if ((usage?.count ?? 0) >= PORTRAIT_DAILY_LIMIT) {
+        const retryAt = usage?.oldest ? new Date(new Date(usage.oldest).getTime() + PORTRAIT_WINDOW_MS).toISOString() : null;
+        return res.status(429).json({
+          ok: false, error: 'rate-limited',
+          text: `You have repainted your portrait ${PORTRAIT_DAILY_LIMIT} times today — come back tomorrow to paint a new one.`,
+          retryAt, limit: PORTRAIT_DAILY_LIMIT,
+          media: { voice: null, background: null, portraits: [] },
+        });
+      }
+
       const cleanTraits = sanitizeTraits(traits);
       const prompt = composePortraitPrompt(cleanTraits, character.className);
       const gen = await deps.generateImage(prompt);
@@ -1216,7 +1234,8 @@ export function createGameRouter(rawDeps = {}) {
       // Cache-bust by the new portrait's id so a re-roll shows immediately.
       const portraitUrl = `/api/game/portrait/${characterId}/render.png?v=${saved?.id ?? gen.png.length}`;
       const updated = await deps.setCharacterPortraitUrl(deps.db, characterId, portraitUrl);
-      return res.json({ ok: true, portraitUrl, traits: cleanTraits, character: rowCharacter(updated ?? row) });
+      const remaining = Math.max(0, PORTRAIT_DAILY_LIMIT - (usage.count + 1));
+      return res.json({ ok: true, portraitUrl, traits: cleanTraits, remaining, dailyLimit: PORTRAIT_DAILY_LIMIT, character: rowCharacter(updated ?? row) });
     } catch (err) {
       return next(err);
     }
