@@ -379,3 +379,41 @@ test('slaying an enemy writes the deed to the chronicle', async () => {
   const deeds = last.body.state.character.chronicle.deeds.map((d) => d.text);
   assert.ok(deeds.some((d) => /Slew the Troll in Troll Den/.test(d)));
 });
+
+test('implicit speech: un-parsed sentences are spoken to whoever is present', async () => {
+  const deps = makeDeps({
+    judgeParley: async ({ words }) => ({
+      reply: `Heard: ${words}`, shift: 5, craft: 3, craftNote: null, action: 'none', source: 'ai',
+    }),
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll den
+
+  // No "say" prefix — exactly what a new player types.
+  const plea = await command(app, session, 'please stop, I mean you no harm');
+  assert.ok(plea.body.events.some((e) => e.type === 'parley'));
+  assert.match(plea.body.text, /Troll: "Heard: please stop, I mean you no harm"/);
+  assert.match(plea.body.text, /✦ Craft 3\/5/);
+});
+
+test('implicit speech does not shadow ACT verbs or fire in empty rooms', async () => {
+  const deps = makeDeps({
+    judgeParley: async () => ({ reply: 'should not be called', shift: 0, craft: 0, craftNote: null, action: 'none', source: 'ai' }),
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+
+  // Empty antechamber: multi-word gibberish stays a parser error.
+  const alone = await command(app, session, 'fiddle the sproingle');
+  assert.equal(alone.body.event.type, 'unknown');
+
+  await command(app, session, 'south');
+  // "calm troll" must still be the authored ACT, not speech.
+  const act = await command(app, session, 'calm troll');
+  assert.ok(act.body.events.some((e) => e.type === 'act'));
+  assert.equal(act.body.events.some((e) => e.type === 'parley'), false);
+  // Single-word gibberish near the troll: still a parser error, not speech.
+  const typo = await command(app, session, 'norht');
+  assert.equal(typo.body.event.type, 'unknown');
+});
