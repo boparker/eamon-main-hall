@@ -55,7 +55,7 @@ ${disguised ? 'They are currently DISGUISED and pretending to be an ordinary obj
 
 THE PLAYER SPEAKS TO THEM. Reply with ONLY a JSON object:
 {
-  "reply": "what the character says/does in response, 1-3 sentences, in their voice",
+  "reply": "what the character says/does in response, 1-3 sentences, in their voice — plain prose, fold any action into the sentence, no asterisks or stage directions",
   "shift": <integer -20..20, how much these exact words move this character's regard for the speaker>,
   "craft": <integer 0..5, writing-craft score for the player's words>,
   "craft_note": "<=12 words of coaching, e.g. 'Naming his lost ship made it land.'"${disguised ? ',\n  "action": "none" | "reveal"' : ''}
