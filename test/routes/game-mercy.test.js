@@ -13,7 +13,11 @@ const fixture = {
   locations: [
     {
       id: 'm1', room_number: 1, name: 'Antechamber', narration_text: 'A quiet stone room.',
-      exits: { north: 'main-hall', south: 2, east: 3, west: 4, up: null, down: null }, treasure: [], requires: null,
+      exits: { north: 'main-hall', south: 2, east: 3, west: 4, up: 5, down: null }, treasure: [], requires: null,
+    },
+    {
+      id: 'm5', room_number: 5, name: 'Empty Vault', narration_text: 'Bare stone. Nobody here.',
+      exits: { north: null, south: null, east: null, west: null, up: null, down: 1 }, treasure: [], requires: null,
     },
     {
       id: 'm2', room_number: 2, name: 'Troll Den', narration_text: 'A den that smells of moss.',
@@ -40,6 +44,17 @@ const fixture = {
       yield_text: 'The troll drops its club and waits.',
       spare_text: 'The troll bows its mossy head and shuffles aside.',
       spare_gold: 10,
+      frees_on_defeat: 'prisoner',
+    },
+    {
+      id: 'prisoner-1', slug: 'prisoner', name: 'Prisoner', type: 'npc', friendliness: 'friendly',
+      hp: 4, agility: 2, damage_dice: '0d0', location_room: 2, current_hp_from: 'hp',
+      persona: 'A frightened captive of the troll.', escort: true,
+    },
+    {
+      id: 'minstrel-1', slug: 'minstrel', name: 'Minstrel', type: 'npc', friendliness: 'friendly',
+      hp: 6, agility: 4, damage_dice: '1d2', location_room: 1, current_hp_from: 'hp',
+      persona: 'A wandering minstrel looking for a story worth singing.',
     },
     {
       id: 'bandit-1', slug: 'bandit', name: 'Bandit', type: 'enemy', friendliness: 'hostile',
@@ -404,10 +419,12 @@ test('implicit speech does not shadow ACT verbs or fire in empty rooms', async (
   const app = makeApp(deps);
   const session = await startSession(app);
 
-  // Empty antechamber: multi-word gibberish stays a parser error.
+  // Empty vault: multi-word gibberish stays a parser error.
+  await command(app, session, 'up');
   const alone = await command(app, session, 'fiddle the sproingle');
   assert.equal(alone.body.event.type, 'unknown');
 
+  await command(app, session, 'down');
   await command(app, session, 'south');
   // "calm troll" must still be the authored ACT, not speech.
   const act = await command(app, session, 'calm troll');
@@ -416,4 +433,67 @@ test('implicit speech does not shadow ACT verbs or fire in empty rooms', async (
   // Single-word gibberish near the troll: still a parser error, not speech.
   const typo = await command(app, session, 'norht');
   assert.equal(typo.body.event.type, 'unknown');
+});
+
+test('a free NPC can be talked into joining; the engine seats them in the party', async () => {
+  const deps = makeDeps({
+    judgeParley: async ({ joinable }) => ({
+      reply: joinable ? 'A story worth walking for! Lead on.' : 'no', shift: 10, craft: 4, craftNote: null, action: 'join', source: 'ai',
+    }),
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+
+  const plea = await command(app, session, 'come with me, minstrel — this cave will make a fine song');
+  assert.ok(plea.body.events.some((e) => e.type === 'recruit' && e.character === 'minstrel'));
+  assert.match(plea.body.text, /Minstrel falls in beside you/);
+  assert.ok(plea.body.state.adventureRun.flags.companions.some((c) => c.slug === 'minstrel'));
+  const deeds = plea.body.state.character.chronicle.deeds.map((d) => d.text);
+  assert.ok(deeds.some((d) => /Persuaded Minstrel/.test(d)));
+});
+
+test('a captive cannot be talked into leaving while the captor stands — and the player is told', async () => {
+  // Model misbehaves and says "join" anyway: the engine must refuse it.
+  const deps = makeDeps({
+    judgeParley: async () => ({ reply: 'Yes! Take me with you!', shift: 10, craft: 4, craftNote: null, action: 'join', source: 'ai' }),
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll den, troll alive, prisoner captive
+
+  const plea = await command(app, session, 'tell prisoner follow me and I will get you home safely');
+  assert.equal(plea.body.events.some((e) => e.type === 'recruit'), false);
+  assert.match(plea.body.text, /no captive may leave while their captor stands/);
+  assert.equal(plea.body.state.adventureRun.flags.companions?.some?.((c) => c.slug === 'prisoner') ?? false, false);
+
+  // TALK (canned dialogue) also spells out the catch.
+  const talk = await command(app, session, 'talk prisoner');
+  assert.match(talk.body.text, /cannot leave while the troll stands/);
+});
+
+test('sparing the captor frees the captive, who joins as before', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south');
+  await command(app, session, 'calm troll');
+  await command(app, session, 'calm troll');
+  await command(app, session, 'calm troll');
+  const spared = await command(app, session, 'spare troll');
+  assert.ok(spared.body.events.some((e) => e.type === 'recruit' && e.character === 'prisoner'));
+  assert.ok(spared.body.state.adventureRun.flags.companions.some((c) => c.slug === 'prisoner'));
+});
+
+test('unnamed speech that mentions a bystander by name goes to them, not the enemy', async () => {
+  const heard = [];
+  const deps = makeDeps({
+    judgeParley: async ({ npc }) => { heard.push(npc.slug); return { reply: 'I hear you.', shift: 0, craft: 2, craftNote: null, action: 'none', source: 'ai' }; },
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll (enemy) + prisoner (captive bystander)
+
+  const plea = await command(app, session, 'stay strong, prisoner — I will come back for you');
+  assert.deepEqual(heard, ['prisoner']);
+  assert.match(plea.body.text, /Prisoner: "I hear you\."/);
 });

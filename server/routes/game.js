@@ -2089,7 +2089,12 @@ export function createGameRouter(rawDeps = {}) {
         let listener = targetName ? findVisibleCharacter(adventure, run, targetName) : null;
         let disguised = false;
         if (!listener && !targetName) {
-          listener = visibleEnemy(adventure, run) ?? (visible.length === 1 ? visible[0] : null);
+          // Words that name someone present go to them ("Cynthia, follow me");
+          // otherwise the enemy holds the floor, then a sole bystander.
+          const lower = String(words ?? '').toLowerCase();
+          listener = visible.find((c) => lower.includes(String(c.name ?? c.slug).toLowerCase()))
+            ?? visibleEnemy(adventure, run)
+            ?? (visible.length === 1 ? visible[0] : null);
         }
         if (!listener && disguisedMimic) {
           const container = adventure.items.find((item) => item.slug === disguisedMimic.hidden_until_opened);
@@ -2108,7 +2113,19 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'say_failed', command, reason: 'talked-out' }, text: `${disguised ? 'The chest' : listener.name} has heard enough of your words for one expedition.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
         }
         run = bumpParley(run, listener.slug);
-        const verdict = await deps.ai.judgeParley({ npc: listener, character, run, words, disguised });
+        // Captivity and joinability: a captive (Cynthia) cannot leave while her
+        // captor stands — the judge is told, so the reply matches the rules. A
+        // free, non-hostile NPC who isn't already travelling with you can be
+        // talked into joining ("action":"join"), which the engine validates.
+        const captor = adventure.characters.find((c) => c.frees_on_defeat === listener.slug);
+        const captorAlive = !!captor && !run.defeatedEnemies.includes(captor.slug);
+        const alreadyCompanion = getCompanions(run).some((c) => c.slug === listener.slug);
+        const listenerHostile = (listener.disposition ?? dispositionOf(listener, run)) === 'hostile';
+        const joinable = !disguised && !listenerHostile && !alreadyCompanion && !captorAlive;
+        const verdict = await deps.ai.judgeParley({
+          npc: listener, character, run, words, disguised, joinable,
+          heldBy: captorAlive ? (captor.name ?? captor.slug) : null,
+        });
         // The engine — not the model — applies the shift: craft-scaled,
         // charisma-scaled, capped per NPC per run.
         let effective = craftScaledShift(verdict.shift, verdict.craft);
@@ -2123,6 +2140,16 @@ export function createGameRouter(rawDeps = {}) {
           run = markContainerOpened(run, listener.hidden_until_opened);
           lines.push(`The chest's lid peels back along a seam no chest should have — it ERUPTS! ${listener.first_encounter_text ?? ''}`);
           events.push({ type: 'ambush', character: listener.slug });
+        }
+        // Persuaded to come along — the engine seats them in the party.
+        if (verdict.action === 'join' && joinable) {
+          run = recruitCompanion(run, listener);
+          lines.push(`${listener.name} falls in beside you.`);
+          events.push({ type: 'recruit', character: listener.slug });
+          character = recordDeed(character, `Persuaded ${listener.name} to come along, in ${getCurrentRoom(run, adventure).name}.`);
+        } else if (captorAlive && !listenerHostile) {
+          // Whatever was said, a captive stays a captive — say so plainly.
+          lines.push(`${listener.name} glances fearfully toward the ${(captor.name ?? captor.slug).toLowerCase()} — no captive may leave while their captor stands.`);
         }
         // Words can finish what acts began: the yield check.
         const hostile = !disguised && (listener.disposition ?? dispositionOf(listener, run)) === 'hostile';
@@ -2177,7 +2204,12 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'hostile', character: target.slug ?? name }, text: `${name} answers only with a snarl. But the right words, well chosen, might yet reach them — SAY something.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
         }
         const dialogue = target.dialogue ?? target.text ?? `${name} gives you a quiet nod but has little to say.`;
-        return res.json(canonicalResponse({ intent: command, event: { type: 'talk', command, character: target.slug ?? target.id ?? name }, text: dialogue, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        // A captive's invitation comes with the catch spelled out.
+        const talkCaptor = adventure.characters.find((c) => c.frees_on_defeat === target.slug);
+        const captiveNote = talkCaptor && !run.defeatedEnemies.includes(talkCaptor.slug)
+          ? `\n(${name} cannot leave while the ${(talkCaptor.name ?? talkCaptor.slug).toLowerCase()} stands.)`
+          : '';
+        return res.json(canonicalResponse({ intent: command, event: { type: 'talk', command, character: target.slug ?? target.id ?? name }, text: dialogue + captiveNote, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'leave') {

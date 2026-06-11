@@ -43,22 +43,28 @@ function validVerdict(v) {
     && typeof v.reply === 'string' && v.reply.trim().length > 0 && v.reply.length <= 600
     && Number.isFinite(v.shift) && v.shift >= -20 && v.shift <= 20
     && Number.isFinite(v.craft) && v.craft >= 0 && v.craft <= 5
-    && (v.action === undefined || v.action === 'none' || v.action === 'reveal');
+    && (v.action === undefined || v.action === 'none' || v.action === 'reveal' || v.action === 'join');
 }
 
-function systemPrompt(npc, { disguised = false } = {}) {
+function systemPrompt(npc, { disguised = false, joinable = false, heldBy = null } = {}) {
+  const actionValues = ['"none"'];
+  if (disguised) actionValues.push('"reveal"');
+  if (joinable) actionValues.push('"join"');
   return `You are roleplaying ${npc.name}, a character in "Eamon: The Second Age," a classroom-safe storybook fantasy game, AND judging the player's words as a writing coach.
 
 WHO ${String(npc.name ?? '').toUpperCase()} IS:
 ${npc.persona ?? npc.description ?? 'A character of few words.'}
 ${disguised ? 'They are currently DISGUISED and pretending to be an ordinary object. If the player sees through the disguise or provokes them, you may set "action":"reveal".' : ''}
+${heldBy ? `IMPORTANT: they are held CAPTIVE here by ${heldBy}, who is alive and present. They CANNOT leave or follow anyone, however much they want to, until ${heldBy} is dealt with — if asked to come along, their reply must make this plight clear.` : ''}
+${joinable ? 'They are free to travel. If — and only if — the player\'s words genuinely persuade them to come along, set "action":"join" and have the reply agree. Do not promise to follow without setting it; never set it for words that don\'t earn it.' : 'They will not join the player now: the reply must never promise to follow or come along.'}
 
 THE PLAYER SPEAKS TO THEM. Reply with ONLY a JSON object:
 {
   "reply": "what the character says/does in response, 1-3 sentences, in their voice — plain prose, fold any action into the sentence, no asterisks or stage directions",
   "shift": <integer -20..20, how much these exact words move this character's regard for the speaker>,
   "craft": <integer 0..5, writing-craft score for the player's words>,
-  "craft_note": "<=12 words of coaching, e.g. 'Naming his lost ship made it land.'"${disguised ? ',\n  "action": "none" | "reveal"' : ''}
+  "craft_note": "<=12 words of coaching, e.g. 'Naming his lost ship made it land.'",
+  "action": ${actionValues.join(' | ')}
 }
 
 JUDGING shift: this character's own wants and fears decide it. Generic flattery moves little. Words that show the speaker LISTENED — naming what this character cares about, offering what they actually want — move a lot. Threats and insults move it negative.
@@ -74,7 +80,7 @@ HARD RULES:
 // Ask the model for a verdict on the player's words. Returns
 // { reply, shift, craft, craftNote, action, source } — or a deterministic
 // fallback verdict when AI is unavailable (the game must work keyless).
-export async function judgeParley({ npc, character, run, words, disguised = false }) {
+export async function judgeParley({ npc, character, run, words, disguised = false, joinable = false, heldBy = null }) {
   const trimmed = String(words ?? '').slice(0, MAX_WORDS_LENGTH).trim();
 
   if (!isEnabled()) {
@@ -99,7 +105,7 @@ export async function judgeParley({ npc, character, run, words, disguised = fals
   };
 
   const verdict = await completeJSON({
-    system: systemPrompt(npc, { disguised }),
+    system: systemPrompt(npc, { disguised, joinable, heldBy }),
     prompt: JSON.stringify(facts, null, 2),
     validate: validVerdict,
     maxTokens: 300,
@@ -123,7 +129,7 @@ export async function judgeParley({ npc, character, run, words, disguised = fals
     shift: clamp(Math.round(verdict.shift), -20, 20),
     craft: clamp(Math.round(verdict.craft), 0, 5),
     craftNote: typeof verdict.craft_note === 'string' ? verdict.craft_note.slice(0, 120) : null,
-    action: verdict.action === 'reveal' ? 'reveal' : 'none',
+    action: (verdict.action === 'reveal' && disguised) || (verdict.action === 'join' && joinable) ? verdict.action : 'none',
     source: 'ai',
   };
 }
