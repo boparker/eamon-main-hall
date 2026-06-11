@@ -48,15 +48,20 @@ function normalizeShopPayload(shopOrKey) {
 }
 
 // Swap an emoji icon box for painted item art when scenes/items/<slug>.png exists.
-// Leaves the emoji in place if there's no slug or the art fails to load.
+// Leaves the emoji in place if there's no slug or the art fails to load. The
+// rotating named magic weapons (Mooncleaver, Doombringer, …) fall back to one
+// painted "enchanted arms" icon per weapon type.
 function applyItemArt(iconEl, item) {
   const slug = item?.slug;
   if (!slug) return;
+  const candidates = [slug];
+  if (item?.magic && item?.stats?.type) candidates.push(`magic-${String(item.stats.type).toLowerCase()}`);
   const img = new Image();
   img.className = 'tile-art';
   img.alt = '';
   img.onload = () => { iconEl.textContent = ''; iconEl.appendChild(img); };
-  img.src = `scenes/items/${slug}.png`;
+  img.onerror = () => { if (candidates.length) img.src = `scenes/items/${candidates.shift()}.png`; };
+  img.src = `scenes/items/${candidates.shift()}.png`;
 }
 
 function itemIcon(item) {

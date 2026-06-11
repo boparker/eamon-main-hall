@@ -85,15 +85,21 @@ function objectGlyph(object, verb) {
 
 // Swap an object tile's emoji for painted item art when one exists for its slug.
 // Resolves the slug from the matched room item, else slugifies the object name.
+// Falls back from the exact slug to the item's canonical name, so the six
+// "inscription-*"/"writing-*" tutorial slugs share one painted icon each.
 function applyObjectArt(iconEl, object) {
   const item = _roomItems.find((i) => norm(i.name) === norm(object) || norm(i.slug) === norm(object));
   const slug = item?.slug || norm(object).replace(/\s+/g, '-');
   if (!slug) return;
+  const candidates = [slug];
+  const canonical = norm(item?.canonical_name ?? '').replace(/\s+/g, '-');
+  if (canonical && canonical !== slug) candidates.push(canonical);
   const img = new Image();
   img.className = 'obj-art';
   img.alt = '';
   img.onload = () => { iconEl.textContent = ''; iconEl.appendChild(img); };
-  img.src = `scenes/items/${slug}.png`;
+  img.onerror = () => { if (candidates.length) img.src = `scenes/items/${candidates.shift()}.png`; };
+  img.src = `scenes/items/${candidates.shift()}.png`;
 }
 
 function send(text) {

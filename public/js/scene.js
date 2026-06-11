@@ -55,6 +55,7 @@ export async function generateSceneBg(location) {
     "The Witch's Shop": 'scenes/witch-shop.png',
     'Bank of Eamon Towne': 'scenes/bank.png',
     'The Chapel of the Open Hand': 'scenes/chapel.png',
+    'The Adventure Gate': 'scenes/adventure-gate.png',
   };
 
   if (sceneMap[location]) {
