@@ -11,6 +11,8 @@ Voice: second person, present tense. Vivid but spare, like a master storyteller 
 
 STRICT RULES:
 - Use ONLY the facts given. NEVER invent items, exits, creatures, dangers, or numbers that are not in the facts.
+- Mention EVERY person or creature listed in "present" — each by name, with their bearing toward the adventurer (a hostile one must read as a clear threat). Never leave someone in the room unaccounted for.
+- Text under "already_shown_to_player" is printed verbatim above your prose: do NOT restate or paraphrase it — write what comes next.
 - Never speak for the adventurer or decide what they do or feel beyond what the facts say.
 - Never reveal hidden things, mechanics, or hints.
 - Keep it G-rated and classroom-safe; peril yes, gore no.
@@ -38,6 +40,7 @@ export async function narrateRoomEntry({ adventure, room, character, entities = 
   const present = (entities.characters ?? []).map((c) => ({
     name: c.name ?? c.slug,
     disposition: c.disposition ?? 'neutral',
+    appearance: c.description ?? null,
     ...(c.companion ? { travelling_with_you: true } : {}),
     ...(c.state ? { state: c.state } : {}),
   }));
@@ -51,7 +54,7 @@ export async function narrateRoomEntry({ adventure, room, character, entities = 
     },
     present,
     visit: visitCount > 1 ? `this is visit number ${visitCount}` : 'first visit',
-    just_happened: note || null,
+    already_shown_to_player: note || null,
     remembered_deeds: chronicleEchoes(character),
   };
 

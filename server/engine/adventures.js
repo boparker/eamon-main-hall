@@ -228,6 +228,18 @@ export function freeDefeatedCaptives(run, adventure) {
   return { run: next, freed };
 }
 
+// A character's authored entrance text is shown once per run, on first sight.
+export function isIntroduced(run, slug) {
+  return Array.isArray(run?.flags?.introduced) && run.flags.introduced.includes(slug);
+}
+
+export function markIntroduced(run, slug) {
+  const flags = run.flags ?? {};
+  const introduced = Array.isArray(flags.introduced) ? flags.introduced : [];
+  if (introduced.includes(slug)) return run;
+  return { ...run, flags: { ...flags, introduced: [...introduced, slug] } };
+}
+
 // Record a resolved random-encounter outcome ('friend' | 'foe') so it stays
 // stable for the rest of the run.
 export function recordEncounter(run, slug, outcome) {
