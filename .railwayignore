@@ -1,0 +1,8 @@
+node_modules/
+art-out/
+.env.local
+.fal.env
+.claude/
+memory/
+public/gen-images/
+.git/
