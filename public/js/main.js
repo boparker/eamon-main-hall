@@ -94,7 +94,13 @@ function updateRoomRail(response) {
       return d === 'hostile' ? 'monster' : d === 'friendly' ? 'friendly' : 'neutral';
     };
     // Painted portraits live beside the room art: scenes/<adventure>/portraits/<slug>.png
-    const portraitDir = (response.state?.background || '').replace(/room-\d+\.png.*$/, 'portraits/');
+    // Resolve from the run's adventure id — present on every response — and only
+    // fall back to parsing the background path (absent on e.g. parley responses,
+    // which used to monogram every rail card after speaking).
+    const advId = response.state?.adventureRun?.adventureId ?? response.state?.run?.adventureId;
+    const portraitDir = advId
+      ? `scenes/${advId}/portraits/`
+      : (response.state?.background || '').replace(/room-\d+\.png.*$/, 'portraits/');
     const people = characters
       .filter((c) => c.type !== 'merchant')
       .map((c) => ({
