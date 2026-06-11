@@ -23,6 +23,10 @@ const DRINK_VERBS = new Set(['drink', 'quaff', 'sip']);
 const USE_VERBS = new Set(['use', 'cast', 'open']);
 const READ_VERBS = new Set(['read', 'examine', 'inspect']);
 const LEAVE_COMMANDS = new Set(['leave', 'quit', 'exit', 'back', 'return']);
+const SPARE_VERBS = new Set(['spare', 'pardon', 'forgive']);
+const SAY_VERBS = new Set(['say', 'shout', 'whisper']);
+const STANCES = new Set(['brace', 'dodge', 'interrupt']);
+const HINT_COMMANDS = new Set(['hint', 'hints']);
 
 function normalizeInput(input) {
   if (typeof input !== 'string') {
@@ -80,6 +84,28 @@ export function parseCommand(input) {
 
   if (command === 'help' || command === '?') {
     return { type: 'help', source: 'rules' };
+  }
+
+  if (HINT_COMMANDS.has(command) || command === 'ask the spirit' || command === 'ask spirit') {
+    return { type: 'hint', source: 'rules' };
+  }
+
+  // Answering a telegraphed wind-up: a bare stance word.
+  if (STANCES.has(command)) {
+    return { type: 'stance', stance: command, source: 'rules' };
+  }
+
+  // Freeform speech: say <words>, or a leading quote mark. The route decides
+  // who hears it (the one NPC or enemy sharing the room).
+  if (command.startsWith('"') || command.startsWith('“')) {
+    const words = command.replace(/^["“]+/, '').replace(/["”]+$/, '').trim();
+    if (words) {
+      return { type: 'say', words, source: 'rules' };
+    }
+  }
+
+  if (command === 'mercy' || command === 'show mercy') {
+    return { type: 'spare', target: null, source: 'rules' };
   }
 
   if (command === 'shop') {
@@ -146,6 +172,24 @@ export function parseCommand(input) {
 
   if (READ_VERBS.has(verb) && objectText) {
     return { type: 'read_item', target: objectText, source: 'rules' };
+  }
+
+  if (SPARE_VERBS.has(verb) && objectText) {
+    const target = objectText.startsWith('the ') ? objectText.slice(4).trim() : objectText;
+    return { type: 'spare', target, source: 'rules' };
+  }
+
+  if (SAY_VERBS.has(verb) && objectText) {
+    const words = objectText.replace(/^["“]+/, '').replace(/["”]+$/, '').trim();
+    if (words) {
+      return { type: 'say', words, source: 'rules' };
+    }
+  }
+
+  // tell <name> <words> — speech aimed at a named listener.
+  if (verb === 'tell' && rest.length >= 2) {
+    const [listener, ...words] = rest;
+    return { type: 'say', target: listener, words: words.join(' ').replace(/^["“]+/, '').replace(/["”]+$/, '').trim(), source: 'rules' };
   }
 
   if (verb === 'talk' && objectText) {

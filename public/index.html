@@ -361,6 +361,15 @@
     .combat-banner small { display: block; font-family: var(--font-body); text-transform: none; letter-spacing: 0.02em; font-size: 0.95rem; font-style: italic; color: var(--text-dim); margin-top: 4px; }
     .combat-banner.victory .combat-banner-head { color: var(--gold); text-shadow: 0 0 34px rgba(200,168,75,0.45); }
     .combat-banner.defeat .combat-banner-head { color: #c0392b; text-shadow: 0 0 34px rgba(192,57,43,0.45); }
+    .combat-banner.telegraph .combat-banner-head { font-size: clamp(1.1rem, 3.4vw, 1.6rem); color: #f0b441; text-shadow: 0 0 26px rgba(240,180,65,0.4); }
+    .combat-banner.truce .combat-banner-head { font-size: clamp(1.1rem, 3.4vw, 1.6rem); color: #9ed27a; text-shadow: 0 0 26px rgba(140,200,110,0.35); }
+    /* Behavior state tag under the enemy's name (aggressive/wary/desperate/yielding) */
+    .combatant-state { font-size: 0.72rem; font-style: italic; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-top: 2px; }
+    .combatant-state[hidden] { display: none; }
+    .combatant-state.aggressive { color: #e0734f; }
+    .combatant-state.wary { color: #e8c46a; }
+    .combatant-state.desperate { color: #d98fb6; }
+    .combatant-state.yielding { color: #9ed27a; }
     .combatant.defeated { opacity: 0.55; transition: opacity 0.6s ease; }
     .combatant.defeated .combat-portrait { filter: grayscale(1) brightness(0.55); }
     .combat-actions .enter-btn.flee:hover { border-color: var(--gold); color: var(--gold); }
@@ -389,6 +398,12 @@
     .heal-float.show { animation: dmgFloatAnim 1.1s ease forwards; }
     .combat-actions .enter-btn.cast { color: #cdbcf2; border-color: rgba(150,125,210,0.5); }
     .combat-actions .enter-btn.cast:hover { border-color: #b89cff; color: #e3d8ff; box-shadow: 0 0 18px rgba(160,130,255,0.25); }
+    .combat-actions .enter-btn.mercy { color: #b9e29a; border-color: rgba(140,200,110,0.55); }
+    .combat-actions .enter-btn.mercy:hover { border-color: #9ed27a; color: #e0f5cf; box-shadow: 0 0 18px rgba(140,200,110,0.3); }
+    .combat-actions .enter-btn.stance { color: #f0d28e; border-color: rgba(240,180,65,0.55); }
+    .combat-actions .enter-btn.stance:hover { border-color: #f0b441; color: #fbe9c2; box-shadow: 0 0 18px rgba(240,180,65,0.3); }
+    .combat-actions .enter-btn.act { color: #a9d4e8; border-color: rgba(120,180,210,0.5); }
+    .combat-actions .enter-btn.act:hover { border-color: #7fc2e0; color: #dff2fb; box-shadow: 0 0 18px rgba(120,180,210,0.25); }
     .hit-flash { position: absolute; inset: 0; background: rgba(224,60,40,0.5); opacity: 0; pointer-events: none; }
     @keyframes hitShake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-7px)} 30%{transform:translateX(6px)} 45%{transform:translateX(-5px)} 60%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
     @keyframes hitFlashAnim { 0%{opacity:0} 20%{opacity:0.55} 100%{opacity:0} }
@@ -940,6 +955,7 @@
       <div class="combatant enemy" id="combatant-enemy">
         <div class="combat-portrait"><span class="portrait-placeholder">👁</span><span class="hit-flash"></span><span class="dmg-float"></span><span class="heal-float"></span></div>
         <div class="combatant-name" id="combat-enemy-name">Cave Goblin</div>
+        <div class="combatant-state" id="combat-enemy-state" hidden></div>
         <div class="hp-bar"><div class="hp-fill enemy" id="combat-enemy-hp" style="width:40%"></div><span class="hp-text" id="combat-enemy-hptext">4 / 10</span></div>
       </div>
     </div>

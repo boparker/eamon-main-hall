@@ -16,9 +16,11 @@ app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
 // ── Database Setup ────────────────────────────────────────────────────────────
+// Local Postgres (localhost) speaks plaintext; hosted (Railway) requires SSL.
+const isLocalDb = /@localhost|@127\.0\.0\.1|^postgres(ql)?:\/\/localhost|^postgres(ql)?:\/\/127\.0\.0\.1/.test(process.env.DATABASE_URL ?? '');
 const pool = process.env.DATABASE_URL ? new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ...(isLocalDb ? {} : { ssl: { rejectUnauthorized: false } }),
 }) : null;
 let dbReady = false;
 
