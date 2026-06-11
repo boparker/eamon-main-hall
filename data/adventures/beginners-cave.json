@@ -607,7 +607,17 @@
       "canonical_name": "Priest",
       "text_source": "kdechant/eamon monster.description",
       "frees_on_defeat": "cynthia",
-      "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman."
+      "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman.",
+      "persona": "A once-gentle temple priest driven mad by years alone among the cave's dark altars. He believes the bloody altar demands a sacrifice. Somewhere beneath the madness he remembers his liturgy, his order, and his shame. He responds to scripture, calm authority, and reminders of who he was; threats and mockery feed the madness.",
+      "acts": [
+        { "verb": "reason", "label": "Reason with", "shift": -10, "success_text": "You try to reason with the priest, but logic is a language he no longer speaks. His eyes burn brighter. \"The altar HUNGERS,\" he howls." },
+        { "verb": "pray", "label": "Pray with", "shift": 25, "success_text": "You raise your voice in the old liturgy — the one painted on these very walls. The priest falters mid-snarl. His lips move with yours, remembering.", "repeat_text": "You pray again. The mace droops in his hand; tears cut clean lines down his filthy face." }
+      ],
+      "yields_at_regard": 80,
+      "telegraph": { "every": 3, "name": "overhead blow", "multiplier": 2, "warn_text": "The priest raises his mace high overhead, shrieking a broken litany — a crushing blow is coming!" },
+      "yield_text": "The mad light gutters out of the priest's eyes. The mace clatters to the stone and he sinks to his knees before the bloody altar, mumbling the old words. The fight is over, if you will let it be.",
+      "spare_text": "You lower your weapon. The priest unbinds Cynthia with shaking hands and presses his temple purse upon you, weeping. \"The altar is fed enough,\" he whispers, and begins, slowly, to scrub the old blood from the stone.",
+      "spare_gold": 15
     },
     {
       "id": "beginners-cave-cynthia",
@@ -630,7 +640,8 @@
       "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style.",
       "canonical_name": "Cynthia",
       "text_source": "kdechant/eamon monster.description",
-      "escort": true
+      "escort": true,
+      "persona": "Duke Luxom's sweet, sheltered, not-too-bright daughter, kidnapped by the mad priest and frightened half out of her wits. She chatters when nervous, dotes on her rescuer, and is endearingly literal-minded. She knows only what she has seen: the priest, the temple, and the long dark walk from the cave mouth."
     },
     {
       "id": "beginners-cave-hermit",
@@ -653,7 +664,15 @@
       "encounter_behavior": "random",
       "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style.",
       "canonical_name": "Hermit",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "persona": "A grizzled hermit who has lived alone in this cave for forty years and likes it that way. Cantankerous, suspicious of glory-seekers, but lonely underneath and full of hard-won cave wisdom. Plain speech, honesty, and good listening win him over; flattery and bravado bore him.",
+      "acts": [
+        { "verb": "apologize", "label": "Apologize to", "shift": 25, "success_text": "You lower your weapon and say, plainly, that you meant no harm trespassing in his home. The hermit's axe-arm eases. \"Hmph. Forty years, and that's the first apology these walls have heard.\"" }
+      ],
+      "yields_at_regard": 70,
+      "befriend_on_spare": true,
+      "yield_text": "The hermit plants his axe-head on the stone and leans on it, studying you with one rheumy eye. \"Well. Maybe you're not like the others.\"",
+      "spare_text": "The hermit spits on his palm and offers his hand. \"You'll do. Stay close — I know every crack of this cave, and most of what's hungry in it.\""
     },
     {
       "id": "beginners-cave-gorilla",
@@ -674,7 +693,17 @@
       "location_room": 8,
       "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style.",
       "canonical_name": "Gorilla",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "persona": "A frightened wild animal, not a monster: dragged into this cave and locked in a cell it does not understand. It cannot speak and does not understand words, only tone — softness, stillness, and open hands. Sudden moves and shouting terrify it into violence.",
+      "acts": [
+        { "verb": "calm", "label": "Calm", "shift": 30, "success_text": "You lower your weapon, open your empty palms, and hum low and steady. The gorilla's screaming stops. It watches your hands, knuckles still planted, breathing hard.", "repeat_text": "You keep your palms open and your voice low. The great shoulders drop an inch. It huffs — wary, but no longer wild." },
+        { "verb": "posture", "label": "Posture at", "shift": -15, "success_text": "You beat your chest and roar back at it. Bad idea. The gorilla's answering bellow shakes dust from the ceiling." }
+      ],
+      "yields_at_regard": 60,
+      "yields_at_hp": 3,
+      "telegraph": { "every": 2, "name": "charge", "multiplier": 2, "warn_text": "The gorilla rears to its full height and beats its chest — it is about to charge!" },
+      "yield_text": "The gorilla backs against the cell wall, hooting softly, one long arm curled over its head. It does not want to fight you. It never did.",
+      "spare_text": "You step back and leave the doorway clear. The gorilla watches you a long moment — then knuckles past you, unhurried, and settles in the far corner with its back to the wall. Something like peace returns to the little cell."
     },
     {
       "id": "beginners-cave-heinrich",
@@ -697,7 +726,15 @@
       "encounter_behavior": "random",
       "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style.",
       "canonical_name": "Heinrich",
-      "text_source": "kdechant/eamon monster.description"
+      "text_source": "kdechant/eamon monster.description",
+      "persona": "A cheerful journeyman sellsword, more salesman than killer — he literally wears a name-tag sticker on his shield. Professional about violence, never personal. He respects courtesy, good humor, and sensible deals; if he has drawn steel on you it is strictly business, and he would honestly rather not.",
+      "acts": [
+        { "verb": "apologize", "label": "Apologize to", "shift": 25, "success_text": "\"Whoa, whoa.\" You raise an open hand and tell Heinrich this fight is a misunderstanding. He peers at you over his shield rim. \"Huh. You know, you don't LOOK like the usual cave riffraff.\"" }
+      ],
+      "yields_at_regard": 70,
+      "befriend_on_spare": true,
+      "yield_text": "Heinrich steps back and lowers his longsword with a professional nod. \"Tell you what — no hard feelings, eh? Steel's expensive and you seem decent.\"",
+      "spare_text": "Heinrich sheathes his sword with a flourish and thumps your shoulder. \"Heinrich Schmidt, at your service after all! Stick with me, friend — two blades walk farther than one.\""
     },
     {
       "id": "beginners-cave-mimic",
@@ -719,7 +756,8 @@
       "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style.",
       "canonical_name": "Mimic",
       "text_source": "kdechant/eamon monster.description",
-      "hidden_until_opened": "mimic-chest"
+      "hidden_until_opened": "mimic-chest",
+      "persona": "A mimic disguised as a wooden chest, very hungry and very bad at small talk. If spoken to while disguised it answers in a muffled, woody voice, pretending unconvincingly to be ordinary furniture ('I am a normal chest. Chests do not talk. Please come closer.'). It cannot resist replying, which is its great weakness as an ambush predator."
     },
     {
       "id": "beginners-cave-pirate",
@@ -741,7 +779,17 @@
       "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style.",
       "canonical_name": "Pirate",
       "text_source": "kdechant/eamon monster.description",
-      "flees_after_round": 1
+      "flees_after_round": 1,
+      "persona": "A vain, theatrical old corsair marooned in this cove with his beloved engraved sword TrollsFire and a rotting boat. He is a coward at heart who masks fear with swagger. He respects flattery of his legend, fair bargains, and anyone who can out-talk him; he despises being laughed at. He desperately wants to leave this cave but will not admit it.",
+      "acts": [
+        { "verb": "parley", "label": "Parley with", "shift": 20, "success_text": "\"Parley, is it?\" The pirate's blade dips a hand's width. \"Aye... I know the old code. Speak your piece, landlubber, and speak it pretty.\"", "repeat_text": "The pirate leans on a rock, sword loose in his grip, half-enjoying the negotiation. \"Go on. I'm listening.\"" },
+        { "verb": "taunt", "label": "Taunt", "shift": -20, "success_text": "You laugh at his silk clothes and his broken little boat. The pirate's face goes scarlet. \"INSOLENT DOG!\" Vanity is the one thing he'll fight for." }
+      ],
+      "yields_at_regard": 70,
+      "yields_at_hp": 2,
+      "yield_text": "The pirate staggers back against his ruined boat, sword point dropping to the sand. \"Hold — HOLD, devil take you!\" he pants. \"Perhaps... perhaps we needn't finish this dance.\"",
+      "spare_text": "The pirate stares at you, then barks a disbelieving laugh. \"Mercy, from a guild rat! Ha!\" He unbuckles TrollsFire, scabbard and all, and presses it into your hands with his coin purse. \"Take her — she's brought me nothing but grief. And tell them ashore that One-Eyed Filmore paid his debts.\" He shoves his wretched boat toward the waves.",
+      "spare_gold": 50
     }
   ],
   "items": [

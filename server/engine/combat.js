@@ -86,11 +86,12 @@ export function isDead(entity) {
   return getHp(entity) <= 0;
 }
 
-export function resolveAttack(attacker, defender, rng = Math.random) {
+export function resolveAttack(attacker, defender, rng = Math.random, opts = {}) {
   const combatRng = safeRng(rng);
   const roll = rollDie(20, combatRng);
+  const bonus = Number.isFinite(opts.bonus) ? opts.bonus : 0;
   // Magic weapons add their to-hit bonus (weaponOdds %, ~+1 per 5%).
-  const attackTotal = roll + getAgility(attacker) + Math.round(getWeaponOdds(attacker) / 5);
+  const attackTotal = roll + getAgility(attacker) + Math.round(getWeaponOdds(attacker) / 5) + bonus;
   const targetNumber = 10 + getAgility(defender);
   const defenderHpBefore = getHp(defender);
 
@@ -106,7 +107,8 @@ export function resolveAttack(attacker, defender, rng = Math.random) {
     };
   }
 
-  const rawDamage = Math.max(0, rollDice(getDamageDice(attacker), combatRng));
+  const multiplier = Number.isFinite(opts.damageMultiplier) && opts.damageMultiplier > 0 ? opts.damageMultiplier : 1;
+  const rawDamage = Math.max(0, Math.round(rollDice(getDamageDice(attacker), combatRng) * multiplier));
   const damage = Math.max(0, rawDamage - getDefense(defender));
   const defenderHp = setHp(defender, defenderHpBefore - damage);
 
@@ -162,6 +164,50 @@ export function resolvePartyRound({ character, fighters = [], enemy, rng = Math.
     enemyDefeated: isDead(enemy),
     characterDefeated: isDead(character),
     fallen,
+  };
+}
+
+// Resolve a telegraphed wind-up (e.g. the gorilla's charge) against the
+// player's chosen answer. The stance decides the whole exchange:
+//   brace     — you plant your feet: no attack, the blow lands at half force.
+//   dodge     — you throw yourself aside: no attack, the blow misses outright.
+//   interrupt — you strike into the wind-up at +4: a hit cancels the blow; a
+//               miss leaves you wide open and the blow lands automatically.
+//   (none)    — attacking through it: your normal attack, then the blow lands
+//               at full multiplier (resolved by the caller passing stance null).
+export function resolveTelegraphRound({ character, enemy, stance, multiplier = 2, rng = Math.random }) {
+  const combatRng = safeRng(rng);
+
+  if (stance === 'dodge') {
+    return {
+      stance,
+      playerAttack: null,
+      enemyAttack: { hit: false, roll: null, attackTotal: null, targetNumber: null, rawDamage: 0, damage: 0, defenderHp: getHp(character), telegraph: true, evaded: true },
+      enemyDefeated: isDead(enemy),
+      characterDefeated: isDead(character),
+    };
+  }
+
+  if (stance === 'brace') {
+    const blow = resolveAttack(enemy, character, combatRng, { damageMultiplier: multiplier / 2 });
+    return { stance, playerAttack: null, enemyAttack: { ...blow, telegraph: true, braced: true }, enemyDefeated: isDead(enemy), characterDefeated: isDead(character) };
+  }
+
+  // interrupt
+  const playerAttack = resolveAttack(character, enemy, combatRng, { bonus: 4 });
+  if (playerAttack.hit || isDead(enemy)) {
+    return { stance, playerAttack, enemyAttack: null, interrupted: true, enemyDefeated: isDead(enemy), characterDefeated: isDead(character) };
+  }
+  // A missed interrupt leaves you open: the blow lands automatically.
+  const rawDamage = Math.max(0, Math.round(rollDice(getDamageDice(enemy), combatRng) * multiplier));
+  const damage = Math.max(0, rawDamage - getDefense(character));
+  const defenderHp = setHp(character, getHp(character) - damage);
+  return {
+    stance,
+    playerAttack,
+    enemyAttack: { hit: true, roll: null, attackTotal: null, targetNumber: null, rawDamage, damage, defenderHp, telegraph: true, exposed: true },
+    enemyDefeated: isDead(enemy),
+    characterDefeated: isDead(character),
   };
 }
 
