@@ -38,7 +38,7 @@ function normalize(value) {
 
 // A prose line is the location header when it matches the scene's location
 // title (or its primary segment before a " - " sub-location).
-function isLocationLine(line, locationTitle) {
+export function isLocationLine(line, locationTitle) {
   if (!locationTitle) return false;
   const main = String(locationTitle).split(/\s+[-–—|:]\s+/)[0];
   const l = normalize(line);

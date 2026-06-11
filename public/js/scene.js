@@ -11,6 +11,10 @@ export function setLastBgLocation(loc) { lastBgLocation = loc; }
 
 export function setLocation(name) {
   const el = document.getElementById('location-title');
+  // The combat overlay carries its own copy of the room name (the main
+  // heading is hidden while the duel fills the screen).
+  const combatEl = document.getElementById('combat-location');
+  if (combatEl) combatEl.textContent = String(name ?? '').split(/\s+[-–—|:]\s+/)[0].trim();
 
   // Split "Main - Sub" (–, —, |, :) into a primary title + flanked sub-location.
   const parts = String(name ?? '').split(/\s+[-–—|:]\s+/);

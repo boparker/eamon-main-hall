@@ -5,6 +5,7 @@
 import { state } from './state.js';
 import { formatActionLabel, inputEl } from './input.js';
 import { confirmAction } from './confirm.js';
+import { isLocationLine } from './narrative.js';
 
 let _onAction = null;
 export function registerCombatAction(fn) { _onAction = fn; }
@@ -92,7 +93,10 @@ function setRollReadout(round) {
 function renderLog(text) {
   const log = document.getElementById('combat-log');
   log.replaceChildren();
+  // The room name renders as the heading above the duel, not as a log line.
+  const locationTitle = document.getElementById('combat-location')?.textContent ?? '';
   for (const line of String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean)) {
+    if (isLocationLine(line, locationTitle)) continue;
     const div = document.createElement('div');
     div.className = 'combat-log-line';
     div.textContent = line;
