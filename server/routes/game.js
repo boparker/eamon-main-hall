@@ -25,8 +25,22 @@ import {
   bumpCombatRound,
   combatRoundsFought,
 } from '../engine/adventures.js';
-import { resolveAttack, resolveCombatRound, resolvePartyRound, isDead } from '../engine/combat.js';
+import { resolveAttack, resolveCombatRound, resolvePartyRound, resolveTelegraphRound, isDead } from '../engine/combat.js';
 import { resolveEncounter, isEscort, buildFighter } from '../engine/companions.js';
+import {
+  getRegard, shiftRegard, actsFor, findAct, applyAct,
+  canYield, checkYield, hasYielded, markYielded, markMerciless, isMerciless, markSpared,
+  behaviorState, telegraphFor, telegraphPending, setTelegraph, shouldTelegraph,
+} from '../engine/acts.js';
+import { narrateRoomEntry as defaultNarrateRoomEntry, narrateMoment as defaultNarrateMoment } from '../ai/narrator.js';
+import {
+  judgeParley as defaultJudgeParley, craftScaledShift,
+  parleyCount, bumpParley, parleyShiftUsed, recordParleyShift,
+  MAX_PARLEYS_PER_NPC, MAX_PARLEY_SHIFT,
+} from '../ai/parley.js';
+import { spiritHint as defaultSpiritHint } from '../ai/hints.js';
+import { weaponLegend as defaultWeaponLegend } from '../ai/lore.js';
+import { recordDeed, recordDeeds, maybeCompress as defaultMaybeCompress } from '../ai/chronicle.js';
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
 import {
@@ -146,12 +160,23 @@ function choicesForRun(adventure, run, character = null) {
   // name (e.g. two "inscription"s), which would otherwise render the same
   // button twice. One "Read Inscription" reads them all (see read_item).
   const itemChoices = [...new Set(items.map((item) => itemChoice(item, opened, inspected)).filter(Boolean))];
+  let stanceChoices = [];
   const characterChoices = (entities.characters ?? []).flatMap((entity) => {
     const disposition = entity.disposition ?? dispositionOf(entity, run);
-    if (disposition === 'hostile') return [`attack ${entity.name ?? entity.slug}`];
+    const name = entity.name ?? entity.slug;
+    if (disposition === 'hostile') {
+      // A yielded enemy waits on your mercy: spare it, or finish it.
+      if (hasYielded(run, entity.slug)) return [`spare ${name}`, `attack ${name}`];
+      // A telegraphed wind-up demands an answer before anything else.
+      if (telegraphPending(run, entity.slug)) stanceChoices = ['Brace', 'Dodge', 'Interrupt'];
+      const acts = isMerciless(run, entity.slug)
+        ? []
+        : actsFor(entity).map((act) => `${act.label ?? act.verb} ${name}`);
+      return [`attack ${name}`, ...acts];
+    }
     return [`talk ${entity.name ?? entity.slug}`];
   });
-  return [...exits, ...itemChoices, ...characterChoices, ...magicChoices];
+  return [...stanceChoices, ...exits, ...itemChoices, ...characterChoices, ...magicChoices];
 }
 
 function findItem(adventure, slugOrName) {
@@ -285,14 +310,39 @@ function deliverEscorts(character, run, adventure) {
   const bySlug = new Map(adventure.characters.map((c) => [c.slug, c]));
   let gold = 0;
   const lines = [];
+  const names = [];
   for (const c of getCompanions(run)) {
     const npc = bySlug.get(c.slug);
     if (!npc || !isEscort(npc)) continue;
     const reward = 10 * (Number(character.charisma) || 0);
     gold += reward;
+    names.push(npc.name ?? npc.slug);
     lines.push(`You return ${npc.name ?? npc.slug} safely. ${npc.patron ?? 'Her grateful father'} rewards you with ${reward} gold.`);
   }
-  return { gold, message: lines.join(' ') };
+  return { gold, message: lines.join(' '), names };
+}
+
+// Words and gestures cost your action: a hostile, un-yielded enemy strikes
+// while you spend your turn on them. Mutates character (HP), returns updates.
+function hostileReprisal({ run, character, npc, rng }) {
+  const hostile = (npc.disposition ?? dispositionOf(npc, run)) === 'hostile';
+  if (!hostile || hasYielded(run, npc.slug) || isFleeing(run, npc.slug)) {
+    return { run, character, enemyAttack: null, characterDefeated: false, text: null };
+  }
+  const enemy = { ...npc, hp: run.enemyHp?.[npc.slug] ?? npc.hp };
+  applyEquipmentToCombatant(character, run);
+  const enemyAttack = resolveAttack(enemy, character, rng);
+  character.hd = character.hp;
+  let characterDefeated = false;
+  if ((character.hd ?? 0) <= 0) {
+    characterDefeated = true;
+    character.isAlive = false;
+    run = { ...run, status: 'dead' };
+  }
+  const text = enemyAttack.hit
+    ? `${npc.name} strikes at you mid-word for ${enemyAttack.damage}!`
+    : `${npc.name} lashes out while you speak — and misses.`;
+  return { run, character, enemyAttack, characterDefeated, text };
 }
 
 function combatSide(attack) {
@@ -316,8 +366,17 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   const hp = Math.max(0, run.enemyHp?.[enemy.slug] ?? maxHp);
   if (!result && round === undefined && hp <= 0) return null;
   const partyBySlug = new Map((adventure?.characters ?? []).map((c) => [c.slug, c]));
+  const yielded = hasYielded(run, enemy.slug);
+  const pendingTelegraph = telegraphPending(run, enemy.slug) ? telegraphFor(enemy) : null;
   return {
-    enemy: { slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp, image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png` },
+    enemy: {
+      slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp,
+      image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png`,
+      state: behaviorState(enemy, { hp, maxHp, regard: getRegard(run, enemy), yielded }),
+      yielded,
+      canParley: !!enemy.persona && !isMerciless(run, enemy.slug),
+    },
+    telegraph: pendingTelegraph ? { name: pendingTelegraph.name, warn: pendingTelegraph.warn_text } : null,
     player: { name: character.name, hp: Math.max(0, character.hd ?? 0), maxHp: character.maxHd ?? character.hd ?? 0, image: character.portraitUrl ?? (character.className ? `scenes/classes/${character.className}.png` : null) },
     companions: getCompanions(run).map((c) => {
       const npc = partyBySlug.get(c.slug);
@@ -433,6 +492,7 @@ function rowCharacter(row) {
     equipment: row.equipment ?? {},
     spells: row.spells ?? {},
     adventuresCompleted: Array.isArray(row.adventures_completed) ? row.adventures_completed : [],
+    chronicle: row.chronicle && typeof row.chronicle === 'object' ? row.chronicle : { summary: '', deeds: [] },
     isAlive: row.is_alive,
     portraitUrl: row.portrait_url ?? null,
   };
@@ -481,6 +541,7 @@ function characterPatch(character) {
     inventory: character.inventory ?? [],
     equipment: character.equipment ?? {},
     adventuresCompleted: character.adventuresCompleted ?? [],
+    chronicle: character.chronicle ?? { summary: '', deeds: [] },
     isAlive: character.isAlive ?? ((character.hd ?? character.hp ?? 1) > 0),
   };
 }
@@ -833,11 +894,14 @@ function healerResponse({ player, character, characters, adventures, prefix = ''
   });
 }
 
-function roomResponse({ adventure, run, character, text = null, prefix = null, event = { type: 'look' }, intent = null, events = null }) {
+function roomResponse({ adventure, run, character, text = null, prefix = null, event = { type: 'look' }, intent = null, events = null, narration = null }) {
   const room = getCurrentRoom(run, adventure);
   const entities = getVisibleRoomEntities(run, adventure);
   const items = visibleItems(adventure, entities);
-  const body = text ?? renderRoom(room, entities, items, room.exits);
+  // AI narration replaces only the description line; the mechanical truth
+  // (who is here, items, exits) always comes from the engine.
+  const renderedRoom = narration ? { ...room, narration_text: narration, description: undefined } : room;
+  const body = text ?? renderRoom(renderedRoom, entities, items, room.exits);
   return canonicalResponse({
     intent,
     event,
@@ -938,6 +1002,17 @@ function normalizeDeps(deps = {}) {
     setCharacterPortraitUrl: deps.setCharacterPortraitUrl ?? defaultSetCharacterPortraitUrl,
     countRecentPortraits: deps.countRecentPortraits ?? defaultCountRecentPortraits,
     rng: deps.rng ?? Math.random,
+    // The AI layer is flavor over the rules engine: every entry point returns
+    // null on failure and the caller falls back to authored text. Injectable
+    // so tests run deterministic and keyless.
+    ai: {
+      narrateRoomEntry: deps.ai?.narrateRoomEntry ?? defaultNarrateRoomEntry,
+      narrateMoment: deps.ai?.narrateMoment ?? defaultNarrateMoment,
+      judgeParley: deps.ai?.judgeParley ?? defaultJudgeParley,
+      spiritHint: deps.ai?.spiritHint ?? defaultSpiritHint,
+      weaponLegend: deps.ai?.weaponLegend ?? defaultWeaponLegend,
+      maybeCompress: deps.ai?.maybeCompress ?? defaultMaybeCompress,
+    },
   };
 }
 
@@ -1054,7 +1129,10 @@ export function createGameRouter(rawDeps = {}) {
         const result = buyFromShop(character, item);
         if (!result.ok) return error(res, 409, `Not enough gold to buy ${item.name}.`, result.reason);
         const row = await persist({ gold: result.character.gold, inventory: result.character.inventory, equipment: result.character.equipment });
-        return render(shopResponse, rowCharacter(row), row, `You buy ${item.name} and ready it. "Pleasure doing business!"`);
+        // A named magic weapon comes with its legend (AI-told, stats untouched).
+        const legend = item.magic ? await deps.ai.weaponLegend(item) : null;
+        const receipt = `You buy ${item.name} and ready it. "Pleasure doing business!"`;
+        return render(shopResponse, rowCharacter(row), row, legend ? `${receipt}\nMarcos leans on the counter. "${legend}"` : receipt);
       }
       if (/^sell\s+equipment$|^sell$|^sell\s+from/.test(normalizedInput)) {
         return render(shopResponse, character, characterRow, '"Looking to sell? Let\'s see what you\'ve got," says Marcos.');
@@ -1377,10 +1455,11 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'help') {
-        return res.json(canonicalResponse({ intent: command, event: { type: 'help', command }, text: 'Try: look, north, south, take gem, attack rat, inventory, or leave.', choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        return res.json(canonicalResponse({ intent: command, event: { type: 'help', command }, text: 'Try: look, north, south, take gem, attack rat, inventory, or leave.\nNot every fight must end in blood: SAY something to an enemy in your own words, try what the room suggests (CALM, PARLEY, PRAY...), and SPARE a foe who yields.\nWhen an enemy winds up a big blow, answer with BRACE, DODGE, or INTERRUPT. Lost? Ask for a HINT.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
       }
 
       if (command.type === 'move') {
+        const revisiting = (run.visitedRooms ?? []).includes(getCurrentRoom(run, adventure)?.exits?.[command.direction]);
         const result = move(run, adventure, command.direction);
         if (!result.ok) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command, reason: result.reason }, text: renderMoveBlocked(command.direction), choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
@@ -1394,7 +1473,15 @@ export function createGameRouter(rawDeps = {}) {
           if (escort.gold > 0) character = { ...character, gold: (character.gold ?? 0) + escort.gold };
           // Wounds persist between adventures — the Healer in the Hall restores
           // HP for gold, so health is a real resource (not free on return).
+          const firstClear = !(character.adventuresCompleted ?? []).includes(adventure.adventure.id);
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
+          // The chronicle remembers the expedition; long logs fold into prose.
+          character = recordDeeds(character, [
+            firstClear ? `Conquered ${adventure.adventure.name} for the first time.` : `Returned from ${adventure.adventure.name}.`,
+            conversion.goldGained > 0 ? `Carried home plunder worth ${conversion.goldGained} gold.` : null,
+            ...escort.names.map((name) => `Brought ${name} safely home through the dark.`),
+          ]);
+          character = await deps.ai.maybeCompress(character);
           const [updatedCharacter, completedRun] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
             deps.completeAdventureRun(deps.db, context.owner, run.id),
@@ -1418,9 +1505,20 @@ export function createGameRouter(rawDeps = {}) {
         const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
         run = encounter.run;
         const updatedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+        const savedRun = rowRun(updatedRun) ?? run;
+        // State-aware narration over the canonical room text (null → authored text).
+        const narration = await deps.ai.narrateRoomEntry({
+          adventure,
+          room: getCurrentRoom(savedRun, adventure),
+          character,
+          entities: getVisibleRoomEntities(savedRun, adventure),
+          visitCount: revisiting ? 2 : 1,
+          note: encounter.note || null,
+        });
         return res.json(roomResponse({
-          adventure, run: rowRun(updatedRun), character,
+          adventure, run: savedRun, character,
           prefix: encounter.note || null,
+          narration,
           event: { type: 'move', command }, events: encounter.events.length ? [{ type: 'move', command }, ...encounter.events] : null,
           intent: command,
         }));
@@ -1454,6 +1552,7 @@ export function createGameRouter(rawDeps = {}) {
           const roomNo = String(getCurrentRoom(run, adventure).room_number);
           const deathText = fatalItem.read_effect_text_at?.[roomNo] ?? fatalItem.read_effect_text ?? 'The book’s curse takes you.';
           character = { ...character, isAlive: false, hd: 0 };
+          character = recordDeed(character, `Read the ${fatalItem.name} in ${getCurrentRoom(run, adventure).name} — and paid the old price for curiosity.`);
           run = { ...run, status: 'dead' };
           const [uc, ur] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -1565,10 +1664,11 @@ export function createGameRouter(rawDeps = {}) {
         character = { ...character, hd: result.character.hd, inventory: result.character.inventory };
 
         // In combat, drinking costs your action — the enemy strikes back.
+        // (A yielded enemy keeps the truce while you drink.)
         const enemyTemplate = visibleEnemy(adventure, run);
         let enemyAttack = null;
         let characterDefeated = false;
-        if (enemyTemplate) {
+        if (enemyTemplate && !hasYielded(run, enemyTemplate.slug)) {
           const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
           applyEquipmentToCombatant(character, run);
           enemyAttack = resolveAttack(enemy, character, deps.rng);
@@ -1618,6 +1718,16 @@ export function createGameRouter(rawDeps = {}) {
         const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
         applyEquipmentToCombatant(character, run);
         const fighters = companionFighters(run, adventure);
+        // Striking a yielded enemy shatters the truce: it will never yield again.
+        let mercyBroken = false;
+        if (hasYielded(run, enemyTemplate.slug)) {
+          run = markMerciless(run, enemyTemplate.slug);
+          mercyBroken = true;
+        }
+        // A pending wind-up: attacking straight through it means eating the
+        // charged blow at full force.
+        const pendingTelegraph = telegraphPending(run, enemyTemplate.slug) ? telegraphFor(enemyTemplate) : null;
+        if (pendingTelegraph) run = setTelegraph(run, enemyTemplate.slug, false);
         // An enemy already in flight (flees_after_round) no longer turns to fight:
         // a one-sided pursuit. Otherwise the normal party/solo exchange.
         const pursuing = isFleeing(run, enemyTemplate.slug);
@@ -1627,6 +1737,12 @@ export function createGameRouter(rawDeps = {}) {
           const companionAttacks = [];
           for (const f of fighters) { if (isDead(enemy)) break; companionAttacks.push({ slug: f.slug, name: f.name, attack: resolveAttack(f, enemy, deps.rng) }); }
           combat = { playerAttack, companionAttacks, enemyAttack: null, enemyTarget: null, enemyDefeated: isDead(enemy), characterDefeated: isDead(character), fallen: [] };
+        } else if (pendingTelegraph) {
+          const playerAttack = resolveAttack(character, enemy, deps.rng);
+          const companionAttacks = [];
+          for (const f of fighters) { if (isDead(enemy)) break; companionAttacks.push({ slug: f.slug, name: f.name, attack: resolveAttack(f, enemy, deps.rng) }); }
+          const enemyAttack = isDead(enemy) ? null : resolveAttack(enemy, character, deps.rng, { damageMultiplier: pendingTelegraph.multiplier });
+          combat = { playerAttack, companionAttacks, enemyAttack, enemyTarget: enemyAttack ? 'player' : null, enemyDefeated: isDead(enemy), characterDefeated: isDead(character), fallen: [], chargedThrough: true };
         } else {
           combat = fighters.length
             ? resolvePartyRound({ character, fighters, enemy, rng: deps.rng })
@@ -1638,6 +1754,13 @@ export function createGameRouter(rawDeps = {}) {
         for (const f of fighters) run = setCompanionHp(run, f.slug, f.hp);
         const events = [{ type: 'combat', command, enemy: enemyTemplate.slug }];
         const extraText = [];
+        if (mercyBroken) {
+          extraText.push(`${enemyTemplate.name} had stopped fighting — your blow shatters the truce. It will never trust you again.`);
+          events.push({ type: 'mercy_broken', enemy: enemyTemplate.slug });
+        }
+        if (combat.chargedThrough && combat.enemyAttack?.hit) {
+          extraText.push(`You attack straight through the ${pendingTelegraph.name} — and pay for it.`);
+        }
         for (const att of combat.companionAttacks ?? []) {
           extraText.push(att.attack.hit ? `${att.name} strikes ${enemyTemplate.name} for ${att.attack.damage}.` : `${att.name} swings at ${enemyTemplate.name} and misses.`);
         }
@@ -1651,11 +1774,24 @@ export function createGameRouter(rawDeps = {}) {
         // (the pirate after his first swing). Thereafter combat is a pursuit.
         const bumped = bumpCombatRound(run, enemyTemplate.slug);
         run = bumped.run;
-        if (!combat.enemyDefeated && enemyTemplate.flees_after_round
+        // Brought to the brink, a yielding enemy stops fighting (HP threshold;
+        // regard thresholds resolve in the act/say handlers).
+        if (!combat.enemyDefeated && !hasYielded(run, enemyTemplate.slug) && checkYield(enemyTemplate, run, enemy.hp)) {
+          run = markYielded(run, enemyTemplate.slug);
+          extraText.push(enemyTemplate.yield_text ?? `${enemyTemplate.name} falters, lowers its guard, and stops fighting. You could SPARE it — or finish this.`);
+          events.push({ type: 'enemy_yielded', enemy: enemyTemplate.slug });
+        } else if (!combat.enemyDefeated && enemyTemplate.flees_after_round
           && bumped.rounds >= enemyTemplate.flees_after_round && !isFleeing(run, enemyTemplate.slug)) {
           run = markFleeing(run, enemyTemplate.slug);
           extraText.push(`${enemyTemplate.name} turns and bolts — you give chase!`);
           events.push({ type: 'enemy_fleeing', enemy: enemyTemplate.slug });
+        } else if (!combat.enemyDefeated && !hasYielded(run, enemyTemplate.slug)
+          && !isFleeing(run, enemyTemplate.slug) && shouldTelegraph(enemyTemplate, bumped.rounds)) {
+          // The wind-up: warn now, resolve on the player's answer next turn.
+          const telegraph = telegraphFor(enemyTemplate);
+          run = setTelegraph(run, enemyTemplate.slug, true);
+          extraText.push(`${telegraph.warn_text ?? `${enemyTemplate.name} winds up for a ${telegraph.name}!`} (BRACE, DODGE, or INTERRUPT.)`);
+          events.push({ type: 'telegraph', enemy: enemyTemplate.slug, name: telegraph.name });
         }
         if (combat.enemyDefeated) {
           run = markEnemyDefeated(run, enemyTemplate.slug);
@@ -1675,6 +1811,23 @@ export function createGameRouter(rawDeps = {}) {
           run = { ...run, status: 'dead' };
           events.push({ type: 'character_defeated', characterId: character.id });
         }
+        // The chronicle records what verifiably happened this round.
+        const battleRoom = getCurrentRoom(run, adventure);
+        const deeds = [];
+        if (combat.enemyDefeated) deeds.push(`Slew the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`);
+        if (mercyBroken) deeds.push(`Broke a truce with the ${enemyTemplate.name}, who had yielded.`);
+        for (const slug of combat.fallen ?? []) {
+          deeds.push(`${adventure.characters.find((c) => c.slug === slug)?.name ?? slug} fell in battle in ${battleRoom.name}.`);
+        }
+        if (combat.characterDefeated) deeds.push(`Died fighting the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`);
+        character = recordDeeds(character, deeds);
+        // A turning point earns a line from the narrator (null → silence).
+        const moment = (combat.enemyDefeated || combat.characterDefeated)
+          ? await deps.ai.narrateMoment({
+            kind: combat.characterDefeated ? 'the adventurer falls in battle' : 'the enemy is struck down',
+            adventure, room: battleRoom, character, subject: enemyTemplate.name,
+          })
+          : null;
         const [updatedCharacter, updatedRun] = await Promise.all([
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
           deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
@@ -1683,8 +1836,8 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(canonicalResponse({
           intent: command,
           events,
-          text: [renderCombatResult(combat), ...extraText].filter(Boolean).join('\n'),
-          choices: combat.characterDefeated ? [] : choicesForRun(adventure, run),
+          text: [renderCombatResult(combat), ...extraText, moment].filter(Boolean).join('\n'),
+          choices: combat.characterDefeated ? [] : choicesForRun(adventure, run, character),
           state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun), combat: combatState },
         }));
       }
@@ -1727,6 +1880,12 @@ export function createGameRouter(rawDeps = {}) {
 
         const enemyTemplate = visibleEnemy(adventure, run);
         const enemy = enemyTemplate ? { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp } : null;
+        // Blasting a yielded enemy shatters the truce, same as a sword would.
+        let spellBrokeMercy = false;
+        if (spellName === 'blast' && enemyTemplate && hasYielded(run, enemyTemplate.slug)) {
+          run = markMerciless(run, enemyTemplate.slug);
+          spellBrokeMercy = true;
+        }
         applyEquipmentToCombatant(character, run);
         const cast = castSpell(character, spellName, { enemy, rng: deps.rng });
         if (!cast.ok) {
@@ -1746,7 +1905,7 @@ export function createGameRouter(rawDeps = {}) {
               const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
               if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) run = recruitCompanion(run, captive);
             }
-          } else {
+          } else if (!hasYielded(run, enemyTemplate.slug)) {
             enemyAttack = resolveAttack(enemy, character, deps.rng);
             character.hd = character.hp;
             if ((character.hd ?? 0) <= 0) { characterDefeated = true; character.isAlive = false; run = { ...run, status: 'dead' }; }
@@ -1766,7 +1925,12 @@ export function createGameRouter(rawDeps = {}) {
           characterDefeated,
         };
         const enemyText = enemyAttack ? (enemyAttack.hit ? `${enemyTemplate.name} strikes back for ${enemyAttack.damage}.` : `${enemyTemplate.name} lunges but misses.`) : null;
-        const text = [cast.message, enemyText, enemyDefeated ? 'The enemy is defeated.' : null, characterDefeated ? 'You have been defeated.' : null].filter(Boolean).join('\n');
+        const text = [
+          spellBrokeMercy ? `${enemyTemplate.name} had stopped fighting — your spell shatters the truce.` : null,
+          cast.message, enemyText,
+          enemyDefeated ? 'The enemy is defeated.' : null,
+          characterDefeated ? 'You have been defeated.' : null,
+        ].filter(Boolean).join('\n');
         const combat = enemyTemplate ? combatStateFor({ adventure, run, character, enemyTemplate, round }) : null;
         return res.json(canonicalResponse({
           intent: command,
@@ -1777,15 +1941,233 @@ export function createGameRouter(rawDeps = {}) {
         }));
       }
 
+      // ── Stances: answering a telegraphed wind-up ─────────────────────────
+      if (command.type === 'stance') {
+        const enemyTemplate = visibleEnemy(adventure, run);
+        const pending = enemyTemplate && telegraphPending(run, enemyTemplate.slug) ? telegraphFor(enemyTemplate) : null;
+        if (!pending) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'stance_failed', command, reason: 'no-telegraph' }, text: 'You set yourself — but nothing is coming. Brace, dodge, and interrupt answer an enemy wind-up.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+        }
+        run = setTelegraph(run, enemyTemplate.slug, false);
+        const enemy = { ...enemyTemplate, hp: run.enemyHp?.[enemyTemplate.slug] ?? enemyTemplate.hp };
+        applyEquipmentToCombatant(character, run);
+        const result = resolveTelegraphRound({ character, enemy, stance: command.stance, multiplier: pending.multiplier, rng: deps.rng });
+        character.hd = character.hp;
+        run = { ...run, enemyHp: { ...(run.enemyHp ?? {}), [enemyTemplate.slug]: enemy.hp } };
+        run = bumpCombatRound(run, enemyTemplate.slug).run;
+        const events = [{ type: 'stance', command, stance: command.stance, enemy: enemyTemplate.slug }];
+        const lines = [];
+        if (command.stance === 'dodge') {
+          lines.push(`You hurl yourself aside as the ${pending.name} crashes past — untouched!`);
+        } else if (command.stance === 'brace') {
+          lines.push(result.enemyAttack?.hit
+            ? `You plant your feet and take the ${pending.name} on your guard — ${result.enemyAttack.damage} damage, half what it might have been.`
+            : `Braced and ready, you turn the ${pending.name} aside entirely.`);
+        } else if (result.interrupted) {
+          lines.push(`You lunge into the wind-up — your strike lands for ${result.playerAttack.damage} and stops the ${pending.name} cold!`);
+        } else {
+          lines.push(`Your strike goes wide — and the ${pending.name} hammers home for ${result.enemyAttack.damage}!`);
+        }
+        if (result.enemyDefeated) {
+          run = markEnemyDefeated(run, enemyTemplate.slug);
+          events.push({ type: 'enemy_defeated', enemy: enemyTemplate.slug });
+          lines.push('The enemy is defeated.');
+          character = recordDeed(character, `Slew the ${enemyTemplate.name} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`);
+          if (enemyTemplate.frees_on_defeat) {
+            const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
+            if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) {
+              run = recruitCompanion(run, captive);
+              lines.push(`${captive.name ?? captive.slug} is free, and gratefully joins you.`);
+              events.push({ type: 'recruit', character: captive.slug });
+            }
+          }
+        }
+        if (result.characterDefeated) {
+          character.isAlive = false;
+          run = { ...run, status: 'dead' };
+          events.push({ type: 'character_defeated', characterId: character.id });
+          lines.push('You have been defeated.');
+          character = recordDeed(character, `Died to the ${enemyTemplate.name}'s ${pending.name} in ${getCurrentRoom(run, adventure).name}.`);
+        }
+        const [uc, ur] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        const round = {
+          player: result.playerAttack ? combatSide(result.playerAttack) : null,
+          enemy: result.enemyAttack ? combatSide(result.enemyAttack) : null,
+          enemyDefeated: !!result.enemyDefeated,
+          characterDefeated: !!result.characterDefeated,
+        };
+        return res.json(canonicalResponse({
+          intent: command,
+          events,
+          text: lines.filter(Boolean).join('\n'),
+          choices: result.characterDefeated ? [] : choicesForRun(adventure, run, character),
+          state: { character: rowCharacter(uc), adventureRun: rowRun(ur), combat: combatStateFor({ adventure, run, character, enemyTemplate, round }) },
+        }));
+      }
+
+      // ── Mercy: SPARE a yielded enemy ─────────────────────────────────────
+      if (command.type === 'spare') {
+        const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
+        const yieldedHere = visible.filter((c) => hasYielded(run, c.slug));
+        const target = command.target
+          ? findVisibleCharacter(adventure, run, command.target)
+          : (yieldedHere.length === 1 ? yieldedHere[0] : null);
+        if (!target) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'spare_failed', command, reason: 'no-target' }, text: command.target ? `There is no ${command.target} here.` : 'No one here awaits your mercy.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+        }
+        if (!hasYielded(run, target.slug)) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'spare_failed', command, reason: 'not-yielded' }, text: `${target.name} has not stopped fighting. Mercy must be offered to one who has yielded — words or wounds may bring them there.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+        }
+        const room = getCurrentRoom(run, adventure);
+        const events = [{ type: 'enemy_spared', command, enemy: target.slug }];
+        const lines = [target.spare_text ?? `You lower your weapon. ${target.name} backs away, beaten but breathing, and troubles you no more.`];
+        if (target.befriend_on_spare) {
+          // Mercy completes the friend-or-foe arc: the foe becomes a companion.
+          run = recordEncounter(run, target.slug, 'friend');
+          run = recruitCompanion(run, target);
+          events.push({ type: 'recruit', character: target.slug });
+          character = recordDeed(character, `Made peace with ${target.name} in ${room.name}, who joined the party.`);
+        } else {
+          run = markEnemyDefeated(run, target.slug);
+          run = markSpared(run, target.slug);
+          if (Number.isFinite(target.spare_gold) && target.spare_gold > 0) {
+            character = { ...character, gold: (character.gold ?? 0) + target.spare_gold };
+            lines.push(`You receive ${target.spare_gold} gold.`);
+            events.push({ type: 'spare_reward', gold: target.spare_gold });
+          }
+          character = recordDeed(character, `Showed mercy to the ${target.name} in ${room.name} (${adventure.adventure.name}).`);
+          // A spared captor releases their prisoner just as a slain one does.
+          const released = freeDefeatedCaptives(run, adventure);
+          run = released.run;
+          for (const slug of released.freed) {
+            const captive = adventure.characters.find((c) => c.slug === slug);
+            lines.push(`${captive?.name ?? slug} is free, and gratefully joins you.`);
+            events.push({ type: 'recruit', character: slug });
+          }
+        }
+        const moment = await deps.ai.narrateMoment({ kind: 'the adventurer shows mercy', adventure, room, character, subject: target.name });
+        if (moment) lines.push(moment);
+        const [uc, ur] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        run = rowRun(ur) ?? run;
+        return res.json(roomResponse({
+          adventure, run, character: rowCharacter(uc) ?? character,
+          text: lines.filter(Boolean).join('\n'),
+          event: events[0], events, intent: command,
+        }));
+      }
+
+      // ── The Spirit of the Hall: a Socratic nudge from true game state ────
+      if (command.type === 'hint') {
+        const hint = await deps.ai.spiritHint(adventure, run, character);
+        return res.json(canonicalResponse({
+          intent: command,
+          event: { type: 'hint', kind: hint.kind },
+          text: `✶ The Spirit of the Hall whispers: ${hint.text}`,
+          choices: choicesForRun(adventure, run, character),
+          state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) },
+        }));
+      }
+
+      // ── Freeform speech: the words are judged, the engine applies them ──
+      if (command.type === 'say') {
+        const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
+        // A disguised mimic: speaking to the chest (or into an "empty" room
+        // that holds one) gets an answer no honest chest would give.
+        const disguisedMimic = adventure.characters.find((c) => c.hidden_until_opened
+          && !run.defeatedEnemies.includes(c.slug)
+          && !(run.flags?.openedContainers ?? []).includes(c.hidden_until_opened)
+          && (run.flags?.relocated?.[c.slug] ?? c.location_room) === getCurrentRoom(run, adventure).room_number);
+        let listener = command.target ? findVisibleCharacter(adventure, run, command.target) : null;
+        let disguised = false;
+        if (!listener && !command.target) {
+          listener = visibleEnemy(adventure, run) ?? (visible.length === 1 ? visible[0] : null);
+        }
+        if (!listener && disguisedMimic) {
+          const container = adventure.items.find((item) => item.slug === disguisedMimic.hidden_until_opened);
+          if (!command.target || normalizeTarget(command.target) === normalizeTarget(container?.name ?? '')) {
+            listener = disguisedMimic;
+            disguised = true;
+          }
+        }
+        if (!listener) {
+          const text = visible.length > 1
+            ? 'Several here might listen. TELL someone by name — e.g. TELL HERMIT your words.'
+            : 'Your words echo off the stone. No one is here to hear them.';
+          return res.json(canonicalResponse({ intent: command, event: { type: 'say_failed', command, reason: 'no-listener' }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        if (parleyCount(run, listener.slug) >= MAX_PARLEYS_PER_NPC) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'say_failed', command, reason: 'talked-out' }, text: `${disguised ? 'The chest' : listener.name} has heard enough of your words for one expedition.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+        }
+        run = bumpParley(run, listener.slug);
+        const verdict = await deps.ai.judgeParley({ npc: listener, character, run, words: command.words, disguised });
+        // The engine — not the model — applies the shift: craft-scaled,
+        // charisma-scaled, capped per NPC per run.
+        let effective = craftScaledShift(verdict.shift, verdict.craft);
+        const remaining = Math.max(0, MAX_PARLEY_SHIFT - parleyShiftUsed(run, listener.slug));
+        effective = Math.max(-remaining, Math.min(remaining, effective));
+        const shifted = shiftRegard(run, listener, effective, character.charisma);
+        run = recordParleyShift(shifted.run, listener.slug, shifted.applied);
+        const events = [{ type: 'parley', command, character: listener.slug, craft: verdict.craft, shift: shifted.applied, source: verdict.source }];
+        const lines = [`${disguised ? 'The chest' : listener.name}: "${verdict.reply}"`];
+        // A talked-to mimic gives itself away.
+        if (disguised && verdict.action === 'reveal') {
+          run = markContainerOpened(run, listener.hidden_until_opened);
+          lines.push(`The chest's lid peels back along a seam no chest should have — it ERUPTS! ${listener.first_encounter_text ?? ''}`);
+          events.push({ type: 'ambush', character: listener.slug });
+        }
+        // Words can finish what acts began: the yield check.
+        const hostile = !disguised && (listener.disposition ?? dispositionOf(listener, run)) === 'hostile';
+        if (hostile && !hasYielded(run, listener.slug) && checkYield(listener, run, run.enemyHp?.[listener.slug] ?? listener.hp)) {
+          run = markYielded(run, listener.slug);
+          lines.push(listener.yield_text ?? `${listener.name} lowers their guard. The fight has gone out of them — you could SPARE them.`);
+          events.push({ type: 'enemy_yielded', enemy: listener.slug });
+        }
+        // Talking to a still-hostile enemy costs your action.
+        let reprisal = { enemyAttack: null, characterDefeated: false, text: null };
+        if (hostile && !disguised) {
+          reprisal = hostileReprisal({ run, character, npc: listener, rng: deps.rng });
+          run = reprisal.run;
+          character = reprisal.character;
+          if (reprisal.text) lines.push(reprisal.text);
+          if (reprisal.characterDefeated) {
+            events.push({ type: 'character_defeated', characterId: character.id });
+            lines.push('You have been defeated.');
+            character = recordDeed(character, `Died mid-parley with the ${listener.name} in ${getCurrentRoom(run, adventure).name}.`);
+          }
+        }
+        // The writing-craft rubric, shown to the writer (the classroom heart).
+        if (Number.isFinite(verdict.craft)) {
+          lines.push(`✦ Craft ${verdict.craft}/5${verdict.craftNote ? ` — ${verdict.craftNote}` : ''}`);
+        }
+        const [uc, ur] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        const round = reprisal.enemyAttack ? { player: null, enemy: combatSide(reprisal.enemyAttack), enemyDefeated: false, characterDefeated: reprisal.characterDefeated } : undefined;
+        return res.json(canonicalResponse({
+          intent: command,
+          events,
+          text: lines.filter(Boolean).join('\n'),
+          choices: reprisal.characterDefeated ? [] : choicesForRun(adventure, run, character),
+          state: { character: rowCharacter(uc), adventureRun: rowRun(ur), combat: combatStateFor({ adventure, run, character, round }), entities: getVisibleRoomEntities(rowRun(ur) ?? run, adventure) },
+        }));
+      }
+
       if (command.type === 'talk') {
         const target = findVisibleCharacter(adventure, run, command.target);
         if (!target) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'missing-character' }, text: `There is no ${command.target} here to talk to.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         const name = target.name ?? target.slug ?? 'They';
-        // Hostile foes won't parley — talking doesn't dump their look-description.
+        // Hostile foes don't make small talk — but chosen words might reach them.
         if ((target.disposition ?? dispositionOf(target, run)) === 'hostile') {
-          return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'hostile', character: target.slug ?? name }, text: `${name} answers only with a snarl — words will not help you here.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+          return res.json(canonicalResponse({ intent: command, event: { type: 'talk_failed', command, reason: 'hostile', character: target.slug ?? name }, text: `${name} answers only with a snarl. But the right words, well chosen, might yet reach them — SAY something.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
         }
         const dialogue = target.dialogue ?? target.text ?? `${name} gives you a quiet nod but has little to say.`;
         return res.json(canonicalResponse({ intent: command, event: { type: 'talk', command, character: target.slug ?? target.id ?? name }, text: dialogue, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
@@ -1799,6 +2181,10 @@ export function createGameRouter(rawDeps = {}) {
         character = conversion.character;
         const escort = deliverEscorts(character, run, adventure);
         if (escort.gold > 0) character = { ...character, gold: (character.gold ?? 0) + escort.gold };
+        character = recordDeeds(character, [
+          conversion.goldGained > 0 ? `Walked out of ${adventure.adventure.name} alive with plunder worth ${conversion.goldGained} gold.` : null,
+          ...escort.names.map((name) => `Brought ${name} safely home through the dark.`),
+        ]);
         const leftRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
         character = rowCharacter(leftRow) ?? character;
         const hall = hallResponse({
@@ -1820,7 +2206,61 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(hall);
       }
 
-      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, or leave.', choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+      // ── Data-driven ACT verbs: "calm gorilla", "parley with pirate" ──────
+      // Unknown verbs are matched against the acts authored on whoever is in
+      // the room, so each enemy brings its own vocabulary (the ACT menu).
+      {
+        const raw = normalizeTarget(req.body.input ?? '');
+        const [verb, ...restWords] = raw.split(' ');
+        const actTarget = restWords.join(' ').replace(/^(?:with|at|to)\s+/, '').replace(/^the\s+/, '');
+        const visibleChars = getVisibleRoomEntities(run, adventure).characters ?? [];
+        const subject = verb ? visibleChars.find((c) => findAct(c, verb) && (
+          !actTarget || normalizeTarget(c.name) === normalizeTarget(actTarget) || normalizeTarget(c.slug) === normalizeTarget(actTarget)
+        )) : null;
+        if (subject) {
+          if (isMerciless(run, subject.slug)) {
+            return res.json(canonicalResponse({ intent: { type: 'act', verb, source: 'rules' }, event: { type: 'act_failed', reason: 'merciless', character: subject.slug }, text: `${subject.name} is past words and gestures now. You saw to that.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
+          }
+          const act = findAct(subject, verb);
+          const acted = applyAct({ run, npc: subject, act, charisma: character.charisma });
+          run = acted.run;
+          const events = [{ type: 'act', verb, character: subject.slug, regard: acted.regard, shift: acted.applied }];
+          const lines = [acted.text ?? `You ${verb} ${subject.name}.`];
+          const hostile = (subject.disposition ?? dispositionOf(subject, run)) === 'hostile';
+          if (hostile && !hasYielded(run, subject.slug) && checkYield(subject, run, run.enemyHp?.[subject.slug] ?? subject.hp)) {
+            run = markYielded(run, subject.slug);
+            lines.push(subject.yield_text ?? `${subject.name} lowers their guard. The fight has gone out of them — you could SPARE them.`);
+            events.push({ type: 'enemy_yielded', enemy: subject.slug });
+          }
+          // The gesture costs your action: an unmoved enemy answers in steel.
+          let reprisal = { enemyAttack: null, characterDefeated: false, text: null };
+          if (hostile) {
+            reprisal = hostileReprisal({ run, character, npc: subject, rng: deps.rng });
+            run = reprisal.run;
+            character = reprisal.character;
+            if (reprisal.text) lines.push(reprisal.text);
+            if (reprisal.characterDefeated) {
+              events.push({ type: 'character_defeated', characterId: character.id });
+              lines.push('You have been defeated.');
+              character = recordDeed(character, `Died reaching out to the ${subject.name} in ${getCurrentRoom(run, adventure).name}.`);
+            }
+          }
+          const [uc, ur] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          const round = reprisal.enemyAttack ? { player: null, enemy: combatSide(reprisal.enemyAttack), enemyDefeated: false, characterDefeated: reprisal.characterDefeated } : undefined;
+          return res.json(canonicalResponse({
+            intent: { type: 'act', verb, target: subject.slug, source: 'rules' },
+            events,
+            text: lines.filter(Boolean).join('\n'),
+            choices: reprisal.characterDefeated ? [] : choicesForRun(adventure, run, character),
+            state: { character: rowCharacter(uc), adventureRun: rowRun(ur), combat: combatStateFor({ adventure, run, character, round }) },
+          }));
+        }
+      }
+
+      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, spare, say, hint, or leave.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
     } catch (err) {
       return next(err);
     }
