@@ -2075,7 +2075,10 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       // ── Freeform speech: the words are judged, the engine applies them ──
-      if (command.type === 'say') {
+      // Shared by the explicit SAY/TELL commands and the implicit catch-all
+      // below: any un-parsed sentence typed where someone can hear it is
+      // simply spoken aloud — the AI layer's answer to "I did not understand".
+      const speakWords = async (words, targetName) => {
         const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
         // A disguised mimic: speaking to the chest (or into an "empty" room
         // that holds one) gets an answer no honest chest would give.
@@ -2083,14 +2086,14 @@ export function createGameRouter(rawDeps = {}) {
           && !run.defeatedEnemies.includes(c.slug)
           && !(run.flags?.openedContainers ?? []).includes(c.hidden_until_opened)
           && (run.flags?.relocated?.[c.slug] ?? c.location_room) === getCurrentRoom(run, adventure).room_number);
-        let listener = command.target ? findVisibleCharacter(adventure, run, command.target) : null;
+        let listener = targetName ? findVisibleCharacter(adventure, run, targetName) : null;
         let disguised = false;
-        if (!listener && !command.target) {
+        if (!listener && !targetName) {
           listener = visibleEnemy(adventure, run) ?? (visible.length === 1 ? visible[0] : null);
         }
         if (!listener && disguisedMimic) {
           const container = adventure.items.find((item) => item.slug === disguisedMimic.hidden_until_opened);
-          if (!command.target || normalizeTarget(command.target) === normalizeTarget(container?.name ?? '')) {
+          if (!targetName || normalizeTarget(targetName) === normalizeTarget(container?.name ?? '')) {
             listener = disguisedMimic;
             disguised = true;
           }
@@ -2105,7 +2108,7 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'say_failed', command, reason: 'talked-out' }, text: `${disguised ? 'The chest' : listener.name} has heard enough of your words for one expedition.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, combat: combatStateFor({ adventure, run, character }) } }));
         }
         run = bumpParley(run, listener.slug);
-        const verdict = await deps.ai.judgeParley({ npc: listener, character, run, words: command.words, disguised });
+        const verdict = await deps.ai.judgeParley({ npc: listener, character, run, words, disguised });
         // The engine — not the model — applies the shift: craft-scaled,
         // charisma-scaled, capped per NPC per run.
         let effective = craftScaledShift(verdict.shift, verdict.craft);
@@ -2157,6 +2160,10 @@ export function createGameRouter(rawDeps = {}) {
           choices: reprisal.characterDefeated ? [] : choicesForRun(adventure, run, character),
           state: { character: rowCharacter(uc), adventureRun: rowRun(ur), combat: combatStateFor({ adventure, run, character, round }), entities: getVisibleRoomEntities(rowRun(ur) ?? run, adventure) },
         }));
+      };
+
+      if (command.type === 'say') {
+        return speakWords(command.words, command.target ?? null);
       }
 
       if (command.type === 'talk') {
@@ -2260,7 +2267,28 @@ export function createGameRouter(rawDeps = {}) {
         }
       }
 
-      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, spare, say, hint, or leave.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+      // ── Implicit speech: un-parsed sentences are spoken aloud ────────────
+      // "yes, follow me and I'll get you home safely" shouldn't earn a parser
+      // error when Cynthia is standing right there. Any unknown multi-word
+      // input (or a single conversational word) with someone present to hear
+      // it routes through the same judged-parley path as SAY.
+      {
+        const spoken = String(req.body.input ?? '').trim();
+        const CONVERSATIONAL = new Set(['yes', 'no', 'hello', 'hi', 'hail', 'greetings', 'sorry', 'please', 'thanks', 'farewell', 'goodbye', 'why', 'who']);
+        const looksLikeSpeech = /\s/.test(spoken) || CONVERSATIONAL.has(spoken.toLowerCase().replace(/[!?.,]+$/, ''));
+        if (spoken && looksLikeSpeech) {
+          const anyoneHere = (getVisibleRoomEntities(run, adventure).characters ?? []).length > 0
+            || adventure.characters.some((c) => c.hidden_until_opened
+              && !run.defeatedEnemies.includes(c.slug)
+              && !(run.flags?.openedContainers ?? []).includes(c.hidden_until_opened)
+              && (run.flags?.relocated?.[c.slug] ?? c.location_room) === getCurrentRoom(run, adventure).room_number);
+          if (anyoneHere) {
+            return speakWords(spoken, null);
+          }
+        }
+      }
+
+      return res.json(canonicalResponse({ intent: command, event: { type: 'unknown', command }, text: 'I did not understand that. Try a direction, look, inventory, take, attack, spare, say, hint, or leave — or simply speak to whoever is near you.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
     } catch (err) {
       return next(err);
     }
