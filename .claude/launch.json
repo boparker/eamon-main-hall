@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "eamon",
-      "runtimeExecutable": "env",
-      "runtimeArgs": ["DATABASE_URL=postgres://localhost/eamon_ai_dev", "node", "server.js"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "set -a; [ -f .env.local ] && . ./.env.local; [ -f .fal.env ] && . ./.fal.env; set +a; DATABASE_URL=${DATABASE_URL:-postgres://localhost/eamon_ai_dev} exec node server.js"
+      ],
       "port": 3000
     }
   ]

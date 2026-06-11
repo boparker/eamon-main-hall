@@ -4,3 +4,4 @@ public/gen-images/*.jpg
 memory/
 .fal.env
 art-out/
+.env.local
