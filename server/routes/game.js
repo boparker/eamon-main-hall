@@ -11,6 +11,8 @@ import {
   markFeatureInspected,
   markEnemyDefeated,
   markItemCollected,
+  markIntroduced,
+  isIntroduced,
   move,
   dispositionOf,
   getCompanions,
@@ -263,6 +265,21 @@ function resolveRoomEncounters(run, adventure, character, rng) {
   const notes = [];
   const events = [];
   let next = run;
+  // First-sight introductions: a character's authored entrance text prints
+  // once per run, BEFORE any friend-or-foe outcome, so the player always
+  // meets whoever the buttons point at — a captor standing over their
+  // captive uses the staged captive_intro instead.
+  for (const present of getVisibleRoomEntities(next, adventure).characters ?? []) {
+    if (present.companion || isIntroduced(next, present.slug)) continue;
+    const captive = present.frees_on_defeat
+      ? (getVisibleRoomEntities(next, adventure).characters ?? []).find((c) => c.slug === present.frees_on_defeat)
+      : null;
+    const intro = (captive && present.captive_intro) || present.first_encounter_text || present.description;
+    if (!intro) continue;
+    notes.push(intro);
+    next = markIntroduced(next, present.slug);
+    events.push({ type: 'introduced', character: present.slug });
+  }
   for (const npc of adventure.characters) {
     if (npc.location_room !== room.room_number) continue;
     if (npc.encounter_behavior !== 'random') continue;

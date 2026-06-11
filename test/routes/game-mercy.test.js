@@ -37,6 +37,7 @@ const fixture = {
       id: 'troll-1', slug: 'troll', name: 'Troll', type: 'enemy', friendliness: 'hostile',
       hp: 10, agility: 0, damage_dice: '1d4', location_room: 2, current_hp_from: 'hp',
       persona: 'A lonely bridge troll.',
+      first_encounter_text: 'A mossy troll fills the den, knuckles dragging, eyes like river stones.',
       acts: [{ verb: 'calm', label: 'Calm', shift: 30, success_text: 'The troll blinks, soothed.' }],
       yields_at_regard: 60,
       yields_at_hp: 3,
@@ -496,4 +497,18 @@ test('unnamed speech that mentions a bystander by name goes to them, not the ene
   const plea = await command(app, session, 'stay strong, prisoner — I will come back for you');
   assert.deepEqual(heard, ['prisoner']);
   assert.match(plea.body.text, /Prisoner: "I hear you\."/);
+});
+
+test('first sight of a character prints their authored entrance text, once per run', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+
+  const first = await command(app, session, 'south');
+  assert.match(first.body.text, /A mossy troll fills the den/);
+  assert.ok(first.body.events.some((e) => e.type === 'introduced' && e.character === 'troll'));
+
+  await command(app, session, 'north');
+  const second = await command(app, session, 'south');
+  assert.equal(/A mossy troll fills the den/.test(second.body.text), false);
 });
