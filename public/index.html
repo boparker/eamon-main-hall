@@ -327,6 +327,13 @@
     #game-screen.in-combat #location-title,
     #game-screen.in-combat #thinking { display: none; }
 
+    /* The room name keeps its place of honor above the duel. */
+    .combat-location {
+      font-family: var(--font-head); text-align: center; text-transform: uppercase;
+      font-size: clamp(1.2rem, 3.2vw, 1.9rem); letter-spacing: 0.16em; color: var(--gold);
+      text-shadow: 0 0 40px rgba(200,168,75,0.3), 0 2px 10px rgba(0,0,0,0.9);
+    }
+    .combat-location:empty { display: none; }
     .combat-stage { display: flex; align-items: center; justify-content: center; gap: clamp(16px,4vw,64px); width: min(900px,100%); }
     .combatant { display: flex; flex-direction: column; align-items: center; width: clamp(150px, 22vw, 230px); }
     .combat-portrait {
@@ -936,6 +943,7 @@
 
   <!-- ═ COMBAT SCENE (head-to-head) ═ -->
   <div id="combat-scene" hidden>
+    <div class="combat-location" id="combat-location"></div>
     <div class="combat-stage">
       <div class="combatant" id="combatant-player">
         <div class="combat-portrait"><span class="portrait-placeholder">🜂</span><span class="hit-flash"></span><span class="dmg-float"></span><span class="heal-float"></span></div>
