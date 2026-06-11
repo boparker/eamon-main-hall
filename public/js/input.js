@@ -39,6 +39,8 @@ export function formatActionLabel(text) {
   let m;
   if ((m = /^talk\s+(?:to\s+)?(.+)$/i.exec(t))) return `Talk to ${titleCaseWords(m[1])}`;
   if ((m = /^attack\s+(.+)$/i.exec(t))) return `Attack ${titleCaseWords(m[1])}`;
+  if ((m = /^spare\s+(.+)$/i.exec(t))) return `🕊 Spare ${titleCaseWords(m[1])}`;
+  if (/^(brace|dodge|interrupt)$/i.test(t)) return `⚔ ${t.charAt(0).toUpperCase()}${t.slice(1).toLowerCase()}`;
   if ((m = /^take\s+(.+)$/i.exec(t))) return `Take ${titleCaseWords(m[1])}`;
   if ((m = /^inspect\s+(.+)$/i.exec(t))) return `Inspect ${titleCaseWords(m[1])}`;
   if ((m = /^(?:read|examine)\s+(.+)$/i.exec(t))) return `Read ${titleCaseWords(m[1])}`;

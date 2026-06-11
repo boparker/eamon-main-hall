@@ -3,7 +3,7 @@
 // buttons submit the matching command through registerCombatAction.
 
 import { state } from './state.js';
-import { formatActionLabel } from './input.js';
+import { formatActionLabel, inputEl } from './input.js';
 import { confirmAction } from './confirm.js';
 
 let _onAction = null;
@@ -129,8 +129,12 @@ function renderActions(choices, spells, potions, magicWords) {
   const all = choices ?? [];
 
   for (const choice of all.filter((c) => !isMoveChoice(c))) {
-    const isAttack = /^attack/i.test(String(choice));
-    el.appendChild(mkBtn(formatActionLabel(choice), choice, isAttack ? 'primary' : ''));
+    const c = String(choice);
+    const variant = /^attack/i.test(c) ? 'primary'
+      : /^spare/i.test(c) ? 'mercy'
+        : /^(brace|dodge|interrupt)$/i.test(c.trim()) ? 'stance'
+          : /^(talk|take|open|inspect|read)/i.test(c) ? '' : 'act'; // unknown verbs = authored ACTs
+    el.appendChild(mkBtn(formatActionLabel(choice), choice, variant));
   }
   // Tap-to-ignite a carried magic blade (TrollsFire).
   for (const mw of magicWords ?? []) {
@@ -199,6 +203,14 @@ export function renderCombat(combat, choices, text) {
 
   document.getElementById('combat-player-name').textContent = combat.player?.name ?? state.character?.name ?? 'You';
   document.getElementById('combat-enemy-name').textContent = combat.enemy.name;
+  // Behavior state tag: the enemy reads differently as the fight turns.
+  const stateTag = document.getElementById('combat-enemy-state');
+  if (stateTag) {
+    const behavior = combat.enemy.state;
+    stateTag.hidden = !behavior;
+    stateTag.textContent = behavior ?? '';
+    stateTag.className = 'combatant-state' + (behavior ? ` ${behavior}` : '');
+  }
   setCombatPortrait('enemy', combat.enemy.image);
   setCombatPortrait('player', combat.player?.image);
 
@@ -236,9 +248,30 @@ export function renderCombat(combat, choices, text) {
     banner.className = 'combat-banner defeat';
     banner.replaceChildren(bannerHead('Defeated'), bannerSub(`${combat.player.name} has fallen.`));
     singleAction('Return to the Guild Hall', () => { if (_onReturnToHall) _onReturnToHall(); });
+  } else if (combat.telegraph) {
+    // The wind-up: a warning banner over the normal action bar (the stance
+    // buttons arrive in the choices).
+    banner.hidden = false;
+    banner.className = 'combat-banner telegraph';
+    banner.replaceChildren(bannerHead('⚠ ' + (combat.telegraph.name ?? 'wind-up')), bannerSub(combat.telegraph.warn ?? 'Brace, dodge, or interrupt!'));
+    renderActions(choices, combat.spells, combat.potions, combat.magicWords);
+  } else if (combat.enemy.yielded) {
+    banner.hidden = false;
+    banner.className = 'combat-banner truce';
+    banner.replaceChildren(bannerHead('They yield'), bannerSub('The fight has gone out of them. Mercy — or steel?'));
+    renderActions(choices, combat.spells, combat.potions, combat.magicWords);
   } else {
     banner.hidden = true;
     renderActions(choices, combat.spells, combat.potions, combat.magicWords);
+  }
+
+  // A persona-bearing enemy can be talked to: invite the player to type.
+  // (Deferred a beat so it wins over the generic input-skin reset.)
+  if (!enemyDefeated && !playerDefeated && combat.enemy.canParley && inputEl) {
+    const hint = combat.enemy.yielded
+      ? `Speak to the ${combat.enemy.name} — or SPARE them...`
+      : `Say something to the ${combat.enemy.name} — well-chosen words are judged...`;
+    setTimeout(() => { if (!document.getElementById('combat-scene')?.hidden) inputEl.placeholder = hint; }, 200);
   }
 }
 
