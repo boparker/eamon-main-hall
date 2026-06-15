@@ -2105,13 +2105,19 @@ export function createGameRouter(rawDeps = {}) {
           && (run.flags?.relocated?.[c.slug] ?? c.location_room) === getCurrentRoom(run, adventure).room_number);
         let listener = targetName ? findVisibleCharacter(adventure, run, targetName) : null;
         let disguised = false;
+        // Whoever the words name (covers a punctuated/explicit target that didn't
+        // resolve exactly, e.g. "tell cynthia, ..." → matches Cynthia in the room).
+        if (!listener) {
+          const hay = `${targetName ?? ''} ${words ?? ''}`.toLowerCase();
+          listener = visible.find((c) => hay.includes(String(c.name ?? c.slug).toLowerCase())) ?? null;
+        }
+        // Bare speech with no one named: the enemy holds the floor, else the sole
+        // bystander. An explicit-but-unmatched target speaks to a lone listener too.
         if (!listener && !targetName) {
-          // Words that name someone present go to them ("Cynthia, follow me");
-          // otherwise the enemy holds the floor, then a sole bystander.
-          const lower = String(words ?? '').toLowerCase();
-          listener = visible.find((c) => lower.includes(String(c.name ?? c.slug).toLowerCase()))
-            ?? visibleEnemy(adventure, run)
-            ?? (visible.length === 1 ? visible[0] : null);
+          listener = visibleEnemy(adventure, run) ?? (visible.length === 1 ? visible[0] : null);
+        }
+        if (!listener && targetName && visible.length === 1) {
+          listener = visible[0];
         }
         if (!listener && disguisedMimic) {
           const container = adventure.items.find((item) => item.slug === disguisedMimic.hidden_until_opened);
@@ -2121,9 +2127,13 @@ export function createGameRouter(rawDeps = {}) {
           }
         }
         if (!listener) {
-          const text = visible.length > 1
-            ? 'Several here might listen. TELL someone by name — e.g. TELL HERMIT your words.'
-            : 'Your words echo off the stone. No one is here to hear them.';
+          // Name given but not here → say so plainly; otherwise nudge to name someone.
+          const here = visible.map((c) => c.name ?? c.slug);
+          const text = targetName
+            ? `There is no ${targetName} here to speak to.${here.length ? ` You could speak to ${here.join(' or ')}.` : ''}`
+            : (visible.length > 1
+              ? `Several here might listen — name who you mean. Try: TELL ${String(here[0] ?? 'NAME').toUpperCase()} your words.`
+              : 'Your words echo off the stone. No one is here to hear them.');
           return res.json(canonicalResponse({ intent: command, event: { type: 'say_failed', command, reason: 'no-listener' }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
         }
         if (parleyCount(run, listener.slug) >= MAX_PARLEYS_PER_NPC) {
