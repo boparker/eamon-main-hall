@@ -186,10 +186,12 @@ export function parseCommand(input) {
     }
   }
 
-  // tell <name> <words> — speech aimed at a named listener.
+  // tell <name> <words> — speech aimed at a named listener. Strip punctuation
+  // off the name so "tell cynthia, follow me" still targets Cynthia.
   if (verb === 'tell' && rest.length >= 2) {
     const [listener, ...words] = rest;
-    return { type: 'say', target: listener, words: words.join(' ').replace(/^["“]+/, '').replace(/["”]+$/, '').trim(), source: 'rules' };
+    const target = listener.replace(/[^a-z0-9'-]/gi, '');
+    return { type: 'say', target, words: words.join(' ').replace(/^["“]+/, '').replace(/["”]+$/, '').trim(), source: 'rules' };
   }
 
   if (verb === 'talk' && objectText) {

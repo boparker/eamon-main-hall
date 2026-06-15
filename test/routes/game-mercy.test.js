@@ -512,3 +512,30 @@ test('first sight of a character prints their authored entrance text, once per r
   const second = await command(app, session, 'south');
   assert.equal(/A mossy troll fills the den/.test(second.body.text), false);
 });
+
+test('TELL with a punctuated name still reaches the listener (no false "several here")', async () => {
+  const heard = [];
+  const deps = makeDeps({
+    judgeParley: async ({ npc, words }) => { heard.push(npc.slug); return { reply: `to ${words}`, shift: 0, craft: 2, craftNote: null, action: 'none', source: 'ai' }; },
+  });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll den: troll + prisoner (two listeners)
+
+  const plea = await command(app, session, 'tell prisoner, stay strong and I will return');
+  assert.deepEqual(heard, ['prisoner']);
+  assert.match(plea.body.text, /Prisoner: "to stay strong and i will return"/);
+  assert.equal(/Several here might listen/.test(plea.body.text), false);
+});
+
+test('TELL a name that is not present gives a clear "not here", not "several here"', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll + prisoner present, no "cynthia"
+
+  const miss = await command(app, session, 'tell cynthia hello there friend');
+  assert.match(miss.body.text, /no cynthia here to speak to/i);
+  assert.match(miss.body.text, /speak to Troll or Prisoner/);
+  assert.equal(miss.body.events[0].reason, 'no-listener');
+});
