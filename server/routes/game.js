@@ -9,6 +9,7 @@ import {
   getVisibleRoomEntities,
   markContainerOpened,
   markFeatureInspected,
+  markItemRead,
   markEnemyDefeated,
   markItemCollected,
   markIntroduced,
@@ -568,6 +569,13 @@ function visibleItems(adventure, entities) {
   return adventure.items.filter((item) => visibleSlugs.has(item.slug));
 }
 
+// Tag visible items the player has already read, so the client can gray the
+// "Read" tile (like an unaffordable shop item) instead of inviting re-reads.
+function withReadState(items, run) {
+  const read = new Set(run?.flags?.readItems ?? []);
+  return items.map((item) => (read.has(item.slug) ? { ...item, read: true } : item));
+}
+
 function canonicalResponse({
   intent = null,
   event = null,
@@ -925,7 +933,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run, character),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items, combat: combatStateFor({ adventure, run, character }) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }) },
   });
 }
 
@@ -1592,7 +1600,15 @@ export function createGameRouter(rawDeps = {}) {
         const text = matches
           .map((item) => item.text ?? item.description ?? `There is nothing written on ${item.name}.`)
           .join('\n\n');
-        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        // Remember they've been read so the tile grays out (no endless re-reading).
+        const alreadyAllRead = matches.every((item) => (run.flags?.readItems ?? []).includes(item.slug));
+        for (const item of matches) run = markItemRead(run, item.slug);
+        if (!alreadyAllRead) {
+          const savedRun = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(savedRun) ?? run;
+        }
+        const readItems = withReadState(visibleItems(adventure, getVisibleRoomEntities(run, adventure)), run);
+        return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, items: readItems } }));
       }
 
       if (command.type === 'take') {
