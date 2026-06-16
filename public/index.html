@@ -39,8 +39,11 @@
     /* ── Masthead ── */
     .title-masthead { display: flex; flex-direction: column; align-items: center; }
     .title-dragon {
-      width: clamp(150px, 22vh, 220px); height: clamp(180px, 26.4vh, 264px);
+      width: clamp(168px, 24vh, 240px); height: clamp(168px, 24vh, 240px); /* square — holds the guild crest */
       background: url('dragon-v3.png') center center / contain no-repeat;
+      /* Fade the crest's black field into the title background so no square edge shows. */
+      -webkit-mask-image: radial-gradient(circle at center, #000 66%, transparent 84%);
+      mask-image: radial-gradient(circle at center, #000 66%, transparent 84%);
       filter: drop-shadow(0 0 40px rgba(200,168,75,0.15));
       animation: dragonBreathe 5s ease-in-out infinite;
     }
@@ -64,7 +67,7 @@
     @media (min-width: 880px) {
       .title-stage { flex-direction: row; align-items: center; gap: clamp(48px, 6vw, 100px); }
       .title-masthead { margin: 0; }
-      .title-dragon { width: clamp(240px, 30vh, 300px); height: clamp(288px, 36vh, 360px); }
+      .title-dragon { width: clamp(260px, 32vh, 340px); height: clamp(260px, 32vh, 340px); }
       .entry-card { margin-top: 0; }
     }
 
