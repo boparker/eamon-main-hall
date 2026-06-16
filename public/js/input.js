@@ -124,13 +124,17 @@ export function renderChoices() {
 
   // Object tiles (the room's interactive things)
   for (const { text, verb, object } of tiles) {
+    // A readable that's already been read grays out (like an unaffordable
+    // shop item), so the player isn't invited to read it over and over.
+    const item = _roomItems.find((i) => norm(i.name) === norm(object) || norm(i.slug) === norm(object));
+    const alreadyRead = verb === 'read' && !!item?.read;
     const tile = document.createElement('button');
     tile.type = 'button';
-    tile.className = 'obj-tile line-enter';
+    tile.className = 'obj-tile line-enter' + (alreadyRead ? ' read' : '');
     const icon = document.createElement('div'); icon.className = 'obj-icon'; icon.textContent = objectGlyph(object, verb);
     applyObjectArt(icon, object);
     const name = document.createElement('div'); name.className = 'obj-name'; name.textContent = titleCaseWords(object);
-    const tag = document.createElement('div'); tag.className = 'obj-verb'; tag.textContent = VERB_LABELS[verb] ?? verb;
+    const tag = document.createElement('div'); tag.className = 'obj-verb'; tag.textContent = alreadyRead ? '✓ Read' : (VERB_LABELS[verb] ?? verb);
     tile.append(icon, name, tag);
     tile.addEventListener('click', () => send(text));
     objectTiles.appendChild(tile);

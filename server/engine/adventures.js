@@ -184,6 +184,19 @@ export function markContainerOpened(run, containerSlug) {
   return { ...run, flags: { ...flags, openedContainers: [...opened, containerSlug] } };
 }
 
+// A readable scenery item (inscription, writing, scroll) the player has read.
+// Tracked so the UI can gray it out rather than inviting endless re-reading.
+export function markItemRead(run, itemSlug) {
+  const flags = run.flags ?? {};
+  const read = Array.isArray(flags.readItems) ? flags.readItems : [];
+  if (read.includes(itemSlug)) return run;
+  return { ...run, flags: { ...flags, readItems: [...read, itemSlug] } };
+}
+
+export function isItemRead(run, itemSlug) {
+  return Array.isArray(run?.flags?.readItems) && run.flags.readItems.includes(itemSlug);
+}
+
 export function markFeatureInspected(run, featureSlug) {
   const flags = run.flags ?? {};
   const inspected = Array.isArray(flags.inspectedFeatures) ? flags.inspectedFeatures : [];

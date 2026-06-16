@@ -611,6 +611,11 @@
     .obj-icon img.obj-art { width: 72px; height: 72px; object-fit: cover; border-radius: 7px; display: block; }
     .obj-name { font-size: 0.86rem; color: var(--text); text-align: center; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
     .obj-verb { font-family: var(--font-head); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    /* Already-read scenery: grayed like an unaffordable shop item, but still re-readable.
+       !important so the .line-enter fade-in animation can't override the dimming. */
+    .obj-tile.read { opacity: 0.45 !important; filter: grayscale(0.7); }
+    .obj-tile.read:hover { transform: none; border-color: var(--gold-dim); box-shadow: none; }
+    .obj-tile.read .obj-verb { color: var(--text-dim); }
     .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--gold); margin-left: 2px; vertical-align: text-bottom; animation: blink 0.7s step-end infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     @keyframes lineIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }

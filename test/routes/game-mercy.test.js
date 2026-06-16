@@ -77,9 +77,11 @@ const fixture = {
   ],
   items: [
     { id: 'chest-1', slug: 'trap-chest', name: 'chest', type: 'container', collectible: false, value: 0, weight: -999, description: 'A chest sits invitingly.' },
+    { id: 'insc-1', slug: 'wall-rune', name: 'inscription', type: 'misc', collectible: false, value: 0, weight: -999, description: 'Ancient runes are carved here.', text: 'The runes speak of mercy.' },
   ],
   placements: [
     { item_slug: 'trap-chest', room_number: 4, hidden: false },
+    { item_slug: 'wall-rune', room_number: 2, hidden: false },
   ],
 };
 
@@ -538,4 +540,25 @@ test('TELL a name that is not present gives a clear "not here", not "several her
   assert.match(miss.body.text, /no cynthia here to speak to/i);
   assert.match(miss.body.text, /speak to Troll or Prisoner/);
   assert.equal(miss.body.events[0].reason, 'no-listener');
+});
+
+test('reading scenery marks it read so the client can gray the tile', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  await command(app, session, 'south'); // troll den has an inscription
+
+  const before = await command(app, session, 'look');
+  const inscBefore = before.body.state.items.find((i) => i.slug === 'wall-rune');
+  assert.equal(inscBefore?.read ?? false, false);
+
+  const read = await command(app, session, 'read inscription');
+  assert.match(read.body.text, /runes speak of mercy/);
+  assert.ok(read.body.state.items.find((i) => i.slug === 'wall-rune')?.read, 'read flag set immediately');
+  assert.ok(read.body.state.adventureRun.flags.readItems.includes('wall-rune'), 'persisted to run flags');
+
+  // Leave and return — still grayed on re-entry.
+  await command(app, session, 'north');
+  const back = await command(app, session, 'south');
+  assert.ok(back.body.state.items.find((i) => i.slug === 'wall-rune')?.read, 'still read after returning to the room');
 });
