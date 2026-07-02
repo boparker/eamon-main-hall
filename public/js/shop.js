@@ -5,6 +5,7 @@
 
 import { state } from './state.js';
 import { confirmAction } from './confirm.js';
+import { compareGear } from './stat-info.js';
 
 const VENDOR_INFO = {
   marcos: { name: 'Marcos Cavielli', glyph: '⚒', img: 'scenes/portraits/marcos.png', greeting: '"Well met! What do you need?"' },
@@ -109,10 +110,25 @@ function tile(item, action) {
   const stat = document.createElement('div'); stat.className = 'tile-stat'; stat.textContent = statText(item);
   const pr = document.createElement('div'); pr.className = 'tile-price'; pr.textContent = `${action === 'sell' ? '+' : ''}${price} g`;
   btn.append(icon, name, stat, pr);
+
+  // On buy, show an at-a-glance verdict vs. currently equipped gear, and put the
+  // full "impact" line in the confirm dialog so the choice is informed.
+  const cmp = action === 'buy' ? compareGear(item, state.character?.equipment ?? {}) : null;
+  if (cmp) {
+    const tag = document.createElement('div');
+    tag.className = `tile-verdict verdict-${cmp.verdict.key}`;
+    tag.textContent = cmp.verdict.key === 'upgrade' ? `▲ ${cmp.verdict.label}`
+      : cmp.verdict.key === 'downgrade' ? `▼ ${cmp.verdict.label}`
+        : cmp.verdict.key === 'sidegrade' ? `= ${cmp.verdict.label}` : `✦ ${cmp.verdict.label}`;
+    btn.append(tag);
+  }
+
   if (afford) {
     btn.addEventListener('click', () => {
       const verb = action === 'sell' ? 'Sell' : 'Buy';
-      const msg = action === 'sell' ? `Sell ${item.name} for ${price} gold?` : `Buy ${item.name} for ${price} gold?`;
+      const msg = action === 'sell'
+        ? `Sell ${item.name} for ${price} gold?`
+        : `Buy ${item.name} for ${price} gold?${cmp ? `\n${cmp.detail}` : ''}`;
       confirmAction(msg, () => { if (_onPurchase) _onPurchase(`${verb} ${item.name}`); });
     });
   }

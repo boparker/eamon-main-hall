@@ -200,7 +200,7 @@
     #confirm-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(3,2,2,0.66); backdrop-filter: blur(3px); }
     #confirm-overlay[hidden] { display: none; }
     .confirm-card { width: min(420px, 100%); padding: 26px 26px 20px; background: rgba(14,11,9,0.98); border: 1px solid var(--gold-dim); border-radius: 8px; box-shadow: 0 24px 70px rgba(0,0,0,0.6); text-align: center; }
-    .confirm-msg { font-size: 1.05rem; line-height: 1.5; color: var(--text); margin-bottom: 22px; }
+    .confirm-msg { font-size: 1.05rem; line-height: 1.5; color: var(--text); margin-bottom: 22px; white-space: pre-line; }
     .confirm-actions { display: flex; gap: 12px; justify-content: center; }
     .confirm-yes, .confirm-no { padding: 11px 26px; font-family: var(--font-head); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.18s; }
     .confirm-yes { color: var(--action); background: rgba(200,168,75,0.1); border: 1px solid var(--gold); }
@@ -306,6 +306,11 @@
     .tile-icon img.tile-art { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
     .tile-name { font-size: 0.92rem; color: var(--text); line-height: 1.2; }
     .tile-stat { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+    .tile-verdict { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; padding: 1px 7px; border-radius: 999px; }
+    .verdict-upgrade { color: #0d1a0b; background: linear-gradient(180deg,#a9d98a,#6fae54); }
+    .verdict-downgrade { color: #f0c9c0; background: rgba(150,60,45,0.35); }
+    .verdict-sidegrade { color: var(--text-dim); background: rgba(255,255,255,0.06); }
+    .verdict-new { color: #1a1206; background: linear-gradient(180deg,#e8d39a,#c8a84b); }
     .tile-price { font-family: var(--font-head); font-size: 0.95rem; color: var(--gold); margin-top: 2px; }
     .shop-cat-label { grid-column: 1 / -1; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold-dim); margin-top: 6px; }
     .shop-cat-label:first-child { margin-top: 0; }
@@ -505,6 +510,15 @@
     .hud-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
     .hud-stat-label { font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-dim); text-transform: uppercase; }
     .hud-stat-val { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+    .hud-stat-band { font-size: 0.5rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold-dim); line-height: 1; }
+    .info-stat { cursor: pointer; border-radius: 5px; padding: 1px 5px; transition: background 0.15s; position: relative; }
+    .info-stat:hover { background: rgba(200,168,75,0.1); }
+    .info-stat::after { content: '?'; position: absolute; top: -2px; right: -1px; font-size: 0.5rem; color: var(--gold-dim); font-weight: 700; }
+    #stat-popover { position: fixed; z-index: 210; width: min(260px, 88vw); background: linear-gradient(180deg, rgba(26,20,14,0.99), rgba(12,9,6,0.99)); border: 1px solid var(--gold-dim); border-radius: 9px; box-shadow: 0 16px 44px rgba(0,0,0,0.6); padding: 12px 14px; }
+    #stat-popover[hidden] { display: none; }
+    #stat-popover .sp-title { font-family: var(--font-head); color: var(--gold); font-size: 0.95rem; margin-bottom: 2px; }
+    #stat-popover .sp-band { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 7px; }
+    #stat-popover .sp-effect { font-size: 0.82rem; color: var(--text); line-height: 1.4; }
     /* Readied loadout — sits in the play console just above the text box, so
        what you're wielding is right where you choose your actions. */
     /* Left-justified, full console width — sits below the choices and above the
@@ -813,12 +827,13 @@
       <button id="hud-portrait-btn" type="button" hidden title="Paint a custom portrait of your hero">🎨 Portrait</button>
     </div>
     <div id="hud-stats">
-      <div class="hud-stat"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">&mdash;</span></div>
-      <div class="hud-stat"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">&mdash;</span></div>
-      <div class="hud-stat"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">&mdash;</span></div>
+      <div class="hud-stat info-stat" data-stat="hardiness" title="What does this mean?"><span class="hud-stat-label">HD</span><span class="hud-stat-val" id="stat-hd">&mdash;</span><span class="hud-stat-band" id="band-hd"></span></div>
+      <div class="hud-stat info-stat" data-stat="agility" title="What does this mean?"><span class="hud-stat-label">AG</span><span class="hud-stat-val" id="stat-ag">&mdash;</span><span class="hud-stat-band" id="band-ag"></span></div>
+      <div class="hud-stat info-stat" data-stat="charisma" title="What does this mean?"><span class="hud-stat-label">CH</span><span class="hud-stat-val" id="stat-ch">&mdash;</span><span class="hud-stat-band" id="band-ch"></span></div>
       <div class="hud-stat"><span class="hud-stat-label">GOLD</span><span class="hud-stat-val" id="stat-gold" style="color:var(--gold)">&mdash;</span></div>
       <div class="hud-stat" title="Gold safe in the bank — survives death"><span class="hud-stat-label">BANK</span><span class="hud-stat-val" id="stat-bank" style="color:var(--gold-dim)">&mdash;</span></div>
     </div>
+    <div id="stat-popover" hidden role="dialog" aria-label="Stat explanation"></div>
     <div class="hud-controls">
       <button class="hud-btn" id="hud-account-btn" title="Account" aria-label="Account">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>

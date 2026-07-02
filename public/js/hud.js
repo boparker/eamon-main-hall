@@ -2,6 +2,50 @@
 
 import { state } from './state.js';
 import { openPortraitBuilder, canPaintPortrait } from './portrait-builder.js';
+import { statBand, describeStat } from './stat-info.js';
+
+// The value that drives each stat's band/tooltip. Hardiness = max HP (not the
+// current, wounded hd), so the band reflects the underlying stat.
+function statValue(character, stat) {
+  if (stat === 'hardiness') return character?.hardiness ?? character?.maxHd ?? character?.maxHp ?? 0;
+  return character?.[stat] ?? 0;
+}
+
+function openStatPopover(el) {
+  const pop = document.getElementById('stat-popover');
+  if (!pop || !state.character) return;
+  const stat = el.dataset.stat;
+  const d = describeStat(stat, statValue(state.character, stat));
+  if (!d) return;
+  pop.replaceChildren();
+  const title = document.createElement('div'); title.className = 'sp-title'; title.textContent = `${d.label} ${d.value}`;
+  const band = document.createElement('div'); band.className = 'sp-band'; band.textContent = d.band;
+  const eff = document.createElement('div'); eff.className = 'sp-effect'; eff.textContent = d.effect;
+  pop.append(title, band, eff);
+  pop.hidden = false;
+  // Position under the clicked stat, clamped to the viewport.
+  const r = el.getBoundingClientRect();
+  const w = pop.offsetWidth;
+  pop.style.top = `${r.bottom + 8}px`;
+  pop.style.left = `${Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2))}px`;
+}
+
+function wireStatPopovers() {
+  const stats = document.getElementById('hud-stats');
+  if (!stats || stats.dataset.popWired) return;
+  stats.dataset.popWired = '1';
+  const pop = document.getElementById('stat-popover');
+  stats.querySelectorAll('.info-stat').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!pop.hidden && pop.dataset.for === el.dataset.stat) { pop.hidden = true; return; }
+      pop.dataset.for = el.dataset.stat;
+      openStatPopover(el);
+    });
+  });
+  document.addEventListener('click', (e) => { if (pop && !pop.hidden && !e.target.closest('#stat-popover')) pop.hidden = true; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pop) pop.hidden = true; });
+}
 
 export function updateHUD(animate) {
   const hasCharacter = Boolean(state.character?.id || state.character?.name);
@@ -25,6 +69,12 @@ export function updateHUD(animate) {
     'stat-gold': hasCharacter ? (state.character.gold ?? 0) : 200,
     'stat-bank': hasCharacter ? (state.character.bankGold ?? 0) : null,
   };
+  // Qualitative band under each interactive stat (Poor…Exceptional).
+  for (const [bandId, stat] of [['band-hd', 'hardiness'], ['band-ag', 'agility'], ['band-ch', 'charisma']]) {
+    const b = document.getElementById(bandId);
+    if (b) b.textContent = hasCharacter ? statBand(statValue(state.character, stat)).label : '';
+  }
+  wireStatPopovers();
   for (const [id, val] of Object.entries(stats)) {
     const el = document.getElementById(id);
     if (!el) continue;

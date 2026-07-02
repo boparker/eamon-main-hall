@@ -5,6 +5,14 @@ import {
   sendHallCommand,
   startGameAdventure,
 } from './api.js';
+import { statBand, rollRead } from './stat-info.js';
+
+// Present a rolled adventurer legibly: each attribute with its band, plus a
+// plain-English "who is this hero" read so a random roll reads as an identity.
+function rollSummary(stats) {
+  const line = (key, label) => `${label} ${stats[key]} (${statBand(stats[key]).label})`;
+  return `Your prime attributes: ${line('hardiness', 'Hardiness')}, ${line('agility', 'Agility')}, ${line('charisma', 'Charisma')}. You start with ${stats.gold} gold pieces.\n\n${rollRead(stats)}`;
+}
 
 function rollDie(sides, rng = Math.random) {
   return Math.floor(rng() * sides) + 1;
@@ -180,7 +188,7 @@ export function createPhase1GameClient({
       creation.stats = statsGenerator('adventurer');
       creation.step = 'confirm';
       prompt(
-        `Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces.`,
+        rollSummary(creation.stats),
         null,
         ['Confirm', 'Reroll', 'Create Character'],
       );
@@ -194,7 +202,7 @@ export function createPhase1GameClient({
       if (/^(reroll|roll again)$/i.test(String(input ?? '').trim())) {
         creation.stats = statsGenerator('adventurer');
         prompt(
-          `Your prime attributes are: Hardiness ${creation.stats.hardiness}, Agility ${creation.stats.agility}, Charisma ${creation.stats.charisma}. You will start with ${creation.stats.gold} gold pieces.`,
+          rollSummary(creation.stats),
           null,
           ['Confirm', 'Reroll', 'Create Character'],
         );
