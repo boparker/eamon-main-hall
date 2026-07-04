@@ -111,6 +111,7 @@ const WITCH_TITLE = "The Witch's Shop";
 const BANK_TITLE = 'Bank of Eamon Towne';
 const HEALER_TITLE = 'The Chapel of the Open Hand';
 const ADVENTURE_GATE_TITLE = 'The Adventure Gate';
+const HALL_OF_RECORDS_TITLE = 'The Hall of Records';
 
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
@@ -636,7 +637,7 @@ function hallChoices(character) {
   if (!character.isAlive || character.hd <= 0) return ['Create Character', 'Sign the Guild Rolls'];
   // A single Gate replaces a "Begin <Name>" button per adventure — it scales to
   // the whole Eamon corpus and is the home for adventure cover art.
-  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Healer', 'Visit the Bank', 'View Equipment', 'Approach the Adventure Gate'];
+  return ['Create Character', 'Sign the Guild Rolls', 'Visit the Weapon Shop', 'Visit the Wizard', 'Visit the Witch', 'Visit the Healer', 'Visit the Bank', 'Visit the Hall of Records', 'View Equipment', 'Approach the Adventure Gate'];
 }
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
@@ -916,6 +917,19 @@ function healerResponse({ player, character, characters, adventures, prefix = ''
     text: lines.join('\n'),
     choices: [...choices, 'Return to Great Hall'],
     state: hallState({ player, character, characters, adventures, extra: { locationTitle: HEALER_TITLE, vendor: { name: 'Brother Aldous', kind: 'neutral' } } }),
+  });
+}
+
+// The Hall of Records: the Archivist's guidance room + tribute to the originals.
+// The browsable codex lives client-side (records.js), reusing the same stat facts
+// as the inline tooltips; the server just opens the panel with the Archivist's line.
+function recordsResponse({ player, character, characters, adventures, prefix = '' }) {
+  return canonicalResponse({
+    intent: { type: 'hall_records' },
+    event: { type: 'hall_records' },
+    text: prefix || `The Archivist looks up from a great ledger and inclines his head. "Welcome to the Hall of Records${character?.name ? `, ${character.name}` : ''}. Here the Guild keeps its lore — how an adventurer's mettle is measured, the ways of arms and mercy, and the memory of those who first lit this lamp. Read a while, and go the wiser for it."`,
+    choices: ['Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true } } }),
   });
 }
 
@@ -1288,6 +1302,9 @@ export function createGameRouter(rawDeps = {}) {
       }
       if (/adventure\s*gate|^gate$|^adventures?$|approach.*(?:adventure|gate)/.test(normalizedInput)) {
         return render(gateResponse, character, characterRow);
+      }
+      if (/hall\s*of\s*records|records|archivist|library|lore|codex/.test(normalizedInput)) {
+        return render(recordsResponse, character, characterRow);
       }
 
       return res.json(hallResponse({ player: hallPlayer, characters: [characterRow], adventures, character, prefix: 'You remain in the Great Hall.' }));

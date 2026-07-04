@@ -222,6 +222,49 @@
     #game-screen.at-gate #readied-bar,
     #game-screen.at-gate #location-title,
     #game-screen.at-gate #thinking { display: none; }
+
+    /* ── Hall of Records (the Archivist's codex + tribute) ── */
+    #hall-of-records {
+      position: absolute; inset: 0; z-index: 22; display: flex;
+      align-items: flex-start; justify-content: safe center; padding: clamp(16px,3vw,44px) clamp(12px,3vw,44px);
+      background: linear-gradient(rgba(6,4,3,0.72), rgba(6,4,3,0.88)),
+                  url('scenes/hall-of-records.png') center center / cover no-repeat;
+      backdrop-filter: blur(3px); overflow-y: auto;
+    }
+    #hall-of-records[hidden] { display: none; }
+    #game-screen.reading #narrative-area,
+    #game-screen.reading #choices-area,
+    #game-screen.reading #object-tiles,
+    #game-screen.reading #input-zone,
+    #game-screen.reading #readied-bar,
+    #game-screen.reading #location-title,
+    #game-screen.reading #thinking { display: none; }
+    #records-close-corner { position: absolute; top: 14px; right: 16px; z-index: 3; width: 40px; height: 40px; border: 1px solid var(--gold-dim); border-radius: 50%; background: rgba(12,9,6,0.7); color: var(--gold); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+    #records-close-corner:hover { border-color: var(--gold); }
+    .records-inner { width: min(760px, 100%); margin: auto; display: flex; flex-direction: column; align-items: center; gap: clamp(16px,2.5vw,26px); }
+    .records-header { text-align: center; }
+    .records-crest { width: clamp(72px, 12vh, 104px); height: clamp(72px, 12vh, 104px); margin: 0 auto 10px;
+      background: url('scenes/portraits/archivist.png') center center / cover no-repeat;
+      border-radius: 50%; border: 2px solid var(--gold-dim); box-shadow: 0 6px 26px rgba(0,0,0,0.6);
+      -webkit-mask-image: radial-gradient(circle at center, #000 70%, transparent 100%); }
+    .records-title { font-family: var(--font-head); font-size: clamp(1.7rem,4vw,2.6rem); color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 40px rgba(200,168,75,0.25); }
+    .records-sub { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px; font-family: var(--font-head); font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,168,75,0.72); }
+    .records-sub .rule { width: clamp(24px,8vw,70px); height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim)); }
+    .records-sub .rule:last-child { background: linear-gradient(90deg, var(--gold-dim), transparent); }
+    .records-body { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+    .rec-section { border: 1px solid var(--border); border-radius: 9px; background: rgba(10,8,6,0.78); backdrop-filter: blur(6px); padding: clamp(14px,2.4vw,22px); }
+    .rec-h { font-family: var(--font-head); color: var(--gold); font-size: clamp(1.05rem,2.6vw,1.35rem); letter-spacing: 0.04em; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+    .rec-icon { color: var(--gold-dim); font-size: 1.1em; }
+    .rec-blurb { color: var(--text-dim); font-style: italic; font-size: 0.9rem; margin: 0 0 12px; line-height: 1.5; }
+    .rec-entries { margin: 0; display: grid; gap: 9px 0; }
+    .rec-entries dt { font-family: var(--font-head); color: #e8d39a; font-size: 0.92rem; letter-spacing: 0.03em; }
+    .rec-entries dd { margin: 2px 0 0; color: var(--text); font-size: 0.9rem; line-height: 1.5; }
+    .rec-footer { margin: 13px 0 0; padding-top: 11px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 0.82rem; line-height: 1.55; }
+    .rec-tribute { border-color: var(--gold-dim); background: linear-gradient(180deg, rgba(30,22,10,0.7), rgba(10,8,6,0.82)); }
+    .rec-tribute-line { color: var(--text); font-size: 0.92rem; line-height: 1.62; margin: 0 0 11px; }
+    .rec-tribute-line:last-child { margin-bottom: 0; }
+    .rec-tribute-line strong { color: #e8d39a; font-weight: 600; }
+    .rec-tribute-line .rec-link { color: var(--gold); border-bottom: 1px dotted var(--gold-dim); }
     .gate-inner { width: min(1080px, 100%); display: flex; flex-direction: column; align-items: center; gap: clamp(18px,3vw,30px); }
     .gate-header { text-align: center; }
     .gate-title { font-family: var(--font-head); font-size: clamp(1.7rem,4vw,2.6rem); color: var(--gold); letter-spacing: 0.08em; text-shadow: 0 0 40px rgba(200,168,75,0.25); }
@@ -961,6 +1004,20 @@
       </header>
       <div class="gate-cards" id="gate-cards"></div>
       <button class="enter-btn link" id="gate-leave-btn">&larr; Back to the Great Hall</button>
+    </div>
+  </div>
+
+  <!-- ═ HALL OF RECORDS (the Archivist's codex + tribute) ═ -->
+  <div id="hall-of-records" hidden>
+    <button id="records-close-corner" type="button" aria-label="Back to the Great Hall">&times;</button>
+    <div class="records-inner">
+      <header class="records-header">
+        <div class="records-crest" aria-hidden="true"></div>
+        <div class="records-title">The Hall of Records</div>
+        <div class="records-sub"><span class="rule"></span><span>Keeper of the Guild's Lore</span><span class="rule"></span></div>
+      </header>
+      <div class="records-body" id="records-body"></div>
+      <button class="enter-btn link" id="records-leave-btn">&larr; Back to the Great Hall</button>
     </div>
   </div>
 
