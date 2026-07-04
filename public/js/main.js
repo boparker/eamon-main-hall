@@ -8,6 +8,7 @@ import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoic
 import { initAudioControls } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
 import { registerGateHandler, openGate, closeGate } from './gate.js';
+import { registerRecordsHandler, openRecords, closeRecords } from './records.js';
 import { setLocation, setSceneBackground, renderRoomCharacters, clearRoomCharacters } from './scene.js';
 import { createPhase1GameClient } from './game-client.js';
 import { createAuthController } from './auth-controller.js';
@@ -34,6 +35,8 @@ function renderGameResponse(response = {}) {
   else closeShop();
   if (response.state?.gate) openGate(response.state.gate);
   else closeGate();
+  if (response.state?.records) openRecords(response.state.records);
+  else closeRecords();
   updateHUD(true);
 
   // Help text follows the player: shop → vendor tips, in a cave → dungeon
@@ -290,6 +293,10 @@ registerPurchaseHandler((text) => {
   sendMessage();
 });
 registerGateHandler((text) => {
+  inputEl.value = text;
+  sendMessage();
+});
+registerRecordsHandler((text) => {
   inputEl.value = text;
   sendMessage();
 });

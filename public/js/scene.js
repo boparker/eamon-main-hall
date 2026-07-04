@@ -60,6 +60,7 @@ export async function generateSceneBg(location) {
     'Bank of Eamon Towne': 'scenes/bank.png',
     'The Chapel of the Open Hand': 'scenes/chapel.png',
     'The Adventure Gate': 'scenes/adventure-gate.png',
+    'The Hall of Records': 'scenes/hall-of-records.png',
   };
 
   if (sceneMap[location]) {
