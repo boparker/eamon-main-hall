@@ -134,6 +134,9 @@ function renderActions(choices, spells, potions, magicWords) {
 
   for (const choice of all.filter((c) => !isMoveChoice(c))) {
     const c = String(choice);
+    // Magic-word items (TrollsFire) get their own flame button below from
+    // combat.magicWords — skip the generic duplicate from the choice list.
+    if (/^(ignite|douse)\b/i.test(c.trim())) continue;
     const variant = /^attack/i.test(c) ? 'primary'
       : /^spare/i.test(c) ? 'mercy'
         : /^(brace|dodge|interrupt)$/i.test(c.trim()) ? 'stance'
