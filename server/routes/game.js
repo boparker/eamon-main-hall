@@ -44,6 +44,10 @@ import {
 import { spiritHint as defaultSpiritHint } from '../ai/hints.js';
 import { weaponLegend as defaultWeaponLegend } from '../ai/lore.js';
 import { recordDeed, recordDeeds, maybeCompress as defaultMaybeCompress } from '../ai/chronicle.js';
+import {
+  computeReputation, reputationRead, reputationForPrompt,
+  encounterBonus, firstSightRegard, yieldMods, escortMultiplier,
+} from '../engine/reputation.js';
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
 import {
@@ -267,12 +271,19 @@ function resolveRoomEncounters(run, adventure, character, rng) {
   const notes = [];
   const events = [];
   let next = run;
+  // The world remembers: reputation (derived from the chronicle) nudges the
+  // dice. Merciful adventurers attract company; the dreaded walk alone.
+  const rep = computeReputation(character?.chronicle);
+  const repBonus = encounterBonus(rep);
+  const repRegard = firstSightRegard(rep);
   // First-sight introductions: a character's authored entrance text prints
   // once per run, BEFORE any friend-or-foe outcome, so the player always
   // meets whoever the buttons point at — a captor standing over their
   // captive uses the staged captive_intro instead.
   for (const present of getVisibleRoomEntities(next, adventure).characters ?? []) {
     if (present.companion || isIntroduced(next, present.slug)) continue;
+    // Your name walks in before you do (once, at first sight).
+    if (repRegard) next = shiftRegard(next, present, repRegard).run;
     const captive = present.frees_on_defeat
       ? (getVisibleRoomEntities(next, adventure).characters ?? []).find((c) => c.slug === present.frees_on_defeat)
       : null;
@@ -286,7 +297,7 @@ function resolveRoomEncounters(run, adventure, character, rng) {
     if (npc.location_room !== room.room_number) continue;
     if (npc.encounter_behavior !== 'random') continue;
     if (defeated.has(npc.slug) || resolved[npc.slug]) continue;
-    const outcome = resolveEncounter(npc, character.charisma, rng);
+    const outcome = resolveEncounter(npc, character.charisma, rng, repBonus);
     next = recordEncounter(next, npc.slug, outcome);
     const who = npc.name ?? npc.slug;
     if (outcome === 'friend') {
@@ -330,10 +341,12 @@ function deliverEscorts(character, run, adventure) {
   let gold = 0;
   const lines = [];
   const names = [];
+  // Patrons pay a famously honorable escort more gladly.
+  const rewardMult = escortMultiplier(computeReputation(character?.chronicle));
   for (const c of getCompanions(run)) {
     const npc = bySlug.get(c.slug);
     if (!npc || !isEscort(npc)) continue;
-    const reward = 10 * (Number(character.charisma) || 0);
+    const reward = Math.round(10 * (Number(character.charisma) || 0) * rewardMult);
     gold += reward;
     names.push(npc.name ?? npc.slug);
     lines.push(`You return ${npc.name ?? npc.slug} safely. ${npc.patron ?? 'Her grateful father'} rewards you with ${reward} gold.`);
@@ -512,6 +525,8 @@ function rowCharacter(row) {
     spells: row.spells ?? {},
     adventuresCompleted: Array.isArray(row.adventures_completed) ? row.adventures_completed : [],
     chronicle: row.chronicle && typeof row.chronicle === 'object' ? row.chronicle : { summary: '', deeds: [] },
+    // Derived, never stored: the world's memory of this adventurer.
+    reputation: computeReputation(row.chronicle && typeof row.chronicle === 'object' ? row.chronicle : {}),
     isAlive: row.is_alive,
     portraitUrl: row.portrait_url ?? null,
   };
@@ -642,7 +657,9 @@ function hallChoices(character) {
 
 function hallText({ player, character, unlockedAdventures, lockedAdventures, prefix = '' }) {
   const characterName = String(character?.name ?? '').trim();
-  const lines = [prefix || (characterName ? `You stand in the Great Hall, ${characterName}.` : 'You stand in the Great Hall.')];
+  const epithet = character?.reputation?.epithet;
+  const titled = characterName ? (epithet ? `${characterName} ${epithet}` : characterName) : '';
+  const lines = [prefix || (titled ? `You stand in the Great Hall, ${titled}.` : 'You stand in the Great Hall.')];
   if (!character) {
     lines.push('The Guild is ready to record a new adventurer.');
   } else {
@@ -929,7 +946,7 @@ function recordsResponse({ player, character, characters, adventures, prefix = '
     event: { type: 'hall_records' },
     text: prefix || `The Archivist looks up from a great ledger and inclines his head. "Welcome to the Hall of Records${character?.name ? `, ${character.name}` : ''}. Here the Guild keeps its lore — how an adventurer's mettle is measured, the ways of arms and mercy, and the memory of those who first lit this lamp. Read a while, and go the wiser for it."`,
     choices: ['Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true } } }),
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true, ledger: reputationRead(computeReputation(character?.chronicle), character?.name) } } }),
   });
 }
 
@@ -1519,9 +1536,9 @@ export function createGameRouter(rawDeps = {}) {
           character.adventuresCompleted = Array.from(new Set([...(character.adventuresCompleted ?? []), adventure.adventure.id]));
           // The chronicle remembers the expedition; long logs fold into prose.
           character = recordDeeds(character, [
-            firstClear ? `Conquered ${adventure.adventure.name} for the first time.` : `Returned from ${adventure.adventure.name}.`,
-            conversion.goldGained > 0 ? `Carried home plunder worth ${conversion.goldGained} gold.` : null,
-            ...escort.names.map((name) => `Brought ${name} safely home through the dark.`),
+            { text: firstClear ? `Conquered ${adventure.adventure.name} for the first time.` : `Returned from ${adventure.adventure.name}.`, kind: 'complete' },
+            conversion.goldGained > 0 ? { text: `Carried home plunder worth ${conversion.goldGained} gold.`, kind: 'other' } : null,
+            ...escort.names.map((name) => ({ text: `Brought ${name} safely home through the dark.`, kind: 'rescue' })),
           ]);
           character = await deps.ai.maybeCompress(character);
           const [updatedCharacter, completedRun] = await Promise.all([
@@ -1556,6 +1573,7 @@ export function createGameRouter(rawDeps = {}) {
           entities: getVisibleRoomEntities(savedRun, adventure),
           visitCount: revisiting ? 2 : 1,
           note: encounter.note || null,
+          reputation: reputationForPrompt(computeReputation(character?.chronicle), character?.name),
         });
         return res.json(roomResponse({
           adventure, run: savedRun, character,
@@ -1594,7 +1612,7 @@ export function createGameRouter(rawDeps = {}) {
           const roomNo = String(getCurrentRoom(run, adventure).room_number);
           const deathText = fatalItem.read_effect_text_at?.[roomNo] ?? fatalItem.read_effect_text ?? 'The book’s curse takes you.';
           character = { ...character, isAlive: false, hd: 0 };
-          character = recordDeed(character, `Read the ${fatalItem.name} in ${getCurrentRoom(run, adventure).name} — and paid the old price for curiosity.`);
+          character = recordDeed(character, `Read the ${fatalItem.name} in ${getCurrentRoom(run, adventure).name} — and paid the old price for curiosity.`, { kind: 'death' });
           run = { ...run, status: 'dead' };
           const [uc, ur] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -1826,7 +1844,7 @@ export function createGameRouter(rawDeps = {}) {
         run = bumped.run;
         // Brought to the brink, a yielding enemy stops fighting (HP threshold;
         // regard thresholds resolve in the act/say handlers).
-        if (!combat.enemyDefeated && !hasYielded(run, enemyTemplate.slug) && checkYield(enemyTemplate, run, enemy.hp)) {
+        if (!combat.enemyDefeated && !hasYielded(run, enemyTemplate.slug) && checkYield(enemyTemplate, run, enemy.hp, yieldMods(computeReputation(character?.chronicle)))) {
           run = markYielded(run, enemyTemplate.slug);
           extraText.push(enemyTemplate.yield_text ?? `${enemyTemplate.name} falters, lowers its guard, and stops fighting. You could SPARE it — or finish this.`);
           events.push({ type: 'enemy_yielded', enemy: enemyTemplate.slug });
@@ -1864,12 +1882,12 @@ export function createGameRouter(rawDeps = {}) {
         // The chronicle records what verifiably happened this round.
         const battleRoom = getCurrentRoom(run, adventure);
         const deeds = [];
-        if (combat.enemyDefeated) deeds.push(`Slew the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`);
-        if (mercyBroken) deeds.push(`Broke a truce with the ${enemyTemplate.name}, who had yielded.`);
+        if (combat.enemyDefeated) deeds.push({ text: `Slew the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`, kind: 'slay' });
+        if (mercyBroken) deeds.push({ text: `Broke a truce with the ${enemyTemplate.name}, who had yielded.`, kind: 'truce_broken' });
         for (const slug of combat.fallen ?? []) {
-          deeds.push(`${adventure.characters.find((c) => c.slug === slug)?.name ?? slug} fell in battle in ${battleRoom.name}.`);
+          deeds.push({ text: `${adventure.characters.find((c) => c.slug === slug)?.name ?? slug} fell in battle in ${battleRoom.name}.`, kind: 'companion_lost' });
         }
-        if (combat.characterDefeated) deeds.push(`Died fighting the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`);
+        if (combat.characterDefeated) deeds.push({ text: `Died fighting the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`, kind: 'death' });
         character = recordDeeds(character, deeds);
         // A turning point earns a line from the narrator (null → silence).
         const moment = (combat.enemyDefeated || combat.characterDefeated)
@@ -2022,7 +2040,7 @@ export function createGameRouter(rawDeps = {}) {
           run = markEnemyDefeated(run, enemyTemplate.slug);
           events.push({ type: 'enemy_defeated', enemy: enemyTemplate.slug });
           lines.push('The enemy is defeated.');
-          character = recordDeed(character, `Slew the ${enemyTemplate.name} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`);
+          character = recordDeed(character, `Slew the ${enemyTemplate.name} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'slay' });
           if (enemyTemplate.frees_on_defeat) {
             const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
             if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) {
@@ -2037,7 +2055,7 @@ export function createGameRouter(rawDeps = {}) {
           run = { ...run, status: 'dead' };
           events.push({ type: 'character_defeated', characterId: character.id });
           lines.push('You have been defeated.');
-          character = recordDeed(character, `Died to the ${enemyTemplate.name}'s ${pending.name} in ${getCurrentRoom(run, adventure).name}.`);
+          character = recordDeed(character, `Died to the ${enemyTemplate.name}'s ${pending.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
         }
         const [uc, ur] = await Promise.all([
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -2079,7 +2097,7 @@ export function createGameRouter(rawDeps = {}) {
           run = recordEncounter(run, target.slug, 'friend');
           run = recruitCompanion(run, target);
           events.push({ type: 'recruit', character: target.slug });
-          character = recordDeed(character, `Made peace with ${target.name} in ${room.name}, who joined the party.`);
+          character = recordDeed(character, `Made peace with ${target.name} in ${room.name}, who joined the party.`, { kind: 'befriend' });
         } else {
           run = markEnemyDefeated(run, target.slug);
           run = markSpared(run, target.slug);
@@ -2088,7 +2106,7 @@ export function createGameRouter(rawDeps = {}) {
             lines.push(`You receive ${target.spare_gold} gold.`);
             events.push({ type: 'spare_reward', gold: target.spare_gold });
           }
-          character = recordDeed(character, `Showed mercy to the ${target.name} in ${room.name} (${adventure.adventure.name}).`);
+          character = recordDeed(character, `Showed mercy to the ${target.name} in ${room.name} (${adventure.adventure.name}).`, { kind: 'spare' });
           // A spared captor releases their prisoner just as a slain one does.
           const released = freeDefeatedCaptives(run, adventure);
           run = released.run;
@@ -2185,6 +2203,7 @@ export function createGameRouter(rawDeps = {}) {
         const verdict = await deps.ai.judgeParley({
           npc: listener, character, run, words, disguised, joinable,
           heldBy: captorAlive ? (captor.name ?? captor.slug) : null,
+          reputation: reputationForPrompt(computeReputation(character?.chronicle), character?.name),
         });
         // The engine — not the model — applies the shift: craft-scaled,
         // charisma-scaled, capped per NPC per run.
@@ -2206,14 +2225,14 @@ export function createGameRouter(rawDeps = {}) {
           run = recruitCompanion(run, listener);
           lines.push(`${listener.name} falls in beside you.`);
           events.push({ type: 'recruit', character: listener.slug });
-          character = recordDeed(character, `Persuaded ${listener.name} to come along, in ${getCurrentRoom(run, adventure).name}.`);
+          character = recordDeed(character, `Persuaded ${listener.name} to come along, in ${getCurrentRoom(run, adventure).name}.`, { kind: 'persuade' });
         } else if (captorAlive && !listenerHostile) {
           // Whatever was said, a captive stays a captive — say so plainly.
           lines.push(`${listener.name} glances fearfully toward the ${(captor.name ?? captor.slug).toLowerCase()} — no captive may leave while their captor stands.`);
         }
         // Words can finish what acts began: the yield check.
         const hostile = !disguised && (listener.disposition ?? dispositionOf(listener, run)) === 'hostile';
-        if (hostile && !hasYielded(run, listener.slug) && checkYield(listener, run, run.enemyHp?.[listener.slug] ?? listener.hp)) {
+        if (hostile && !hasYielded(run, listener.slug) && checkYield(listener, run, run.enemyHp?.[listener.slug] ?? listener.hp, yieldMods(computeReputation(character?.chronicle)))) {
           run = markYielded(run, listener.slug);
           lines.push(listener.yield_text ?? `${listener.name} lowers their guard. The fight has gone out of them — you could SPARE them.`);
           events.push({ type: 'enemy_yielded', enemy: listener.slug });
@@ -2228,7 +2247,7 @@ export function createGameRouter(rawDeps = {}) {
           if (reprisal.characterDefeated) {
             events.push({ type: 'character_defeated', characterId: character.id });
             lines.push('You have been defeated.');
-            character = recordDeed(character, `Died mid-parley with the ${listener.name} in ${getCurrentRoom(run, adventure).name}.`);
+            character = recordDeed(character, `Died mid-parley with the ${listener.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
           }
         }
         // The writing-craft rubric, shown to the writer (the classroom heart).
@@ -2281,8 +2300,8 @@ export function createGameRouter(rawDeps = {}) {
         const escort = deliverEscorts(character, run, adventure);
         if (escort.gold > 0) character = { ...character, gold: (character.gold ?? 0) + escort.gold };
         character = recordDeeds(character, [
-          conversion.goldGained > 0 ? `Walked out of ${adventure.adventure.name} alive with plunder worth ${conversion.goldGained} gold.` : null,
-          ...escort.names.map((name) => `Brought ${name} safely home through the dark.`),
+          conversion.goldGained > 0 ? { text: `Walked out of ${adventure.adventure.name} alive with plunder worth ${conversion.goldGained} gold.`, kind: 'complete' } : null,
+          ...escort.names.map((name) => ({ text: `Brought ${name} safely home through the dark.`, kind: 'rescue' })),
         ]);
         const leftRow = await deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character));
         character = rowCharacter(leftRow) ?? character;
@@ -2326,7 +2345,7 @@ export function createGameRouter(rawDeps = {}) {
           const events = [{ type: 'act', verb, character: subject.slug, regard: acted.regard, shift: acted.applied }];
           const lines = [acted.text ?? `You ${verb} ${subject.name}.`];
           const hostile = (subject.disposition ?? dispositionOf(subject, run)) === 'hostile';
-          if (hostile && !hasYielded(run, subject.slug) && checkYield(subject, run, run.enemyHp?.[subject.slug] ?? subject.hp)) {
+          if (hostile && !hasYielded(run, subject.slug) && checkYield(subject, run, run.enemyHp?.[subject.slug] ?? subject.hp, yieldMods(computeReputation(character?.chronicle)))) {
             run = markYielded(run, subject.slug);
             lines.push(subject.yield_text ?? `${subject.name} lowers their guard. The fight has gone out of them — you could SPARE them.`);
             events.push({ type: 'enemy_yielded', enemy: subject.slug });
@@ -2341,7 +2360,7 @@ export function createGameRouter(rawDeps = {}) {
             if (reprisal.characterDefeated) {
               events.push({ type: 'character_defeated', characterId: character.id });
               lines.push('You have been defeated.');
-              character = recordDeed(character, `Died reaching out to the ${subject.name} in ${getCurrentRoom(run, adventure).name}.`);
+              character = recordDeed(character, `Died reaching out to the ${subject.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
             }
           }
           const [uc, ur] = await Promise.all([

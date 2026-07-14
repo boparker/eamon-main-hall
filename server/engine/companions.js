@@ -20,15 +20,18 @@ export function baseFriendliness(npc) {
 }
 
 // Charisma nudges the odds: each point above/below 10 shifts friendliness by 5%,
-// clamped so there is always a little uncertainty either way.
-export function friendlyChance(charisma, base = DEFAULT_BASE) {
+// clamped so there is always a little uncertainty either way. `bonus` carries
+// reputation (percentage points): the merciful attract company, the dreaded
+// walk alone.
+export function friendlyChance(charisma, base = DEFAULT_BASE, bonus = 0) {
   const cha = Number.isFinite(charisma) ? charisma : 10;
-  return Math.max(5, Math.min(95, base + (cha - 10) * 5));
+  const rep = Number.isFinite(bonus) ? bonus : 0;
+  return Math.max(5, Math.min(95, base + (cha - 10) * 5 + rep));
 }
 
 // Roll the encounter. Returns 'friend' or 'foe'.
-export function resolveEncounter(npc, charisma, rng = Math.random) {
-  const chance = friendlyChance(charisma, baseFriendliness(npc));
+export function resolveEncounter(npc, charisma, rng = Math.random, bonus = 0) {
+  const chance = friendlyChance(charisma, baseFriendliness(npc), bonus);
   const roll = (typeof rng === 'function' ? rng() : 0) * 100;
   return roll < chance ? 'friend' : 'foe';
 }

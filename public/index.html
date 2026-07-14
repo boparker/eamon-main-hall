@@ -516,6 +516,9 @@
       backdrop-filter: blur(8px); flex-shrink: 0;
     }
     #hud-name { font-family: var(--font-head); font-size: 1rem; color: var(--gold); letter-spacing: 0.06em; }
+    /* The earned epithet — the world's one-word memory of you. */
+    #hud-epithet { font-family: var(--font-head); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-dim); margin-top: 1px; }
+    #hud-epithet[hidden] { display: none; }
     #hud-identity { display: flex; flex-direction: row; align-items: center; gap: 10px; min-width: 160px; }
     #hud-identity-text { display: flex; flex-direction: column; gap: 3px; }
     #hud-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; border: 1.5px solid var(--gold-dim); box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
@@ -865,6 +868,7 @@
       <img id="hud-avatar" alt="" hidden />
       <div id="hud-identity-text">
         <div id="hud-name">&mdash;</div>
+        <div id="hud-epithet" hidden></div>
         <div id="account-status" data-mode="guest">Guest mode</div>
       </div>
       <button id="hud-portrait-btn" type="button" hidden title="Paint a custom portrait of your hero">🎨 Portrait</button>

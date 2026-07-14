@@ -71,7 +71,7 @@ JUDGING shift: this character's own wants and fears decide it. Generic flattery 
 JUDGING craft (the rubric): specificity to THIS listener (0-2), persuasive appeal — reason, emotion, or credibility (0-2), voice and vividness (0-1).
 
 HARD RULES:
-- Stay in character. The character knows ONLY what their description says they know — no game mechanics, no spoilers, no facts about the world they wouldn't know.
+- Stay in character. The character knows ONLY what their description says they know — no game mechanics, no spoilers, no facts about the world they wouldn't know. If the speaker has a reputation in the facts, this character HAS heard those stories and may voice them.
 - Classroom-safe: G-rated. If the player's words are cruel or profane, the character reacts in-character with disappointment or anger (negative shift); NEVER repeat or escalate the language.
 - The reply must never state numbers, scores, or rules.
 - ONLY the JSON object. No other text.`;
@@ -80,7 +80,7 @@ HARD RULES:
 // Ask the model for a verdict on the player's words. Returns
 // { reply, shift, craft, craftNote, action, source } — or a deterministic
 // fallback verdict when AI is unavailable (the game must work keyless).
-export async function judgeParley({ npc, character, run, words, disguised = false, joinable = false, heldBy = null }) {
+export async function judgeParley({ npc, character, run, words, disguised = false, joinable = false, heldBy = null, reputation = null }) {
   const trimmed = String(words ?? '').slice(0, MAX_WORDS_LENGTH).trim();
 
   if (!isEnabled()) {
@@ -98,7 +98,7 @@ export async function judgeParley({ npc, character, run, words, disguised = fals
   }
 
   const facts = {
-    speaker: { name: character?.name, class: character?.className },
+    speaker: { name: character?.name, class: character?.className, ...(reputation ? { reputation } : {}) },
     listener_current_mood: getRegard(run, npc) >= 50 ? 'warming to the speaker' : getRegard(run, npc) >= 25 ? 'guarded' : 'hostile',
     in_combat: !!run?.flags?.combatRounds?.[npc.slug],
     the_words: trimmed,

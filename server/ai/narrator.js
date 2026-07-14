@@ -34,7 +34,7 @@ function chronicleEchoes(character) {
 
 // Rewrite a room's description line with awareness of the run's state.
 // Returns prose to use IN PLACE of room.narration_text, or null to fall back.
-export async function narrateRoomEntry({ adventure, room, character, entities = {}, visitCount = 1, note = null }) {
+export async function narrateRoomEntry({ adventure, room, character, entities = {}, visitCount = 1, note = null, reputation = null }) {
   if (!isEnabled() || !room) return null;
 
   const present = (entities.characters ?? []).map((c) => ({
@@ -51,6 +51,7 @@ export async function narrateRoomEntry({ adventure, room, character, entities = 
       name: character?.name,
       class: character?.className,
       condition: hpWord(character?.hd ?? character?.hp ?? 1, character?.maxHd ?? character?.maxHp ?? 1),
+      ...(reputation ? { reputation } : {}),
     },
     present,
     visit: visitCount > 1 ? `this is visit number ${visitCount}` : 'first visit',

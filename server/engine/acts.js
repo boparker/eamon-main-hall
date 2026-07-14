@@ -98,12 +98,16 @@ export function isMerciless(run, slug) {
   return !!run?.flags?.merciless?.[slug];
 }
 
-export function checkYield(npc, run, hp) {
+// `mods` lets a dreaded reputation ease the thresholds: enemies who have heard
+// the stories yield at higher HP (hpEase) and need less regard (regardEase).
+export function checkYield(npc, run, hp, mods = {}) {
   if (!canYield(npc) || isMerciless(run, npc.slug)) return false;
   if (hasYielded(run, npc.slug)) return true;
   if (hp <= 0) return false;
-  if (Number.isFinite(npc.yields_at_regard) && getRegard(run, npc) >= npc.yields_at_regard) return true;
-  if (Number.isFinite(npc.yields_at_hp) && hp <= npc.yields_at_hp) return true;
+  const regardEase = Number(mods.regardEase) || 0;
+  const hpEase = Number(mods.hpEase) || 0;
+  if (Number.isFinite(npc.yields_at_regard) && getRegard(run, npc) >= npc.yields_at_regard - regardEase) return true;
+  if (Number.isFinite(npc.yields_at_hp) && hp <= npc.yields_at_hp + hpEase) return true;
   return false;
 }
 

@@ -117,6 +117,22 @@ function build() {
 export function openRecords(records) {
   if (!records) return;
   build();
+  // The Guild's Ledger: the world's current read of this adventurer —
+  // reputation made legible, straight from the server's deterministic derivation.
+  let ledger = document.getElementById('records-ledger');
+  if (!ledger) {
+    ledger = document.createElement('section');
+    ledger.className = 'rec-section rec-ledger';
+    ledger.id = 'records-ledger';
+    const h = document.createElement('h3'); h.className = 'rec-h';
+    h.innerHTML = '<span class="rec-icon">✒</span> The Guild\u2019s Ledger';
+    const p = document.createElement('p'); p.className = 'rec-blurb'; p.id = 'records-ledger-line';
+    ledger.append(h, p);
+    document.getElementById('records-body')?.prepend(ledger);
+  }
+  const line = document.getElementById('records-ledger-line');
+  if (line) line.textContent = records.ledger ?? '';
+  ledger.hidden = !records.ledger;
   const panel = document.getElementById('hall-of-records');
   if (!panel) return;
   const gs = document.getElementById('game-screen');
