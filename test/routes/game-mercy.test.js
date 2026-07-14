@@ -562,3 +562,64 @@ test('reading scenery marks it read so the client can gray the tile', async () =
   const back = await command(app, session, 'south');
   assert.ok(back.body.state.items.find((i) => i.slug === 'wall-rune')?.read, 'still read after returning to the room');
 });
+
+// ── Cross-run reputation ──────────────────────────────────────────────────────
+
+// Seed a chronicle directly through the deps mock (reputation is derived, so
+// this is exactly what a veteran character looks like on load).
+async function setChronicle(deps, characterId, deeds) {
+  await deps.updateCharacter(null, 'account:user-1', characterId, {
+    chronicle: { summary: '', deeds: deeds.map(([kind]) => ({ text: 'x', kind })) },
+  });
+}
+
+test('a dreaded reputation makes enemies yield sooner — fear is a weapon', async () => {
+  const mk = () => makeDeps({ rng: () => 0.99 }); // always hit, max dice
+
+  // Clean-slate character: after 3 attacks the troll (hp 10, yields_at_hp 3)
+  // sits at 4 hp — above its natural threshold, still fighting.
+  const cleanDeps = mk();
+  const cleanApp = makeApp(cleanDeps);
+  const clean = await startSession(cleanApp);
+  await command(cleanApp, clean, 'south');
+  let last;
+  for (let i = 0; i < 3; i++) last = await command(cleanApp, clean, 'attack troll');
+  assert.equal(last.body.events.some((e) => e.type === 'enemy_yielded'), false);
+
+  // Same fight, but the Butcher walks in: tier-1 dread (hpEase 1) → the troll
+  // breaks at 4 hp. Same dice, different reputation, different world.
+  const dreadDeps = mk();
+  const dreadApp = makeApp(dreadDeps);
+  const dread = await startSession(dreadApp);
+  await setChronicle(dreadDeps, dread.characterId, [['truce_broken'], ['truce_broken'], ['slay'], ['slay'], ['slay']]);
+  await command(dreadApp, dread, 'south');
+  for (let i = 0; i < 3; i++) last = await command(dreadApp, dread, 'attack troll');
+  assert.ok(last.body.events.some((e) => e.type === 'enemy_yielded'), 'dreaded reputation eases the yield threshold');
+});
+
+test('a merciful veteran is greeted by epithet and the ledger knows them', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  const mercifulDeeds = [...Array(8).fill(['spare']), ...Array(2).fill(['rescue'])]; // tier 2
+  await setChronicle(deps, session.characterId, mercifulDeeds);
+
+  // The Guild greets you by your earned name (bootstrap → hall greeting).
+  const hall = await request(app, 'POST', '/api/game/bootstrap', { ...base });
+  assert.match(hall.body.text, /Tester the Merciful/);
+  assert.equal(hall.body.state.character.reputation.epithet, 'the Merciful');
+  assert.equal(hall.body.state.character.reputation.leaning, 'merciful');
+
+  // And the Hall of Records ledger reads who you are.
+  const records = await request(app, 'POST', '/api/game/hall', { ...base, characterId: session.characterId, input: 'Visit the Hall of Records' });
+  assert.match(records.body.state.records.ledger, /Known for mercy/);
+});
+
+test('a nobody stays a nobody: no epithet, no eased yields at tier 0', async () => {
+  const deps = makeDeps({ rng: () => 0.99 });
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  const hall = await request(app, 'POST', '/api/game/bootstrap', { ...base });
+  assert.equal(/the (Kind|Merciful|Ruthless|Butcher|Bold)/.test(hall.body.text), false);
+  assert.equal(hall.body.state.character.reputation.tier, 0);
+});

@@ -50,6 +50,13 @@ function wireStatPopovers() {
 export function updateHUD(animate) {
   const hasCharacter = Boolean(state.character?.id || state.character?.name);
   document.getElementById('hud-name').textContent = hasCharacter ? state.character.name : '—';
+  // The earned epithet — the world's one-word memory of you.
+  const epithetEl = document.getElementById('hud-epithet');
+  if (epithetEl) {
+    const epithet = hasCharacter ? state.character.reputation?.epithet : null;
+    epithetEl.textContent = epithet ?? '';
+    epithetEl.hidden = !epithet;
+  }
 
   // Custom portrait avatar + the reward-gated "Paint Portrait" entry point.
   const avatar = document.getElementById('hud-avatar');

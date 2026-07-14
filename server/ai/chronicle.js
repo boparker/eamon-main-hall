@@ -19,16 +19,23 @@ export function chronicleOf(character) {
 }
 
 // Append a deed (immutable). The engine calls this only for events it
-// resolved itself, so the chronicle is always true.
-export function recordDeed(character, text, { at = new Date().toISOString() } = {}) {
+// resolved itself, so the chronicle is always true. `kind` is a structured
+// tag (spare/slay/rescue/…) that reputation.js scores — older deeds without
+// one are classified from their text.
+export function recordDeed(character, text, { at = new Date().toISOString(), kind = null } = {}) {
   if (!text) return character;
   const { summary, deeds } = chronicleOf(character);
-  const next = [...deeds, { at, text }].slice(-MAX_DEEDS);
+  const next = [...deeds, { at, text, ...(kind ? { kind } : {}) }].slice(-MAX_DEEDS);
   return { ...character, chronicle: { summary, deeds: next } };
 }
 
-export function recordDeeds(character, texts = [], opts = {}) {
-  return texts.filter(Boolean).reduce((c, text) => recordDeed(c, text, opts), character);
+// Accepts plain strings or { text, kind } entries.
+export function recordDeeds(character, entries = [], opts = {}) {
+  return entries.filter(Boolean).reduce((c, entry) => (
+    typeof entry === 'string'
+      ? recordDeed(c, entry, opts)
+      : recordDeed(c, entry.text, { ...opts, kind: entry.kind ?? null })
+  ), character);
 }
 
 // When the log grows long, ask the model to fold older deeds into the prose
