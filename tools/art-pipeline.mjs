@@ -24,7 +24,9 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+// Prefer a DEDICATED key for offline art runs so they never rate-limit the
+// live game's narration (PIPELINE_ANTHROPIC_KEY; falls back to the main key).
+const ANTHROPIC_KEY = process.env.PIPELINE_ANTHROPIC_KEY || process.env.ANTHROPIC_API_KEY;
 const FAL_KEY = process.env.FAL_KEY;
 const MODEL = process.env.PIPELINE_MODEL || 'claude-haiku-4-5-20251001';
 const VISION_MODEL = process.env.PIPELINE_VISION_MODEL || 'claude-sonnet-5';
