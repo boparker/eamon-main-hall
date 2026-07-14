@@ -16,21 +16,33 @@
 </head>
 <body>
 <h1>⚔ Great Hall Ambience — Audition</h1>
-<p>No music — the Hall as a place: big echoing room, roaring fire, happy burly chatter. Only one plays at a time; all loop.</p>
+<p>No music — the Hall as a place. Round 2: smoother beds, each scored for loudness jerkiness (lower = smoother; the cave tunnel bed you liked scores 0.17). Only one plays at a time; all loop.</p>
 
 <div class="card">
-  <h2>A — Busy Hall (currently wired in)</h2>
-  <p>Full crowd talking and laughing, mugs clinking, roaring hearth. This is what plays in the Hall now.</p>
+  <h2>Murmur — currently wired in (jerkiness 0.17)</h2>
+  <p>Blended distant crowd wash, no distinct words, steady fire crackle underneath. Matches the tunnel bed's smoothness exactly.</p>
+  <audio controls loop src="audio/ambience/amb-hall-murmur.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>Far Tavern (0.20)</h2>
+  <p>Tavern hubbub heard from across the hall, faint mug clinks buried deep, hearth up front.</p>
+  <audio controls loop src="audio/ambience/amb-hall-far.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>Hearth (0.21)</h2>
+  <p>Fire-forward: the big hearth dominates, crowd is a faraway murmur.</p>
+  <audio controls loop src="audio/ambience/amb-hall-hearth.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>Busy Hall — round 1, rejected (0.23)</h2>
+  <p>The cacophonous one, kept for reference.</p>
   <audio controls loop src="audio/ambience/amb-hall-busy.m4a"></audio>
 </div>
 
-<div class="card">
-  <h2>B — Warm Hall (quieter alternative)</h2>
-  <p>Fewer voices, murmurs and chuckles, the fire crackling steadily up front.</p>
-  <audio controls loop src="audio/ambience/amb-hall-warm.m4a"></audio>
-</div>
-
-<p class="note">Both run through the gapless Web Audio loop path in-game. Say the word and B swaps in — or tell me what to change and I'll regenerate.</p>
+<p class="note">All run through the gapless Web Audio loop path in-game. Any of these is a one-line swap — or tell me what to change and I'll regenerate.</p>
 <script>
   // Pause the others when one starts.
   const players = [...document.querySelectorAll('audio')];

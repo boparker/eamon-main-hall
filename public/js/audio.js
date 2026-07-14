@@ -183,7 +183,7 @@ export function updateAudioForResponse(response) {
     // chatter + roaring hearth (music retired). Same gapless Web Audio
     // path as the cave beds, so returning from the cave is just a bed swap.
     if (bgMusic && bgMusic.volume > 0) fadeTo(bgMusic, 0);
-    setAmbience('hall-busy', 0.35);
+    setAmbience('hall-murmur', 0.35);
   }
   playAudioForEvents(response);
 }
