@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Great Hall Music — Audition</title>
+<style>
+  body { background:#0d1117; color:#e6dfd0; font-family: Georgia, serif; max-width:640px; margin:3rem auto; padding:0 1rem; }
+  h1 { font-size:1.4rem; letter-spacing:.06em; }
+  .card { background:#161d26; border:1px solid #2b3a4a; border-radius:10px; padding:1rem 1.2rem; margin:1rem 0; }
+  .card h2 { margin:0 0 .2rem; font-size:1.05rem; color:#d9b970; }
+  .card p { margin:.2rem 0 .8rem; font-size:.9rem; color:#9fb0c0; }
+  audio { width:100%; }
+  .note { font-size:.8rem; color:#6d7f90; margin-top:2rem; }
+</style>
+</head>
+<body>
+<h1>⚔ Great Hall Music — Audition</h1>
+<p>Only one plays at a time. All candidates loop.</p>
+
+<div class="card">
+  <h2>A — Warm Hearth</h2>
+  <p>Medieval tavern folk: lute melody, soft fiddle, quiet frame drum. Cozy and welcoming.</p>
+  <audio controls loop src="audio/music/hall-warm-hearth.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>B — Hall of Heroes</h2>
+  <p>Harp arpeggios over a low cello drone, faint distant choir. Quiet grandeur — a storied hall.</p>
+  <audio controls loop src="audio/music/hall-of-heroes.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>C — Wanderer's Rest</h2>
+  <p>Hammered dulcimer over warm cello, gentle percussion. Hopeful, a hint of wanderlust.</p>
+  <audio controls loop src="audio/music/hall-wanderers-rest.m4a"></audio>
+</div>
+
+<div class="card">
+  <h2>Current — Concrete Omen (reference)</h2>
+  <p>What plays in the Hall today.</p>
+  <audio controls loop src="concrete-omen.mp3"></audio>
+</div>
+
+<p class="note">When one wins, it gets wired through the gapless Web Audio loop path (same engine as the cave ambience) so the seam is invisible.</p>
+<script>
+  // Pause the others when one starts.
+  const players = [...document.querySelectorAll('audio')];
+  players.forEach(a => a.addEventListener('play', () => players.forEach(o => { if (o !== a) o.pause(); })));
+</script>
+</body>
+</html>
