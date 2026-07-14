@@ -35,7 +35,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the cave entrance. (N/S)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "entrance",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-2",
@@ -56,7 +60,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a dark north/south tunnel.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-3",
@@ -77,7 +85,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in the west side chamber. (E)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-4",
@@ -98,7 +110,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a large chamber. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-5",
@@ -119,7 +135,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in the east side chamber. (W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-6",
@@ -140,7 +160,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-7",
@@ -161,7 +185,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the north end of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-8",
@@ -182,7 +210,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-9",
@@ -203,7 +235,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-10",
@@ -224,7 +260,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the middle of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-11",
@@ -245,7 +285,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-12",
@@ -266,7 +310,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-13",
@@ -287,7 +335,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the south end of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-14",
@@ -308,7 +360,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-15",
@@ -329,7 +385,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in a broken north/south tunnel.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-16",
@@ -350,7 +410,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east/west tunnel with faint music.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "temple",
+        "volume": 0.08
+      }
     },
     {
       "id": "beginners-cave-17",
@@ -371,7 +435,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east/west tunnel with loud music.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "temple",
+        "volume": 0.22
+      }
     },
     {
       "id": "beginners-cave-18",
@@ -392,7 +460,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the temple. (W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "temple",
+        "volume": 0.35
+      }
     },
     {
       "id": "beginners-cave-19",
@@ -413,7 +485,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in the library. (E)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cell",
+        "volume": 0.25
+      }
     },
     {
       "id": "beginners-cave-20",
@@ -434,7 +510,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at a T-intersection; North by E/W.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-21",
@@ -455,7 +535,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east/west tunnel.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-22",
@@ -476,7 +560,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the top of a stairway. (W/D)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.25
+      }
     },
     {
       "id": "beginners-cave-23",
@@ -497,7 +585,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are at the bottom of a stairway. (E/U)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.25
+      }
     },
     {
       "id": "beginners-cave-24",
@@ -518,7 +610,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east/west tunnel.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "tunnel",
+        "volume": 0.3
+      }
     },
     {
       "id": "beginners-cave-25",
@@ -539,7 +635,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in an east/west tunnel smelling of salt.",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cove",
+        "volume": 0.15
+      }
     },
     {
       "id": "beginners-cave-26",
@@ -560,7 +660,11 @@
       "treasure": [],
       "requires": null,
       "canonical_name": "You are in the Pirate's Cove. (E/W)",
-      "text_source": "kdechant/eamon room.description"
+      "text_source": "kdechant/eamon room.description",
+      "ambience": {
+        "track": "cove",
+        "volume": 0.35
+      }
     }
   ],
   "characters": [
@@ -610,11 +714,27 @@
       "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman.",
       "persona": "A once-gentle temple priest driven mad by years alone among the cave's dark altars. He believes the bloody altar demands a sacrifice. Somewhere beneath the madness he remembers his liturgy, his order, and his shame. He responds to scripture, calm authority, and reminders of who he was; threats and mockery feed the madness.",
       "acts": [
-        { "verb": "reason", "label": "Reason with", "shift": -10, "success_text": "You try to reason with the priest, but logic is a language he no longer speaks. His eyes burn brighter. \"The altar HUNGERS,\" he howls." },
-        { "verb": "pray", "label": "Pray with", "shift": 25, "success_text": "You raise your voice in the old liturgy — the one painted on these very walls. The priest falters mid-snarl. His lips move with yours, remembering.", "repeat_text": "You pray again. The mace droops in his hand; tears cut clean lines down his filthy face." }
+        {
+          "verb": "reason",
+          "label": "Reason with",
+          "shift": -10,
+          "success_text": "You try to reason with the priest, but logic is a language he no longer speaks. His eyes burn brighter. \"The altar HUNGERS,\" he howls."
+        },
+        {
+          "verb": "pray",
+          "label": "Pray with",
+          "shift": 25,
+          "success_text": "You raise your voice in the old liturgy — the one painted on these very walls. The priest falters mid-snarl. His lips move with yours, remembering.",
+          "repeat_text": "You pray again. The mace droops in his hand; tears cut clean lines down his filthy face."
+        }
       ],
       "yields_at_regard": 80,
-      "telegraph": { "every": 3, "name": "overhead blow", "multiplier": 2, "warn_text": "The priest raises his mace high overhead, shrieking a broken litany — a crushing blow is coming!" },
+      "telegraph": {
+        "every": 3,
+        "name": "overhead blow",
+        "multiplier": 2,
+        "warn_text": "The priest raises his mace high overhead, shrieking a broken litany — a crushing blow is coming!"
+      },
       "yield_text": "The mad light gutters out of the priest's eyes. The mace clatters to the stone and he sinks to his knees before the bloody altar, mumbling the old words. The fight is over, if you will let it be.",
       "spare_text": "You lower your weapon. The priest unbinds Cynthia with shaking hands and presses his temple purse upon you, weeping. \"The altar is fed enough,\" he whispers, and begins, slowly, to scrub the old blood from the stone.",
       "spare_gold": 15
@@ -667,7 +787,12 @@
       "text_source": "kdechant/eamon monster.description",
       "persona": "A grizzled hermit who has lived alone in this cave for forty years and likes it that way. Cantankerous, suspicious of glory-seekers, but lonely underneath and full of hard-won cave wisdom. Plain speech, honesty, and good listening win him over; flattery and bravado bore him.",
       "acts": [
-        { "verb": "apologize", "label": "Apologize to", "shift": 25, "success_text": "You lower your weapon and say, plainly, that you meant no harm trespassing in his home. The hermit's axe-arm eases. \"Hmph. Forty years, and that's the first apology these walls have heard.\"" }
+        {
+          "verb": "apologize",
+          "label": "Apologize to",
+          "shift": 25,
+          "success_text": "You lower your weapon and say, plainly, that you meant no harm trespassing in his home. The hermit's axe-arm eases. \"Hmph. Forty years, and that's the first apology these walls have heard.\""
+        }
       ],
       "yields_at_regard": 70,
       "befriend_on_spare": true,
@@ -696,12 +821,28 @@
       "text_source": "kdechant/eamon monster.description",
       "persona": "A frightened wild animal, not a monster: dragged into this cave and locked in a cell it does not understand. It cannot speak and does not understand words, only tone — softness, stillness, and open hands. Sudden moves and shouting terrify it into violence.",
       "acts": [
-        { "verb": "calm", "label": "Calm", "shift": 30, "success_text": "You lower your weapon, open your empty palms, and hum low and steady. The gorilla's screaming stops. It watches your hands, knuckles still planted, breathing hard.", "repeat_text": "You keep your palms open and your voice low. The great shoulders drop an inch. It huffs — wary, but no longer wild." },
-        { "verb": "posture", "label": "Posture at", "shift": -15, "success_text": "You beat your chest and roar back at it. Bad idea. The gorilla's answering bellow shakes dust from the ceiling." }
+        {
+          "verb": "calm",
+          "label": "Calm",
+          "shift": 30,
+          "success_text": "You lower your weapon, open your empty palms, and hum low and steady. The gorilla's screaming stops. It watches your hands, knuckles still planted, breathing hard.",
+          "repeat_text": "You keep your palms open and your voice low. The great shoulders drop an inch. It huffs — wary, but no longer wild."
+        },
+        {
+          "verb": "posture",
+          "label": "Posture at",
+          "shift": -15,
+          "success_text": "You beat your chest and roar back at it. Bad idea. The gorilla's answering bellow shakes dust from the ceiling."
+        }
       ],
       "yields_at_regard": 60,
       "yields_at_hp": 3,
-      "telegraph": { "every": 2, "name": "charge", "multiplier": 2, "warn_text": "The gorilla rears to its full height and beats its chest — it is about to charge!" },
+      "telegraph": {
+        "every": 2,
+        "name": "charge",
+        "multiplier": 2,
+        "warn_text": "The gorilla rears to its full height and beats its chest — it is about to charge!"
+      },
       "yield_text": "The gorilla backs against the cell wall, hooting softly, one long arm curled over its head. It does not want to fight you. It never did.",
       "spare_text": "You step back and leave the doorway clear. The gorilla watches you a long moment — then knuckles past you, unhurried, and settles in the far corner with its back to the wall. Something like peace returns to the little cell."
     },
@@ -729,7 +870,12 @@
       "text_source": "kdechant/eamon monster.description",
       "persona": "A cheerful journeyman sellsword, more salesman than killer — he literally wears a name-tag sticker on his shield. Professional about violence, never personal. He respects courtesy, good humor, and sensible deals; if he has drawn steel on you it is strictly business, and he would honestly rather not.",
       "acts": [
-        { "verb": "apologize", "label": "Apologize to", "shift": 25, "success_text": "\"Whoa, whoa.\" You raise an open hand and tell Heinrich this fight is a misunderstanding. He peers at you over his shield rim. \"Huh. You know, you don't LOOK like the usual cave riffraff.\"" }
+        {
+          "verb": "apologize",
+          "label": "Apologize to",
+          "shift": 25,
+          "success_text": "\"Whoa, whoa.\" You raise an open hand and tell Heinrich this fight is a misunderstanding. He peers at you over his shield rim. \"Huh. You know, you don't LOOK like the usual cave riffraff.\""
+        }
       ],
       "yields_at_regard": 70,
       "befriend_on_spare": true,
@@ -782,8 +928,19 @@
       "flees_after_round": 1,
       "persona": "A vain, theatrical old corsair marooned in this cove with his beloved engraved sword TrollsFire and a rotting boat. He is a coward at heart who masks fear with swagger. He respects flattery of his legend, fair bargains, and anyone who can out-talk him; he despises being laughed at. He desperately wants to leave this cave but will not admit it.",
       "acts": [
-        { "verb": "parley", "label": "Parley with", "shift": 20, "success_text": "\"Parley, is it?\" The pirate's blade dips a hand's width. \"Aye... I know the old code. Speak your piece, landlubber, and speak it pretty.\"", "repeat_text": "The pirate leans on a rock, sword loose in his grip, half-enjoying the negotiation. \"Go on. I'm listening.\"" },
-        { "verb": "taunt", "label": "Taunt", "shift": -20, "success_text": "You laugh at his silk clothes and his broken little boat. The pirate's face goes scarlet. \"INSOLENT DOG!\" Vanity is the one thing he'll fight for." }
+        {
+          "verb": "parley",
+          "label": "Parley with",
+          "shift": 20,
+          "success_text": "\"Parley, is it?\" The pirate's blade dips a hand's width. \"Aye... I know the old code. Speak your piece, landlubber, and speak it pretty.\"",
+          "repeat_text": "The pirate leans on a rock, sword loose in his grip, half-enjoying the negotiation. \"Go on. I'm listening.\""
+        },
+        {
+          "verb": "taunt",
+          "label": "Taunt",
+          "shift": -20,
+          "success_text": "You laugh at his silk clothes and his broken little boat. The pirate's face goes scarlet. \"INSOLENT DOG!\" Vanity is the one thing he'll fight for."
+        }
       ],
       "yields_at_regard": 70,
       "yields_at_hp": 2,

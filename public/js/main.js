@@ -5,7 +5,7 @@ import { PLAYER_ID, state } from './state.js';
 import { updateHUD } from './hud.js';
 import { addPlayerLine, renderNarrative } from './narrative.js';
 import { inputEl, sendBtn, setInputState, registerSendFn, clearChoices, addChoice, renderChoices, setRoomItems } from './input.js';
-import { initAudioControls } from './audio.js';
+import { initAudioControls, updateAudioForResponse } from './audio.js';
 import { registerPurchaseHandler, openShop, closeShop } from './shop.js';
 import { registerGateHandler, openGate, closeGate } from './gate.js';
 import { registerRecordsHandler, openRecords, closeRecords } from './records.js';
@@ -43,6 +43,8 @@ function renderGameResponse(response = {}) {
   // commands, otherwise Great Hall guidance.
   const helpContext = response.state?.shop ? 'shop' : (response.state?.phase === 'adventure' ? 'adventure' : 'hall');
   helpMenu?.setContext?.(helpContext);
+
+  updateAudioForResponse(response);
 
   renderNarrative(response.text ?? '', { locationTitle: response.state?.locationTitle });
   clearChoices();

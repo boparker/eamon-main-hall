@@ -1,6 +1,5 @@
 // scene.js — Background crossfade, portrait system, location management
 
-import { switchMusic, hallMusic, adventureMusic } from './audio.js';
 
 // ── Location & Background ──
 let lastBgLocation = '';
@@ -38,10 +37,7 @@ export function setLocation(name) {
   void el.offsetWidth;
   el.classList.add('visible', 'reveal');
 
-  // Switch music based on location
-  const lowerName = name.toLowerCase();
-  const isHall = lowerName.includes('hall') || lowerName.includes('shop') || lowerName.includes('emporium') || lowerName.includes('bank') || lowerName.includes('pawn') || lowerName.includes('chapel') || lowerName.includes('healer') || lowerName.includes('temple') || lowerName.includes('school') || lowerName.includes('gate');
-  switchMusic(isHall ? hallMusic : adventureMusic);
+  // (Music/ambience is driven centrally by audio.updateAudioForResponse.)
 
   // Generate background image for new locations
   if (name !== lastBgLocation) {
