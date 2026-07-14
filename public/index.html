@@ -41,9 +41,7 @@
     .title-dragon {
       width: clamp(168px, 24vh, 240px); height: clamp(168px, 24vh, 240px); /* square — holds the guild crest */
       background: url('dragon-v3.png') center center / contain no-repeat;
-      /* Fade the crest's black field into the title background so no square edge shows. */
-      -webkit-mask-image: radial-gradient(circle at center, #000 66%, transparent 84%);
-      mask-image: radial-gradient(circle at center, #000 66%, transparent 84%);
+      /* The crest PNG is true-transparent, so it sits on any background. */
       filter: drop-shadow(0 0 40px rgba(200,168,75,0.15));
       animation: dragonBreathe 5s ease-in-out infinite;
     }
