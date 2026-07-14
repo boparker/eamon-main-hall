@@ -9,6 +9,7 @@ import { updateHUD } from './hud.js';
 
 const TRAIT_ORDER = [
   ['presentation', 'Presentation'],
+  ['age', 'Age'],
   ['skin', 'Skin tone'],
   ['hairColor', 'Hair color'],
   ['hairStyle', 'Hair style'],
