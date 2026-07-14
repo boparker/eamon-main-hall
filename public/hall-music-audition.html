@@ -15,34 +15,22 @@
 </style>
 </head>
 <body>
-<h1>⚔ Great Hall Music — Audition</h1>
-<p>Only one plays at a time. All candidates loop.</p>
+<h1>⚔ Great Hall Ambience — Audition</h1>
+<p>No music — the Hall as a place: big echoing room, roaring fire, happy burly chatter. Only one plays at a time; all loop.</p>
 
 <div class="card">
-  <h2>A — Warm Hearth</h2>
-  <p>Medieval tavern folk: lute melody, soft fiddle, quiet frame drum. Cozy and welcoming.</p>
-  <audio controls loop src="audio/music/hall-warm-hearth.m4a"></audio>
+  <h2>A — Busy Hall (currently wired in)</h2>
+  <p>Full crowd talking and laughing, mugs clinking, roaring hearth. This is what plays in the Hall now.</p>
+  <audio controls loop src="audio/ambience/amb-hall-busy.m4a"></audio>
 </div>
 
 <div class="card">
-  <h2>B — Hall of Heroes</h2>
-  <p>Harp arpeggios over a low cello drone, faint distant choir. Quiet grandeur — a storied hall.</p>
-  <audio controls loop src="audio/music/hall-of-heroes.m4a"></audio>
+  <h2>B — Warm Hall (quieter alternative)</h2>
+  <p>Fewer voices, murmurs and chuckles, the fire crackling steadily up front.</p>
+  <audio controls loop src="audio/ambience/amb-hall-warm.m4a"></audio>
 </div>
 
-<div class="card">
-  <h2>C — Wanderer's Rest</h2>
-  <p>Hammered dulcimer over warm cello, gentle percussion. Hopeful, a hint of wanderlust.</p>
-  <audio controls loop src="audio/music/hall-wanderers-rest.m4a"></audio>
-</div>
-
-<div class="card">
-  <h2>Current — Concrete Omen (reference)</h2>
-  <p>What plays in the Hall today.</p>
-  <audio controls loop src="concrete-omen.mp3"></audio>
-</div>
-
-<p class="note">When one wins, it gets wired through the gapless Web Audio loop path (same engine as the cave ambience) so the seam is invisible.</p>
+<p class="note">Both run through the gapless Web Audio loop path in-game. Say the word and B swaps in — or tell me what to change and I'll regenerate.</p>
 <script>
   // Pause the others when one starts.
   const players = [...document.querySelectorAll('audio')];

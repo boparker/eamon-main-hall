@@ -179,16 +179,11 @@ export function updateAudioForResponse(response) {
     const fallback = /cell|chamber/i.test(response?.state?.room?.name ?? '') ? 'cell' : 'tunnel';
     setAmbience(amb?.track ?? fallback, amb?.volume ?? 0.3);
   } else if (phase) {
-    // Hall & shops: music is home; ambience sleeps. Don't rely on
-    // switchMusic here — entering the cave fades hallMusic out WITHOUT
-    // switching tracks, so switchMusic(hallMusic) would no-op and leave the
-    // hall silent on return. Revive it explicitly.
-    stopAmbience();
-    bgMusic = hallMusic;
-    if (state.musicEnabled && (hallMusic.paused || hallMusic.volume < 0.29)) {
-      hallMusic.play().catch(() => {});
-      fadeTo(hallMusic, 0.3);
-    }
+    // Hall & shops: the hall is a PLACE, not a soundtrack — burly crowd
+    // chatter + roaring hearth (music retired). Same gapless Web Audio
+    // path as the cave beds, so returning from the cave is just a bed swap.
+    if (bgMusic && bgMusic.volume > 0) fadeTo(bgMusic, 0);
+    setAmbience('hall-busy', 0.35);
   }
   playAudioForEvents(response);
 }
