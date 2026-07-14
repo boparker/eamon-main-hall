@@ -62,7 +62,7 @@ function imageBlock(path) {
 const PAINTERLY = 'painterly matte finish of the animated series Arcane by studio Fortiche, a moving-oil-painting look with visible directional brushstrokes and matte hand-painted texture';
 const NEG = 'NOT busy, NOT cluttered, NOT evenly lit, no allover detail, NOT photorealistic, NOT a photograph, NOT glossy, NOT a 3d render, NOT CGI, no text, no words, no letters, no watermark, no signature, no border, no UI.';
 const NO_FIGURES = 'An empty environment — no people, no figures, no person, no silhouette of a person, no creatures.';
-const ENCLOSED = 'Fully enclosed underground unless the description explicitly says otherwise: no sky, no horizon, no outside vista, no castle, no buildings.';
+const ENCLOSED = 'Fully enclosed underground unless the description explicitly says otherwise: no sky, no horizon, no outside vista, no castle, no buildings. Raw rough-hewn cave rock, cracked and damp with age — NEVER dressed masonry, polished stone or palace architecture; any door is battered aged rough timber with rusted iron, set directly into the rock.';
 const LOUD = `Cinematic signature keyframe, ${PAINTERLY}: one dominant focal element, a SINGLE dramatic motivated light source, deep chiaroscuro with crushed black shadow, a restricted palette, generous negative space, high contrast, atmospheric depth. ${NO_FIGURES} ${ENCLOSED} ${NEG}`;
 const QUIET = `Quiet understated background, ${PAINTERLY}: a single soft dim light, mostly deep shadow and empty space, a restrained cold desaturated palette, calm and low-drama, minimal detail with a few small grace notes. Deliberately NOT a hero shot. ${NO_FIGURES} ${ENCLOSED} ${NEG}`;
 
@@ -80,7 +80,8 @@ RULES:
 - The description is PLAYER NAVIGATION TEXT: ignore exit directions and meta-instructions; "you see light to the east/from outside" means a distant glow at a passage mouth, NEVER an outdoor scene.
 - POV matters most: if the text places the viewer somewhere (top of stairs, entrance, shore), say it twice — once in camera, once in subject.
 - The scene is UNPEOPLED (characters are overlaid separately) — never include people or creatures, even if the text mentions them.
-- Underground rooms stay fully enclosed: any "light" is torchlight, a shaft from a crack, or a distant glow — no sky, no vistas.`;
+- Underground rooms stay fully enclosed: any "light" is torchlight, a shaft from a crack, or a distant glow — no sky, no vistas.
+- MATERIALS: this is an old CAVE, not a castle. Walls are raw rough-hewn living rock, cracked, damp and ancient — NEVER dressed ashlar masonry, polished stone, tile, or palace architecture. "Cells" are crude chambers cut from rock; doors are heavy, aged, rough timber planks with rusted iron bands and crude hinges, set directly into the rock — battered and old, never grand or ornate.`;
 
 async function makeBrief(room) {
   const text = await claude([{ role: 'user', content: `Room name: ${room.name}\nRoom description: ${room.narration_text}` }], { system: BRIEF_SYSTEM });
@@ -108,7 +109,7 @@ RULES:
 - Describe "observed" FIRST, from the image alone; then judge. Cite only what you can actually see.
 - Only fail for what a player reading the room text would notice: wrong POV, wrong scale, a named CENTERPIECE missing (altars, a boat, a hearth, books in a library), a hard violation, or a direct contradiction.
 - Be certain: when an element is small or ambiguous at this resolution, mark it present:true and move on. False alarms are costly.
-- STYLE GATE: the game's look is restrained painterly matte concept art — rough-hewn, humble, one light, deep shadow. Mark style_ok=false for ornate gilded/baroque/palatial grandeur, allover clutter, or a flat sterile 3D-render look. When in doubt, style_ok=true.
+- STYLE GATE: the game's look is restrained painterly matte concept art — rough-hewn, humble, one light, deep shadow. Mark style_ok=false for ornate gilded/baroque/palatial grandeur, allover clutter, a flat sterile 3D-render look, OR polished/dressed masonry where the text describes a cave (cave walls must read as raw cracked rock; doors as battered old timber, not palace joinery). When in doubt, style_ok=true.
 - verdict is "fail" only if pov_ok=false, scale_ok=false, style_ok=false, a violation exists, or a named centerpiece is missing.`;
 
 async function verify(room, imagePath) {

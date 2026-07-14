@@ -179,9 +179,16 @@ export function updateAudioForResponse(response) {
     const fallback = /cell|chamber/i.test(response?.state?.room?.name ?? '') ? 'cell' : 'tunnel';
     setAmbience(amb?.track ?? fallback, amb?.volume ?? 0.3);
   } else if (phase) {
-    // Hall & shops: music is home; ambience sleeps.
+    // Hall & shops: music is home; ambience sleeps. Don't rely on
+    // switchMusic here — entering the cave fades hallMusic out WITHOUT
+    // switching tracks, so switchMusic(hallMusic) would no-op and leave the
+    // hall silent on return. Revive it explicitly.
     stopAmbience();
-    switchMusic(hallMusic);
+    bgMusic = hallMusic;
+    if (state.musicEnabled && (hallMusic.paused || hallMusic.volume < 0.29)) {
+      hallMusic.play().catch(() => {});
+      fadeTo(hallMusic, 0.3);
+    }
   }
   playAudioForEvents(response);
 }
