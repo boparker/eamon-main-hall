@@ -15,24 +15,17 @@ let bgMusic = hallMusic;
 
 // ── Ambience (the floor; music is punctuation) ──────────────────────────────
 // One looping bed per room *type*, driven by the manifest's per-room
-// `ambience: {track, volume}` (see beginners-cave.json). The temple chant
-// gradient (rooms 16→18) and the sea at the cove (25→26) are the 1980 text's
-// own sound design — finally audible.
-const AMBIENCE_TRACKS = ['tunnel', 'cell', 'temple', 'cove', 'entrance'];
-const ambienceEls = {};
-for (const t of AMBIENCE_TRACKS) {
-  const a = new Audio(`audio/ambience/amb-${t}.m4a`);
-  a.loop = true;
-  a.volume = 0;
-  ambienceEls[t] = a;
-}
-let currentAmbience = null; // { track, target }
-// Debug/verification handle (harmless in prod; lets tests confirm the right
-// bed is audible at the right volume without ears).
-if (typeof window !== 'undefined') {
-  window.__eamonAudio = { ambienceEls, current: () => currentAmbience, sfx: (n) => playSfx(n, 0.5) };
-}
+// `ambience: {track, volume}`. The temple chant gradient (rooms 16→18) and
+// the sea at the cove (25→26) are the 1980 text's own sound design.
+//
+// Built on Web Audio, not <audio loop>: AAC files carry encoder padding at
+// both ends, so HTMLAudioElement looping stutters at the seam. An
+// AudioBufferSourceNode loops sample-accurately, and loopStart/loopEnd sit
+// INSIDE the file, past the padding and the generator's edge fades.
+const LOOP_TRIM_START = 0.6;  // seconds skipped at the head
+const LOOP_TRIM_END = 1.2;    // seconds skipped at the tail
 
+// Gentle volume ramp for HTMLAudio elements (hall music still uses these).
 function fadeTo(el, target, step = 0.02) {
   const iv = setInterval(() => {
     const d = target - el.volume;
@@ -46,20 +39,99 @@ function fadeTo(el, target, step = 0.02) {
   }, 60);
 }
 
-export function setAmbience(track, volume = 0.3) {
-  if (!state.musicEnabled) { currentAmbience = track ? { track, target: volume } : null; return; }
-  // Fade out whatever else is playing
-  for (const [name, el] of Object.entries(ambienceEls)) {
-    if (name !== track && (el.volume > 0 || !el.paused)) fadeTo(el, 0);
+let audioCtx = null;
+let ambienceGain = null;      // master gain for the ambience channel
+const ambienceBuffers = {};   // track -> AudioBuffer (decoded once)
+let ambiencePlaying = null;   // { track, source, gain }
+let currentAmbience = null;   // { track, target }
+
+function ctx() {
+  if (typeof AudioContext === 'undefined' && typeof webkitAudioContext === 'undefined') return null;
+  if (!audioCtx) {
+    audioCtx = new (typeof AudioContext !== 'undefined' ? AudioContext : webkitAudioContext)();
+    ambienceGain = audioCtx.createGain();
+    ambienceGain.gain.value = 1;
+    ambienceGain.connect(audioCtx.destination);
+    // Autoplay policy: contexts start suspended until a user gesture.
+    const unlock = () => { audioCtx.resume().catch(() => {}); };
+    document.addEventListener('pointerdown', unlock, { once: true });
+    document.addEventListener('keydown', unlock, { once: true });
   }
-  if (!track || !ambienceEls[track]) { currentAmbience = null; return; }
-  const el = ambienceEls[track];
-  if (el.paused) { el.play().catch(() => {}); }
-  fadeTo(el, volume); // also handles same-track volume gradients (temple 16→17→18)
-  currentAmbience = { track, target: volume };
+  return audioCtx;
+}
+
+async function ambienceBuffer(track) {
+  if (ambienceBuffers[track]) return ambienceBuffers[track];
+  const c = ctx();
+  if (!c) return null;
+  const res = await fetch(`audio/ambience/amb-${track}.m4a`);
+  const buf = await c.decodeAudioData(await res.arrayBuffer());
+  ambienceBuffers[track] = buf;
+  return buf;
+}
+
+function stopPlaying(fadeSecs = 1.2) {
+  if (!ambiencePlaying) return;
+  const { source, gain } = ambiencePlaying;
+  const c = ctx();
+  try {
+    gain.gain.cancelScheduledValues(c.currentTime);
+    gain.gain.setValueAtTime(gain.gain.value, c.currentTime);
+    gain.gain.linearRampToValueAtTime(0, c.currentTime + fadeSecs);
+    source.stop(c.currentTime + fadeSecs + 0.05);
+  } catch { /* already stopped */ }
+  ambiencePlaying = null;
+}
+
+export async function setAmbience(track, volume = 0.3) {
+  currentAmbience = track ? { track, target: volume } : null;
+  if (!state.musicEnabled) return;
+  const c = ctx();
+  if (!c) return;
+  c.resume().catch(() => {});
+
+  // Same bed, new volume (the temple gradient): just ramp the gain.
+  if (track && ambiencePlaying?.track === track) {
+    const g = ambiencePlaying.gain.gain;
+    g.cancelScheduledValues(c.currentTime);
+    g.setValueAtTime(g.value, c.currentTime);
+    g.linearRampToValueAtTime(volume, c.currentTime + 1.2);
+    return;
+  }
+
+  stopPlaying();
+  if (!track) return;
+
+  const buffer = await ambienceBuffer(track);
+  if (!buffer) return;
+  // The room may have changed while we were decoding.
+  if (currentAmbience?.track !== track) return;
+
+  const source = c.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  source.loopStart = Math.min(LOOP_TRIM_START, buffer.duration / 4);
+  source.loopEnd = Math.max(source.loopStart + 1, buffer.duration - LOOP_TRIM_END);
+  const gain = c.createGain();
+  gain.gain.setValueAtTime(0, c.currentTime);
+  gain.gain.linearRampToValueAtTime(volume, c.currentTime + 1.5);
+  source.connect(gain);
+  gain.connect(ambienceGain);
+  source.start(0, source.loopStart);
+  ambiencePlaying = { track, source, gain };
 }
 
 export function stopAmbience() { setAmbience(null); }
+
+// Debug/verification handle (harmless in prod; lets tests confirm the right
+// bed is audible at the right volume — and gaplessly — without ears).
+if (typeof window !== 'undefined') {
+  window.__eamonAudio = {
+    current: () => currentAmbience,
+    playing: () => (ambiencePlaying ? { track: ambiencePlaying.track, gain: ambiencePlaying.gain.gain.value, loop: ambiencePlaying.source.loop, loopStart: ambiencePlaying.source.loopStart, loopEnd: ambiencePlaying.source.loopEnd, ctxState: audioCtx?.state } : null),
+    sfx: (n) => playSfx(n, 0.5),
+  };
+}
 
 // ── Event SFX (keyed off the engine's typed events) ─────────────────────────
 const SFX = ['hit', 'miss', 'telegraph', 'yield', 'spare', 'coin', 'chest', 'ignite', 'death', 'fanfare'];
@@ -205,7 +277,7 @@ export function initAudioControls() {
     } else {
       hallMusic.pause();
       adventureMusic.pause();
-      for (const el of Object.values(ambienceEls)) { el.pause(); el.volume = 0; }
+      stopPlaying(0.2);
     }
   });
 
