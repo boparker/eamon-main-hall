@@ -71,11 +71,16 @@ export async function complete({ system, prompt, maxTokens = 300, temperature = 
       temperature,
       ...(system ? { system } : {}),
       messages: [{ role: 'user', content: prompt }],
-    }, { timeout: timeoutMs, maxRetries: 1 });
+    }, { timeout: timeoutMs, maxRetries: 2 }); // 429s during load: let the SDK back off twice
     const text = response?.content?.find((block) => block.type === 'text')?.text?.trim() ?? null;
     if (text) cacheSet(key, text);
     return text || null;
-  } catch {
+  } catch (err) {
+    // The game falls back to authored text by design — but the failure must be
+    // LOUD in the server logs, or a rate-limited key looks like a vanished
+    // narrator (learned 2026-07-14, when an offline art pipeline sharing this
+    // key starved live narration into silent fallback).
+    console.warn('[ai] llm call failed (falling back to authored text):', err?.status ?? '', err?.message ?? err);
     return null;
   }
 }
