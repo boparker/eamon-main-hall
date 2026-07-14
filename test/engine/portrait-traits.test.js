@@ -28,13 +28,25 @@ test('composePortraitPrompt weaves picked phrases + class base + the locked styl
     { presentation: 'feminine', skin: 'deep', hairColor: 'red', hairStyle: 'braided', mark: 'scar', expression: 'fierce' },
     'warrior',
   );
-  assert.match(prompt, /fierce feminine warrior/);
+  assert.match(prompt, /fierce feminine warrior/); // default age (adult) adds no phrase
+
   assert.match(prompt, /deep ebony skin/);
   assert.match(prompt, /braided fiery red hair/);
   assert.match(prompt, /a scar across one cheek/);
   assert.match(prompt, /plate armor/); // class base
   assert.match(prompt, /Eyvind Earle/); // locked style
   assert.match(prompt, /NOT photorealistic/);
+});
+
+test('age is a first-class trait: no androgynous option, age phrase woven between expression and presentation', () => {
+  const opts = portraitOptions();
+  assert.ok(!opts.presentation.some((o) => o.key === 'androgynous'));
+  assert.deepEqual(opts.age.map((o) => o.key), ['adult', 'young', 'middleAged', 'elder']);
+  const prompt = composePortraitPrompt({ age: 'elder', presentation: 'masculine', expression: 'kind' }, 'mystic');
+  assert.match(prompt, /kind elderly age-lined masculine mystic/);
+  const safe = sanitizeTraits({});
+  assert.equal(safe.age, 'adult'); // default
+  assert.equal(safe.presentation, 'feminine'); // new first option
 });
 
 test('composePortraitPrompt falls back to adventurer for an unknown class', () => {

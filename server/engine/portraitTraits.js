@@ -15,9 +15,14 @@ const CLASS_BASE = {
 // `phrase` is woven into the prompt. The FIRST entry is the default.
 const TRAITS = {
   presentation: [
-    { key: 'androgynous', label: 'Androgynous', phrase: 'androgynous' },
     { key: 'feminine', label: 'Feminine', phrase: 'feminine' },
     { key: 'masculine', label: 'Masculine', phrase: 'masculine' },
+  ],
+  age: [
+    { key: 'adult', label: 'Adult', phrase: '' },
+    { key: 'young', label: 'Young', phrase: 'youthful' },
+    { key: 'middleAged', label: 'Middle-aged', phrase: 'weathered middle-aged' },
+    { key: 'elder', label: 'Elder', phrase: 'elderly age-lined' },
   ],
   skin: [
     { key: 'fair', label: 'Fair', phrase: 'fair' },
@@ -96,6 +101,7 @@ export function composePortraitPrompt(traits, className) {
   const t = sanitizeTraits(traits);
   const cls = isValidClass(className) ? className : 'adventurer';
   const extras = [phrase('facialHair', t.facialHair), phrase('mark', t.mark)].filter(Boolean);
-  const descriptor = `A ${phrase('expression', t.expression)} ${phrase('presentation', t.presentation)} ${cls} hero with ${phrase('skin', t.skin)} skin and ${phrase('hairStyle', t.hairStyle)} ${phrase('hairColor', t.hairColor)} hair${extras.length ? ', ' + extras.join(', ') : ''}, ${CLASS_BASE[cls]}.`;
+  const lead = [phrase('expression', t.expression), phrase('age', t.age), phrase('presentation', t.presentation)].filter(Boolean).join(' ');
+  const descriptor = `A ${lead} ${cls} hero with ${phrase('skin', t.skin)} skin and ${phrase('hairStyle', t.hairStyle)} ${phrase('hairColor', t.hairColor)} hair${extras.length ? ', ' + extras.join(', ') : ''}, ${CLASS_BASE[cls]}.`;
   return `${descriptor} ${LOCKED_STYLE}`;
 }
