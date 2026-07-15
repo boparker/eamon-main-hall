@@ -134,15 +134,21 @@ if (typeof window !== 'undefined') {
 }
 
 // ── Event SFX (keyed off the engine's typed events) ─────────────────────────
-const SFX = ['hit', 'miss', 'telegraph', 'yield', 'spare', 'coin', 'chest', 'ignite', 'death', 'fanfare'];
+// Frequent combat sounds ship as variant pools (sfx-hit-1..3 etc.); one sample
+// on repeat reads as a video-game bleep within a minute.
+const SFX_VARIANTS = { hit: 3, hurt: 3, miss: 3 };
 const sfxCache = {};
 function playSfx(name, volume = 0.5, delayMs = 0) {
   if (!state.musicEnabled) return;
+  const n = SFX_VARIANTS[name] ? `${name}-${1 + Math.floor(Math.random() * SFX_VARIANTS[name])}` : name;
   const fire = () => {
-    let el = sfxCache[name];
-    if (!el) { el = new Audio(`audio/sfx/sfx-${name}.m4a`); sfxCache[name] = el; }
+    let el = sfxCache[n];
+    if (!el) { el = new Audio(`audio/sfx/sfx-${n}.m4a`); sfxCache[n] = el; }
     el.currentTime = 0;
     el.volume = volume;
+    // ±6% rate jitter — repeated impacts never sound machine-identical.
+    el.preservesPitch = false;
+    el.playbackRate = 0.94 + Math.random() * 0.12;
     el.play().catch(() => {});
   };
   if (delayMs) setTimeout(fire, delayMs); else fire();
@@ -157,10 +163,15 @@ export function playAudioForEvents(response) {
   if (has('character_defeated')) { playSfx('death', 0.55); return; }
   if (has('return_to_hall') || has('escort_reward') || has('abandon')) { playSfx('fanfare', 0.45); return; } // walking out alive is a homecoming too
   if (has('enemy_spared')) { playSfx('spare', 0.5); return; }
+  // The kill: blow + body-fall + silence, in one sample. Heavy and hollow on
+  // purpose — the spare harp's dark twin. Replaces the round's hit sound.
+  if (has('enemy_defeated')) { playSfx('kill', 0.5); return; }
 
   // Combat exchange: player swing now, enemy answer on the animation beat.
+  // Your hit rings bright steel; theirs lands as a dull close body-thud, so
+  // the ear knows who is bleeding without reading.
   if (round?.player && !round.player.spell) playSfx(round.player.hit ? 'hit' : 'miss', 0.45);
-  if (round?.enemy?.hit) playSfx('hit', 0.4, 700);
+  if (round?.enemy?.hit) playSfx('hurt', 0.45, 700);
 
   if (has('enemy_yielded')) playSfx('yield', 0.5, 300);
   else if (has('telegraph')) playSfx('telegraph', 0.55, 300);
