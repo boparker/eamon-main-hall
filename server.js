@@ -197,7 +197,11 @@ const PORT = process.env.PORT || 3000;
 
 async function start() {
   await initDatabase();
-  app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${MODEL}`));
+  // Report the model the AI layer ACTUALLY uses (server/ai/llm.js), not the
+  // legacy provider-detection above — the old banner misdirected a debugging
+  // session into thinking prod ran 3.5-haiku.
+  const aiModel = process.env.EAMON_AI_MODEL || 'claude-haiku-4-5-20251001';
+  app.listen(PORT, () => console.log(`Eamon: The Second Age — port ${PORT} — model: ${aiModel}`));
 }
 
 start();
