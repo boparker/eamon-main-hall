@@ -15,14 +15,18 @@ const app = express();
 app.use(express.json());
 // Without Cache-Control, browsers heuristically cache (10% of file age) and
 // keep serving STALE JS for hours after a deploy — live-play bug reports kept
-// matching already-fixed code. Code/markup must revalidate every load (ETag
-// 304s make that cheap); heavy media (scenes, audio, portraits) caches a week.
+// matching already-fixed code. But plain no-cache made every reload
+// re-validate each ES module serially down the import chain (~1s+ of 304
+// round trips). stale-while-revalidate is the sweet spot: serve instantly
+// from cache, refresh in the background — a deploy reaches the player one
+// reload later. Heavy media (scenes, audio, portraits) caches a week; a
+// re-authored media file must ship under a bumped ?v= query (see audio.js).
 app.use(express.static(join(__dirname, 'public'), {
   setHeaders(res, path) {
     if (/\.(png|jpe?g|webp|mp3|m4a|wav|woff2?)$/i.test(path)) {
       res.setHeader('Cache-Control', 'public, max-age=604800');
     } else {
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'public, max-age=0, stale-while-revalidate=86400');
     }
   },
 }));
