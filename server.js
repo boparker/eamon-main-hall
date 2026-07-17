@@ -13,7 +13,19 @@ const { Pool } = pg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
+// Without Cache-Control, browsers heuristically cache (10% of file age) and
+// keep serving STALE JS for hours after a deploy — live-play bug reports kept
+// matching already-fixed code. Code/markup must revalidate every load (ETag
+// 304s make that cheap); heavy media (scenes, audio, portraits) caches a week.
+app.use(express.static(join(__dirname, 'public'), {
+  setHeaders(res, path) {
+    if (/\.(png|jpe?g|webp|mp3|m4a|wav|woff2?)$/i.test(path)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
 
 // ── Database Setup ────────────────────────────────────────────────────────────
 // Local Postgres (localhost) speaks plaintext; hosted (Railway) requires SSL.
