@@ -72,6 +72,7 @@ const TRIBUTE = {
     'This game stands on the shoulders of a small miracle. Around 1979, a young programmer named <strong>Donald Brown</strong> built the very first <em>Eamon</em> for the Apple II — a Main Hall and a single dungeon, the Beginner\'s Cave, the same one you may have just walked out of.',
     'Its quiet genius was not the dungeon but the <em>doorway</em>: Brown gave Eamon away and left it open, so that anyone could author a new adventure and send their character through it. Others did — <strong>John Nelson</strong>, <strong>Tom Zuchowski</strong>, and hundreds of unnamed dreamers over four decades — until the world of Eamon held more than <strong>283 adventures</strong>, one of the first great communities of player-authors in all of gaming.',
     '<em>Eamon: The Second Age</em> is a love letter to that openness — the Guild of Free Adventurers, still keeping its rolls. The old adventures are lovingly archived to this day at <span class="rec-link">eamon.wiki</span>. If you loved this, go and meet the originals.',
+    'The feast you hear in the Great Hall is <em>"Medieval Banquet"</em> by <strong>Tabletop Audio</strong> (<span class="rec-link">tabletopaudio.com</span>), used with gratitude under the Creative Commons BY-NC-ND 4.0 license.',
   ],
 };
 
