@@ -89,6 +89,8 @@ function stopPlaying(fadeSecs = 1.2) {
   ambiencePlaying = null;
 }
 
+let ambienceGen = 0; // supersession counter: only the latest call may start a source
+
 export async function setAmbience(track, volume = 0.3) {
   currentAmbience = track ? { track, target: volume } : null;
   if (!state.musicEnabled) return;
@@ -105,13 +107,15 @@ export async function setAmbience(track, volume = 0.3) {
     return;
   }
 
+  const gen = ++ambienceGen;
   stopPlaying();
   if (!track) return;
 
   const buffer = await ambienceBuffer(track);
   if (!buffer) return;
-  // The room may have changed while we were decoding.
-  if (currentAmbience?.track !== track) return;
+  // Superseded while decoding (even by a same-track call): bail, or two
+  // sources start and the untracked one loops as an orphan forever.
+  if (gen !== ambienceGen || currentAmbience?.track !== track) return;
 
   const source = c.createBufferSource();
   source.buffer = buffer;

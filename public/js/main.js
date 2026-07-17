@@ -19,7 +19,7 @@ import { listGameCharacters } from './api.js';
 import { createProfile, selectProfileCharacter, claimGuestCharacter } from './profile-api.js';
 import { initHelpMenu } from './help-menu.js';
 import { createCreationCard } from './creation-card.js';
-import { renderCombat, hideCombat, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
+import { renderCombat, hideCombat, dismissCombatWithOutcome, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
 import { updateJournalMap, initJournalMap } from './journal-map.js';
 
 const creationCard = createCreationCard({
@@ -57,6 +57,7 @@ function renderGameResponse(response = {}) {
   creationCard.sync(gameClient?.getState?.().creation);
 
   if (response.state?.combat) renderCombat(response.state.combat, response.choices, response.text);
+  else if ((response.events ?? [response.event]).filter(Boolean).some((e) => e.type === 'enemy_fled')) dismissCombatWithOutcome(response.text);
   else hideCombat();
 
   updateRoomRail(response);
