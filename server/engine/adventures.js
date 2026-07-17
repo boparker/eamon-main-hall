@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-const MAIN_HALL_SENTINEL = 'main-hall';
+export const MAIN_HALL_SENTINEL = 'main-hall';
 
 function getAdventureId(adventure) {
   return adventure?.adventure?.id;

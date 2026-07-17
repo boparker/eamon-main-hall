@@ -49,7 +49,8 @@ import {
   encounterBonus, firstSightRegard, yieldMods, escortMultiplier,
 } from '../engine/reputation.js';
 import { castSpell, isSpell } from '../engine/spells.js';
-import { convertTreasuresOnReturn, takeTreasure, drinkPotion } from '../engine/economy.js';
+import { convertTreasuresOnReturn, takeTreasure, drinkPotion, buyItem } from '../engine/economy.js';
+import { mapRead, computeLayout, hasQuill, QUILL } from '../engine/worldMap.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
   SPELLS, SPELL_MAX, learnSpell, spellAbility,
@@ -944,10 +945,18 @@ function recordsResponse({ player, character, characters, adventures, prefix = '
   return canonicalResponse({
     intent: { type: 'hall_records' },
     event: { type: 'hall_records' },
-    text: prefix || `The Archivist looks up from a great ledger and inclines his head. "Welcome to the Hall of Records${character?.name ? `, ${character.name}` : ''}. Here the Guild keeps its lore — how an adventurer's mettle is measured, the ways of arms and mercy, and the memory of those who first lit this lamp. Read a while, and go the wiser for it."`,
-    choices: ['Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true, ledger: reputationRead(computeReputation(character?.chronicle), character?.name) } } }),
+    text: prefix || `The Archivist looks up from a great ledger and inclines his head. "Welcome to the Hall of Records${character?.name ? `, ${character.name}` : ''}. Here the Guild keeps its lore — how an adventurer's mettle is measured, the ways of arms and mercy, and the memory of those who first lit this lamp. Read a while, and go the wiser for it."${hasQuill(character) ? '' : ` On the counter rests a long grey quill in a case of worn leather, marked ${QUILL.price} gold.`}`,
+    choices: [...(hasQuill(character) ? [] : [`The Chronicler's Quill (${QUILL.price} gold)`]), 'Return to Great Hall'],
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true, ledger: reputationRead(computeReputation(character?.chronicle), character?.name), quill: { owned: hasQuill(character), price: QUILL.price }, note: prefix || null } } }),
   });
+}
+
+// Grid layouts are static per adventure — compute once, serve forever.
+const mapLayoutCache = new Map();
+function mapFor(adventure, run, character) {
+  const id = adventure?.adventure?.id;
+  if (!mapLayoutCache.has(id)) mapLayoutCache.set(id, computeLayout(adventure));
+  return mapRead(adventure, run, character, mapLayoutCache.get(id));
 }
 
 function roomResponse({ adventure, run, character, text = null, prefix = null, event = { type: 'look' }, intent = null, events = null, narration = null }) {
@@ -964,7 +973,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run, character),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
   });
 }
 
@@ -1176,6 +1185,20 @@ export function createGameRouter(rawDeps = {}) {
         const target = normalizeTarget(String(raw).replace(/^sell\s+/i, '').replace(/\s*\(.*\)\s*$/, ''));
         return (character.inventory ?? []).find((owned) => slugify(owned?.slug) === slugify(target) || normalizeTarget(owned?.name) === target) ?? null;
       };
+
+      // ── Archivist: the Chronicler's Quill (before Marcos's generic buy) ──
+      if (/quill/.test(normalizedInput)) {
+        if (hasQuill(character)) {
+          return render(recordsResponse, character, characterRow, 'The Archivist smiles. "Your quill is bought and your book is the better for it. Open your map and see."');
+        }
+        const result = buyItem(character, QUILL);
+        if (!result.ok) {
+          return render(recordsResponse, character, characterRow, `The Archivist closes the leather case gently. "The Chronicler's Quill asks ${QUILL.price} gold, and no less. The Guild's cartographers must eat."`);
+        }
+        const bought = recordDeed(result.character, "Bought the Chronicler's Quill from the Archivist, and watched old deeds ink themselves onto the journal's map.", { kind: 'other' });
+        const row = await persist({ gold: bought.gold, inventory: bought.inventory, chronicle: bought.chronicle });
+        return render(recordsResponse, rowCharacter(row) ?? bought, row, `You count out ${QUILL.price} gold. The Archivist lifts a long grey quill from its case and lays it across your palm. "It remembers where you have been," he says. "Every deed already done, and every one to come, will ink itself into your journal's map." Somewhere in your pack, pages begin to whisper.`);
+      }
 
       // ── Marcos: buy / sell ──────────────────────────────────────────────
       const buyMatch = /^buy\s+(.+)/i.exec(input);
@@ -1612,7 +1635,7 @@ export function createGameRouter(rawDeps = {}) {
           const roomNo = String(getCurrentRoom(run, adventure).room_number);
           const deathText = fatalItem.read_effect_text_at?.[roomNo] ?? fatalItem.read_effect_text ?? 'The book’s curse takes you.';
           character = { ...character, isAlive: false, hd: 0 };
-          character = recordDeed(character, `Read the ${fatalItem.name} in ${getCurrentRoom(run, adventure).name} — and paid the old price for curiosity.`, { kind: 'death' });
+          character = recordDeed(character, `Read the ${fatalItem.name} in ${getCurrentRoom(run, adventure).name} — and paid the old price for curiosity.`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
           run = { ...run, status: 'dead' };
           const [uc, ur] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -1888,7 +1911,7 @@ export function createGameRouter(rawDeps = {}) {
           deeds.push({ text: `${adventure.characters.find((c) => c.slug === slug)?.name ?? slug} fell in battle in ${battleRoom.name}.`, kind: 'companion_lost' });
         }
         if (combat.characterDefeated) deeds.push({ text: `Died fighting the ${enemyTemplate.name} in ${battleRoom.name} (${adventure.adventure.name}).`, kind: 'death' });
-        character = recordDeeds(character, deeds);
+        character = recordDeeds(character, deeds, { room: battleRoom.room_number });
         // A turning point earns a line from the narrator (null → silence).
         const moment = (combat.enemyDefeated || combat.characterDefeated)
           ? await deps.ai.narrateMoment({
@@ -2040,7 +2063,7 @@ export function createGameRouter(rawDeps = {}) {
           run = markEnemyDefeated(run, enemyTemplate.slug);
           events.push({ type: 'enemy_defeated', enemy: enemyTemplate.slug });
           lines.push('The enemy is defeated.');
-          character = recordDeed(character, `Slew the ${enemyTemplate.name} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'slay' });
+          character = recordDeed(character, `Slew the ${enemyTemplate.name} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'slay', room: getCurrentRoom(run, adventure).room_number });
           if (enemyTemplate.frees_on_defeat) {
             const captive = adventure.characters.find((c) => c.slug === enemyTemplate.frees_on_defeat);
             if (captive && !getCompanions(run).some((c) => c.slug === captive.slug)) {
@@ -2055,7 +2078,7 @@ export function createGameRouter(rawDeps = {}) {
           run = { ...run, status: 'dead' };
           events.push({ type: 'character_defeated', characterId: character.id });
           lines.push('You have been defeated.');
-          character = recordDeed(character, `Died to the ${enemyTemplate.name}'s ${pending.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
+          character = recordDeed(character, `Died to the ${enemyTemplate.name}'s ${pending.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
         }
         const [uc, ur] = await Promise.all([
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
@@ -2097,7 +2120,7 @@ export function createGameRouter(rawDeps = {}) {
           run = recordEncounter(run, target.slug, 'friend');
           run = recruitCompanion(run, target);
           events.push({ type: 'recruit', character: target.slug });
-          character = recordDeed(character, `Made peace with ${target.name} in ${room.name}, who joined the party.`, { kind: 'befriend' });
+          character = recordDeed(character, `Made peace with ${target.name} in ${room.name}, who joined the party.`, { kind: 'befriend', room: room.room_number });
         } else {
           run = markEnemyDefeated(run, target.slug);
           run = markSpared(run, target.slug);
@@ -2106,7 +2129,7 @@ export function createGameRouter(rawDeps = {}) {
             lines.push(`You receive ${target.spare_gold} gold.`);
             events.push({ type: 'spare_reward', gold: target.spare_gold });
           }
-          character = recordDeed(character, `Showed mercy to the ${target.name} in ${room.name} (${adventure.adventure.name}).`, { kind: 'spare' });
+          character = recordDeed(character, `Showed mercy to the ${target.name} in ${room.name} (${adventure.adventure.name}).`, { kind: 'spare', room: room.room_number });
           // A spared captor releases their prisoner just as a slain one does.
           const released = freeDefeatedCaptives(run, adventure);
           run = released.run;
@@ -2225,7 +2248,7 @@ export function createGameRouter(rawDeps = {}) {
           run = recruitCompanion(run, listener);
           lines.push(`${listener.name} falls in beside you.`);
           events.push({ type: 'recruit', character: listener.slug });
-          character = recordDeed(character, `Persuaded ${listener.name} to come along, in ${getCurrentRoom(run, adventure).name}.`, { kind: 'persuade' });
+          character = recordDeed(character, `Persuaded ${listener.name} to come along, in ${getCurrentRoom(run, adventure).name}.`, { kind: 'persuade', room: getCurrentRoom(run, adventure).room_number });
         } else if (captorAlive && !listenerHostile) {
           // Whatever was said, a captive stays a captive — say so plainly.
           lines.push(`${listener.name} glances fearfully toward the ${(captor.name ?? captor.slug).toLowerCase()} — no captive may leave while their captor stands.`);
@@ -2247,7 +2270,7 @@ export function createGameRouter(rawDeps = {}) {
           if (reprisal.characterDefeated) {
             events.push({ type: 'character_defeated', characterId: character.id });
             lines.push('You have been defeated.');
-            character = recordDeed(character, `Died mid-parley with the ${listener.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
+            character = recordDeed(character, `Died mid-parley with the ${listener.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
           }
         }
         // The writing-craft rubric, shown to the writer (the classroom heart).
@@ -2360,7 +2383,7 @@ export function createGameRouter(rawDeps = {}) {
             if (reprisal.characterDefeated) {
               events.push({ type: 'character_defeated', characterId: character.id });
               lines.push('You have been defeated.');
-              character = recordDeed(character, `Died reaching out to the ${subject.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death' });
+              character = recordDeed(character, `Died reaching out to the ${subject.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
             }
           }
           const [uc, ur] = await Promise.all([

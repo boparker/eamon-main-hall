@@ -20,6 +20,7 @@ import { createProfile, selectProfileCharacter, claimGuestCharacter } from './pr
 import { initHelpMenu } from './help-menu.js';
 import { createCreationCard } from './creation-card.js';
 import { renderCombat, hideCombat, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
+import { updateJournalMap, initJournalMap } from './journal-map.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
@@ -37,6 +38,7 @@ function renderGameResponse(response = {}) {
   else closeGate();
   if (response.state?.records) openRecords(response.state.records);
   else closeRecords();
+  updateJournalMap(response.state);
   updateHUD(true);
 
   // Help text follows the player: shop → vendor tips, in a cave → dungeon
@@ -324,6 +326,7 @@ registerCombatReturnToHall(async () => {
 
 // ── Audio controls ──
 initAudioControls();
+initJournalMap();
 const helpMenu = initHelpMenu();
 
 // ── Boot / Title gateway ──

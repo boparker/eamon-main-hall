@@ -22,10 +22,12 @@ export function chronicleOf(character) {
 // resolved itself, so the chronicle is always true. `kind` is a structured
 // tag (spare/slay/rescue/…) that reputation.js scores — older deeds without
 // one are classified from their text.
-export function recordDeed(character, text, { at = new Date().toISOString(), kind = null } = {}) {
+// `room` (a room_number) lets the journal map pin the deed to where it
+// happened; older deeds without it are matched by room name in the text.
+export function recordDeed(character, text, { at = new Date().toISOString(), kind = null, room = null } = {}) {
   if (!text) return character;
   const { summary, deeds } = chronicleOf(character);
-  const next = [...deeds, { at, text, ...(kind ? { kind } : {}) }].slice(-MAX_DEEDS);
+  const next = [...deeds, { at, text, ...(kind ? { kind } : {}), ...(Number.isFinite(room) ? { room } : {}) }].slice(-MAX_DEEDS);
   return { ...character, chronicle: { summary, deeds: next } };
 }
 
