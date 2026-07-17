@@ -623,3 +623,71 @@ test('a nobody stays a nobody: no epithet, no eased yields at tier 0', async () 
   assert.equal(/the (Kind|Merciful|Ruthless|Butcher|Bold)/.test(hall.body.text), false);
   assert.equal(hall.body.state.character.reputation.tier, 0);
 });
+
+// ── The journal map + the Chronicler's Quill ────────────────────────────────
+
+test('command responses carry a fog-of-war map that grows with movement', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app);
+  const look = await command(app, session, 'look');
+  const map1 = look.body.state.map;
+  assert.ok(map1, 'adventure state includes a map');
+  assert.deepEqual(map1.nodes.map((n) => n.room), [1]);
+  assert.equal(JSON.stringify(map1).includes('Troll Den'), false); // unvisited stays secret
+  assert.ok(map1.stubs.some((s) => s.out === true)); // the way home is marked
+
+  const moved = await command(app, session, 'south');
+  const map2 = moved.body.state.map;
+  assert.deepEqual(map2.nodes.map((n) => n.room).sort(), [1, 2]);
+  assert.equal(map2.nodes.find((n) => n.room === 2).current, true);
+  assert.deepEqual(map2.edges, [{ from: 1, to: 2 }]);
+});
+
+test('the Archivist sells the quill once, and deeds ink onto the map retroactively', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const created = await request(app, 'POST', '/api/game/characters', {
+    ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 10, gold: 60,
+    adventuresCompleted: ['beginners-cave'],
+  });
+  const characterId = created.body.state.character.id;
+
+  // The records hall offers the quill to a character who lacks it.
+  const records = await request(app, 'POST', '/api/game/hall', { ...base, characterId, input: 'Visit the Hall of Records' });
+  assert.ok(records.body.choices.some((c) => /Chronicler's Quill/.test(c)));
+
+  // Buy it: gold drops, inventory gains it, offer disappears.
+  const bought = await request(app, 'POST', '/api/game/hall', { ...base, characterId, input: "The Chronicler's Quill (50 gold)" });
+  assert.match(bought.body.text, /It remembers where you have been/);
+  assert.equal(bought.body.state.character.gold, 10);
+  assert.ok(bought.body.state.character.inventory.some((i) => i.slug === 'chroniclers-quill'));
+  assert.equal(bought.body.choices.some((c) => /50 gold/.test(c)), false);
+
+  // Buying again is a friendly no-op, not a second charge.
+  const again = await request(app, 'POST', '/api/game/hall', { ...base, characterId, input: 'quill' });
+  assert.equal(again.body.state.character.gold, 10);
+
+  // In the cave, a deed inks onto the room where it happened.
+  const started = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'mercy-cave' });
+  const session = { characterId, adventureRunId: started.body.state.adventureRun.id };
+  await command(app, session, 'south'); // troll den
+  await command(app, session, 'calm troll');
+  await command(app, session, 'calm troll');
+  await command(app, session, 'calm troll'); // regard crosses yields_at 60
+  await command(app, session, 'spare troll');
+  const look = await command(app, session, 'look'); // map rides on room responses
+  const map = look.body.state.map;
+  assert.equal(map.quill, true);
+  assert.deepEqual(map.nodes.find((n) => n.room === 2).notes, ['mercy shown']);
+});
+
+test('without gold the Archivist keeps the quill and nothing is charged', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startSession(app); // gold: 0
+  const refused = await request(app, 'POST', '/api/game/hall', { ...base, characterId: session.characterId, input: 'quill' });
+  assert.match(refused.body.text, /asks 50 gold/);
+  assert.equal(refused.body.state.character.gold, 0);
+  assert.equal((refused.body.state.character.inventory ?? []).some((i) => i.slug === 'chroniclers-quill'), false);
+});

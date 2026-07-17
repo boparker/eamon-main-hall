@@ -133,6 +133,36 @@ export function openRecords(records) {
   const line = document.getElementById('records-ledger-line');
   if (line) line.textContent = records.ledger ?? '';
   ledger.hidden = !records.ledger;
+
+  // The Archivist's Counter: the Chronicler's Quill (journal-map marginalia).
+  // Rendered in the overlay because the response's choice buttons live behind it.
+  let counter = document.getElementById('records-counter');
+  if (!counter) {
+    counter = document.createElement('section');
+    counter.className = 'rec-section';
+    counter.id = 'records-counter';
+    const h = document.createElement('h3'); h.className = 'rec-h';
+    h.innerHTML = '<span class="rec-icon">🪶</span> The Archivist’s Counter';
+    const p = document.createElement('p'); p.className = 'rec-blurb'; p.id = 'records-counter-line';
+    const btn = document.createElement('button');
+    btn.id = 'records-quill-btn'; btn.type = 'button'; btn.className = 'account-menu-action';
+    btn.addEventListener('click', () => { if (_onLeave) _onLeave(btn.dataset.command); });
+    counter.append(h, p, btn);
+    ledger.after(counter);
+  }
+  const q = records.quill;
+  counter.hidden = !q;
+  if (q) {
+    const noteEl = document.getElementById('records-counter-line');
+    const btn = document.getElementById('records-quill-btn');
+    noteEl.textContent = records.note
+      ?? (q.owned
+        ? 'Your grey quill rests in your pack, inking each deed onto your journal’s map as it happens.'
+        : `A long grey quill rests in a case of worn leather. "It remembers where you have been," says the Archivist. "Every deed already done, and every one to come, will ink itself into your journal's map." — ${q.price} gold.`);
+    btn.hidden = !!q.owned;
+    btn.textContent = `Buy the Chronicler's Quill — ${q.price} gold`;
+    btn.dataset.command = `The Chronicler's Quill (${q.price} gold)`;
+  }
   const panel = document.getElementById('hall-of-records');
   if (!panel) return;
   const gs = document.getElementById('game-screen');
