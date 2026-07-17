@@ -51,6 +51,8 @@ import {
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion, buyItem } from '../engine/economy.js';
 import { mapRead, computeLayout, hasQuill, QUILL } from '../engine/worldMap.js';
+import { gateMove, afterMove, sayTrigger, digResult, cursedItem, guardedBy, markTriggerFired, revealItem, applyFlagPatch } from '../engine/mechanics.js';
+import { rollDice } from '../engine/dice.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
   SPELLS, SPELL_MAX, learnSpell, spellAbility,
@@ -120,7 +122,7 @@ const HALL_OF_RECORDS_TITLE = 'The Hall of Records';
 
 function loadJsonAdventures(adventuresDir = DEFAULT_ADVENTURES_DIR) {
   return readdirSync(adventuresDir)
-    .filter((file) => file.endsWith('.json'))
+    .filter((file) => file.endsWith('.json') && !file.endsWith('.overlay.json'))
     .map((file) => JSON.parse(readFileSync(join(adventuresDir, file), 'utf8')));
 }
 
@@ -1541,6 +1543,12 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'move') {
+        const fromRoom = getCurrentRoom(run, adventure);
+        const gate = gateMove({ adventure, run, character, room: fromRoom, direction: command.direction });
+        if (!gate.ok) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command, reason: 'mechanics' }, text: gate.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        run = applyFlagPatch(run, gate.flagPatch);
         const revisiting = (run.visitedRooms ?? []).includes(getCurrentRoom(run, adventure)?.exits?.[command.direction]);
         const result = move(run, adventure, command.direction);
         if (!result.ok) {
@@ -1583,6 +1591,23 @@ export function createGameRouter(rawDeps = {}) {
           hall.state.adventureRun = rowRun(completedRun);
           return res.json(hall);
         }
+        const arrival = afterMove({ adventure, run, destination: getCurrentRoom(run, adventure).room_number });
+        run = applyFlagPatch(run, arrival.flagPatch);
+        if (arrival.deathText) {
+          character = { ...character, isAlive: false, hd: 0 };
+          character = recordDeed(character, `Died on the river in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
+          run = { ...run, status: 'dead' };
+          const [dc, dr] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          return res.json(canonicalResponse({
+            intent: command, event: { type: 'character_defeated', command }, events: [{ type: 'move', command }, { type: 'character_defeated', characterId: character.id }],
+            text: arrival.deathText, choices: ['Return to Great Hall'],
+            state: { character: rowCharacter(dc) ?? character, adventureRun: rowRun(dr) ?? run },
+          }));
+        }
+        const mechNotes = [...(gate.notes ?? []), ...(arrival.notes ?? [])];
         // Entering a room rolls friend-or-foe for any "random" NPCs there.
         const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
         run = encounter.run;
@@ -1600,7 +1625,7 @@ export function createGameRouter(rawDeps = {}) {
         });
         return res.json(roomResponse({
           adventure, run: savedRun, character,
-          prefix: encounter.note || null,
+          prefix: [...mechNotes, encounter.note].filter(Boolean).join('\n') || null,
           narration,
           event: { type: 'move', command }, events: encounter.events.length ? [{ type: 'move', command }, ...encounter.events] : null,
           intent: command,
@@ -1669,6 +1694,23 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, items: readItems } }));
       }
 
+      if (command.type === 'dig') {
+        const dig = digResult({ adventure, run, character, roomNumber: getCurrentRoom(run, adventure).room_number });
+        if (!dig) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command }, text: 'There is nothing here worth digging for.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        if (!dig.ok) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command }, text: dig.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        if (!dig.site) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'search', command }, text: dig.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        run = revealItem(run, dig.site.reveals);
+        const savedDig = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+        run = rowRun(savedDig) ?? run;
+        return res.json(roomResponse({ adventure, run, character, prefix: dig.site.found_text, event: { type: 'open', command }, intent: command }));
+      }
+
       if (command.type === 'take') {
         const item = findVisibleItem(adventure, run, command.target);
         if (!item) {
@@ -1677,17 +1719,36 @@ export function createGameRouter(rawDeps = {}) {
         if (!isCollectible(item)) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'not-collectible' }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
+        const guard = guardedBy({ adventure, run, slug: item.slug, presentSlugs: (getVisibleRoomEntities(run, adventure).characters ?? []).map((c) => c.slug) });
+        if (guard) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: 'guarded' }, text: guard.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
         const taken = takeTreasure(character, item, { allowDuplicate: true });
         if (!taken.ok) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'take_failed', command, reason: taken.reason }, text: `You cannot take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
         }
         character = taken.character;
         run = markItemCollected(run, item.slug);
+        const curse = cursedItem(adventure, item.slug);
+        let takeText = `You take ${item.name}.`;
+        const takeEvents = [{ type: 'take', command, item }];
+        if (curse) {
+          const dmg = rollDice(curse.damage ?? '1d6', deps.rng);
+          character = { ...character, hd: Math.max(0, (character.hd ?? 1) - dmg) };
+          takeText = `${curse.text}\n(You take ${dmg} damage.)`;
+          if (character.hd <= 0) {
+            character = { ...character, isAlive: false };
+            character = recordDeed(character, `Killed by the ${item.name} in ${getCurrentRoom(run, adventure).name}.`, { kind: 'death', room: getCurrentRoom(run, adventure).room_number });
+            run = { ...run, status: 'dead' };
+            takeEvents.push({ type: 'character_defeated', characterId: character.id });
+            takeText += '\nThe shock stops your heart.';
+          }
+        }
         const [updatedCharacter, updatedRun] = await Promise.all([
           deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
           deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
         ]);
-        return res.json(canonicalResponse({ intent: command, event: { type: 'take', command, item }, text: `You take ${item.name}.`, choices: choicesForRun(adventure, run), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
+        return res.json(canonicalResponse({ intent: command, event: takeEvents[takeEvents.length - 1], events: takeEvents.length > 1 ? takeEvents : null, text: takeText, choices: choicesForRun(adventure, run), state: { character: rowCharacter(updatedCharacter), adventureRun: rowRun(updatedRun) } }));
       }
 
       if (command.type === 'take_all') {
@@ -2170,6 +2231,20 @@ export function createGameRouter(rawDeps = {}) {
       // below: any un-parsed sentence typed where someone can hear it is
       // simply spoken aloud — the AI layer's answer to "I did not understand".
       const speakWords = async (words, targetName) => {
+        // Spoken-word mechanics (the mirror's "magic") fire before any parley.
+        const roomEntitiesForSay = getVisibleRoomEntities(run, adventure);
+        const trigger = sayTrigger({
+          adventure, run, words,
+          roomNumber: getCurrentRoom(run, adventure).room_number,
+          visibleItemSlugs: (roomEntitiesForSay.placements ?? []).map((pl) => pl.item_slug),
+        });
+        if (trigger) {
+          run = revealItem(run, trigger.reveals);
+          if (trigger.once) run = markTriggerFired(run, trigger.word);
+          const savedTrig = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          run = rowRun(savedTrig) ?? run;
+          return res.json(roomResponse({ adventure, run, character, prefix: trigger.text, event: { type: 'magic_word', word: trigger.word }, intent: command }));
+        }
         const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
         // A disguised mimic: speaking to the chest (or into an "empty" room
         // that holds one) gets an answer no honest chest would give.

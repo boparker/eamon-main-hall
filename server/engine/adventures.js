@@ -163,7 +163,9 @@ export function getVisibleRoomEntities(run, adventure) {
         if (placement.hidden === true) {
           const byContainer = placement.container && openedContainers.has(placement.container);
           const byInspection = placement.revealedBy && inspectedFeatures.has(placement.revealedBy);
-          if (!byContainer && !byInspection) return false;
+          // Mechanics reveals (dig sites, say-word triggers) land here too.
+          const byMechanics = (run.flags?.revealedItems ?? []).includes(placement.item_slug);
+          if (!byContainer && !byInspection && !byMechanics) return false;
         }
 
         if (placement.after_defeating) {
