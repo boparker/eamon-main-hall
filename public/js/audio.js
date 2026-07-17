@@ -29,8 +29,11 @@ const LOOP_TRIM_START = 0.6;  // seconds skipped at the head
 const LOOP_TRIM_END = 1.2;    // seconds skipped at the tail
 
 // Gentle volume ramp for HTMLAudio elements (hall music still uses these).
+// One fade per element: a new fade cancels the old, or two intervals tug the
+// volume in opposite directions forever (hall music audible in the cave).
 function fadeTo(el, target, step = 0.02) {
-  const iv = setInterval(() => {
+  clearInterval(el._fadeIv);
+  const iv = el._fadeIv = setInterval(() => {
     const d = target - el.volume;
     if (Math.abs(d) <= step) {
       el.volume = target;
