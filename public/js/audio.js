@@ -3,7 +3,10 @@
 import { state } from './state.js';
 
 // ── Music ──
-export const hallMusic = new Audio('concrete-omen.mp3');
+// "Medieval Banquet" by Tabletop Audio (tabletopaudio.com), CC BY-NC-ND 4.0.
+// Served unmodified (NoDerivatives); 10-min seamless loop via HTMLAudio —
+// NOT the Web Audio bed path, which would decode ~200MB into RAM.
+export const hallMusic = new Audio('audio/music/medieval-banquet.mp3');
 hallMusic.loop = true;
 hallMusic.volume = 0;
 
@@ -190,11 +193,15 @@ export function updateAudioForResponse(response) {
     const fallback = /cell|chamber/i.test(response?.state?.room?.name ?? '') ? 'cell' : 'tunnel';
     setAmbience(amb?.track ?? fallback, amb?.volume ?? 0.3);
   } else if (phase) {
-    // Hall & shops: the hall is a PLACE, not a soundtrack — burly crowd
-    // chatter + roaring hearth (music retired). Same gapless Web Audio
-    // path as the cave beds, so returning from the cave is just a bed swap.
-    if (bgMusic && bgMusic.volume > 0) fadeTo(bgMusic, 0);
-    setAmbience('hall-murmur', 0.35);
+    // Hall & shops: Tabletop Audio's "Medieval Banquet" — feast, fire and
+    // crowd professionally mixed. Revive it explicitly: entering the cave
+    // fades it out WITHOUT switching tracks, so switchMusic would no-op.
+    stopAmbience();
+    bgMusic = hallMusic;
+    if (state.musicEnabled && (hallMusic.paused || hallMusic.volume < 0.29)) {
+      hallMusic.play().catch(() => {});
+      fadeTo(hallMusic, 0.3);
+    }
   }
   playAudioForEvents(response);
 }
