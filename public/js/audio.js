@@ -70,7 +70,8 @@ async function ambienceBuffer(track) {
   if (ambienceBuffers[track]) return ambienceBuffers[track];
   const c = ctx();
   if (!c) return null;
-  const res = await fetch(`audio/ambience/amb-${track}.m4a`);
+  // Version query busts the one-week media cache when a bed is re-authored.
+  const res = await fetch(`audio/ambience/amb-${track}.m4a?v=2`);
   const buf = await c.decodeAudioData(await res.arrayBuffer());
   ambienceBuffers[track] = buf;
   return buf;
