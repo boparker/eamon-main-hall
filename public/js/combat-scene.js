@@ -282,6 +282,20 @@ export function renderCombat(combat, choices, text) {
   }
 }
 
+// A fight that ends without a final round — the enemy breaks and runs —
+// still deserves its beat. Hold the scene, show the outcome, and let the
+// player click through instead of slamming back to the room view.
+export function dismissCombatWithOutcome(text) {
+  const scene = document.getElementById('combat-scene');
+  if (!scene || scene.hidden) { hideCombat(); return; }
+  const banner = document.getElementById('combat-banner');
+  banner.hidden = false;
+  banner.className = 'combat-banner victory';
+  const line = String(text ?? '').split('\n').find(Boolean) ?? 'The fight is over.';
+  banner.replaceChildren(bannerHead('They flee!'), bannerSub(line));
+  singleAction('Continue ▸', () => hideCombat());
+}
+
 export function hideCombat() {
   const scene = document.getElementById('combat-scene');
   if (scene) scene.hidden = true;
