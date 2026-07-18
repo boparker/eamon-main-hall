@@ -5,12 +5,13 @@
   "description": "What respectable castle doesn't have a minotaur pit to throw meddlesome thieves into? And you might just be mistaken for one of those thieves. This is one of the earliest Eamon adventures, written by Donald Brown just after the original Beginner's Cave. It is a good example of the style of the first adventures, circa 1980.",
   "artist_style": "earle",
   "difficulty": 2,
-  "author": "Donald Brown (ported)",
+  "author": "Donald Brown",
   "intro": "You had arranged to meet in the town of Dunderhaven with your friend, Larcenous Lil. When you arrived, you learned that Lil had come into town flat broke, and had tried to pick up some easy cash by burglarizing a nearby castle.\n\nShe hasn't been seen since.\n\nMaking your own subtle entrance into the castle, all seemed to be going well until suddenly the lights go on and you see yourself surrounded by bowmen and a fat, ugly man on a throne. He sneers at you and says, \"Well, boys, another thief. I guess we'll send this scoundrel to meet the first.\"\n\nWith that, he pulls a lever, and the bottom drops out of the floor.\n\nYou slide down a long, narrow chute, with stony walls close on either side. You you land with a thud on the floor of a dark chamber.",
   "start_room": 1,
   "full_description": "What respectable castle doesn't have a minotaur pit to throw meddlesome thieves into? And you might just be mistaken for one of those thieves. This is one of the earliest Eamon adventures, written by Donald Brown just after the original Beginner's Cave. It is a good example of the style of the first adventures, circa 1980.",
   "text_source": "Eamon adventure #2 (c. 1980), data via Eamon Remastered (MIT)",
-  "image_preference": "generated"
+  "image_preference": "generated",
+  "year": 1980
  },
  "mechanics": {
   "water_rooms": [
@@ -33,12 +34,12 @@
   ],
   "vehicle": {
    "item": "boat",
-   "board_text": "You push off — the boat rocks, then steadies under you.",
+   "board_text": "You push off \u2014 the boat rocks, then steadies under you.",
    "leave_text": "You drag the boat up onto the shore.",
    "blocked_text": "The river is far too swift to swim. You need a boat."
   },
   "death_rooms": {
-   "16": "Light ahead — a grate blocks the river. The current is faster than your arms. The boat splinters against the iron, and the water takes you."
+   "16": "Light ahead \u2014 a grate blocks the river. The current is faster than your arms. The boat splinters against the iron, and the water takes you."
   },
   "say_triggers": [
    {
@@ -54,7 +55,7 @@
     "tool": "shovel",
     "room_number": 27,
     "reveals": "gold-coins",
-    "found_text": "The shovel strikes something — a rotted pouch, heavy with gold coins!",
+    "found_text": "The shovel strikes something \u2014 a rotted pouch, heavy with gold coins!",
     "nothing_text": "You dig a while and find only wet sand."
    }
   ],
@@ -2390,7 +2391,7 @@
    "type": "enemy",
    "friendliness": "hostile",
    "description": "There is an animated skeleton here, who has for a weapon ten very sharp bony fingers.",
-   "first_encounter_text": "The coffin lid bursts open — a skeleton lunges out, ten sharp bony fingers reaching for your throat!",
+   "first_encounter_text": "The coffin lid bursts open \u2014 a skeleton lunges out, ten sharp bony fingers reaching for your throat!",
    "hp": 15,
    "current_hp_from": "hp",
    "agility": 12,
@@ -2417,7 +2418,7 @@
    "location_room": 14,
    "canonical_name": "Killer Bunny",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "A small white rabbit with bottomless black eyes and a taste for blood. It cannot be reasoned with, exactly — but it can be respected from a distance.",
+   "persona": "A small white rabbit with bottomless black eyes and a taste for blood. It cannot be reasoned with, exactly \u2014 but it can be respected from a distance.",
    "acts": [
     {
      "verb": "freeze",
@@ -2466,7 +2467,7 @@
    "location_room": 21,
    "canonical_name": "Black Knight",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "The Black Knight — an armored duelist who guards the crossroads because a vow binds him there. Courteous, implacable, weary of killing trespassers who never observe the forms. Honors courtesy with courtesy.",
+   "persona": "The Black Knight \u2014 an armored duelist who guards the crossroads because a vow binds him there. Courteous, implacable, weary of killing trespassers who never observe the forms. Honors courtesy with courtesy.",
    "acts": [
     {
      "verb": "salute",
@@ -2476,8 +2477,8 @@
     }
    ],
    "yields_at_regard": 60,
-   "yield_text": "The black blade lowers. \"Well fought, and well spoken. The vow binds me here — but it says nothing of you passing.\"",
-   "spare_text": "The Black Knight steps aside from the crossroads and salutes you — this time, first.",
+   "yield_text": "The black blade lowers. \"Well fought, and well spoken. The vow binds me here \u2014 but it says nothing of you passing.\"",
+   "spare_text": "The Black Knight steps aside from the crossroads and salutes you \u2014 this time, first.",
    "portrait_description": "A knight in scarred black plate armor, closed visor, longsword held in a formal guard, standing in a torchlit stone crossroads"
   },
   {
@@ -2497,7 +2498,7 @@
    "canonical_name": "Priest",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
    "frees_on_defeat": "larcenous-lil",
-   "persona": "A priest of Kalimar keeping the chapel and its prisoner. A true believer, brittle about it — he knows holding a woman chained to an altar is not holiness, and hates being reminded.",
+   "persona": "A priest of Kalimar keeping the chapel and its prisoner. A true believer, brittle about it \u2014 he knows holding a woman chained to an altar is not holiness, and hates being reminded.",
    "acts": [
     {
      "verb": "shame",
@@ -2509,7 +2510,7 @@
    "yields_at_regard": 55,
    "yields_at_hp": 4,
    "yield_text": "The priest sinks onto the altar step, head in his hands. \"Take her. It was never... take her.\"",
-   "spare_text": "You leave the priest kneeling at his own altar — praying, this time, like he means it.",
+   "spare_text": "You leave the priest kneeling at his own altar \u2014 praying, this time, like he means it.",
    "portrait_description": "A gaunt priest in dark ceremonial robes with a bronze censer, hollow-eyed, guilt and zeal fighting in his face, chapel candlelight"
   },
   {
@@ -2528,7 +2529,7 @@
    "location_room": 49,
    "canonical_name": "High Priest",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "The High Priest of Kalimar — proud, learned, and possessive of his library. More scholar than fighter; his faith is mostly bibliography at this point.",
+   "persona": "The High Priest of Kalimar \u2014 proud, learned, and possessive of his library. More scholar than fighter; his faith is mostly bibliography at this point.",
    "acts": [
     {
      "verb": "kneel",
@@ -2539,7 +2540,7 @@
    ],
    "yields_at_regard": 60,
    "yields_at_hp": 5,
-   "yield_text": "The High Priest lowers his morning star, breathing hard. \"Enough. Kalimar preaches mercy — occasionally.\"",
+   "yield_text": "The High Priest lowers his morning star, breathing hard. \"Enough. Kalimar preaches mercy \u2014 occasionally.\"",
    "spare_text": "He straightens his robes with immense dignity, as though the whole affair had been a doctrinal debate he narrowly won.",
    "portrait_description": "An imposing elderly high priest in ornate temple vestments holding a morning star, surrounded by candlelight and old books"
   },
@@ -2559,7 +2560,7 @@
    "location_room": 55,
    "canonical_name": "Blacksmith",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "The lair's blacksmith — a broad, soot-black man who shoes the minotaur's gates and mends the temple's iron. Not evil, just employed. Immensely proud of his anvil.",
+   "persona": "The lair's blacksmith \u2014 a broad, soot-black man who shoes the minotaur's gates and mends the temple's iron. Not evil, just employed. Immensely proud of his anvil.",
    "acts": [
     {
      "verb": "admire",
@@ -2589,7 +2590,7 @@
    "location_room": 90,
    "canonical_name": "Gypsy",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "A traveling fortune-teller camped in the clearing beyond the lair — sharp-eyed, unhurried, amused by adventurers. Knows more about the castle above than she says.",
+   "persona": "A traveling fortune-teller camped in the clearing beyond the lair \u2014 sharp-eyed, unhurried, amused by adventurers. Knows more about the castle above than she says.",
    "acts": [
     {
      "verb": "offer",
@@ -2610,7 +2611,7 @@
    "type": "npc",
    "friendliness": "friendly",
    "description": "You see your old pal, Larcenous Lil! She thanks you for freeing her. She is rubbing her wrists from where the chains cut into her skin, but she otherwise seems unharmed.",
-   "first_encounter_text": "Chained by the altar is a woman you would know anywhere — Larcenous Lil, looking bored with captivity and delighted to see you. \"Took you long enough,\" she says.",
+   "first_encounter_text": "Chained by the altar is a woman you would know anywhere \u2014 Larcenous Lil, looking bored with captivity and delighted to see you. \"Took you long enough,\" she says.",
    "hp": 16,
    "current_hp_from": "hp",
    "agility": 18,
@@ -2620,7 +2621,7 @@
    "canonical_name": "Larcenous Lil",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
    "escort": true,
-   "persona": "Larcenous Lil — a quick-fingered thief and the player's old friend, held captive in the chapel by the Priest of Kalimar. Sharp-tongued, unrepentant about the botched castle job, secretly relieved to be found. Loyal to those who come back for her.",
+   "persona": "Larcenous Lil \u2014 a quick-fingered thief and the player's old friend, held captive in the chapel by the Priest of Kalimar. Sharp-tongued, unrepentant about the botched castle job, secretly relieved to be found. Loyal to those who come back for her.",
    "portrait_description": "A wiry, sharp-eyed young woman with cropped dark hair and a crooked grin, wearing burglar's leathers, wrists chained but posture defiant"
   },
   {
@@ -2630,7 +2631,7 @@
    "type": "enemy",
    "friendliness": "hostile",
    "description": "You see before you a minotaur, straight out of the legends with his bulls head, human body, and a very nasty battle axe.  He does not smell very clean.",
-   "first_encounter_text": "The walls shake with a bellow. Out of the dark comes the Minotaur — taller than any man, bull-horned, eyes like coals, a battle axe in its fists. This is the master of the lair, and you are in it.",
+   "first_encounter_text": "The walls shake with a bellow. Out of the dark comes the Minotaur \u2014 taller than any man, bull-horned, eyes like coals, a battle axe in its fists. This is the master of the lair, and you are in it.",
    "hp": 24,
    "current_hp_from": "hp",
    "agility": 14,
@@ -2639,7 +2640,7 @@
    "location_room": 87,
    "canonical_name": "Minotaur",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "The Minotaur of the pit — a huge bull-headed warrior bred in darkness to kill the castle's cast-offs. He has never been spoken to as anything but a monster. Beneath the bellowing is something old and tired that remembers being calf-young. Respects courage; despises pity.",
+   "persona": "The Minotaur of the pit \u2014 a huge bull-headed warrior bred in darkness to kill the castle's cast-offs. He has never been spoken to as anything but a monster. Beneath the bellowing is something old and tired that remembers being calf-young. Respects courage; despises pity.",
    "acts": [
     {
      "verb": "salute",
@@ -2651,7 +2652,7 @@
      "verb": "listen",
      "label": "Listen",
      "shift": 20,
-     "success_text": "You lower your guard a fraction and simply listen. The bellowing falters into something almost like words — almost like loneliness."
+     "success_text": "You lower your guard a fraction and simply listen. The bellowing falters into something almost like words \u2014 almost like loneliness."
     }
    ],
    "yields_at_regard": 70,
@@ -2660,9 +2661,9 @@
     "every": 3,
     "name": "horn charge",
     "multiplier": 2,
-    "warn_text": "The Minotaur drops its head — those horns are aimed at your chest!"
+    "warn_text": "The Minotaur drops its head \u2014 those horns are aimed at your chest!"
    },
-   "yield_text": "The great axe drags to the floor. The Minotaur stands heaving, watching you with its coal eyes — waiting to learn what you are.",
+   "yield_text": "The great axe drags to the floor. The Minotaur stands heaving, watching you with its coal eyes \u2014 waiting to learn what you are.",
    "spare_text": "You step back and lower your weapon. The Minotaur regards you for a long moment... then turns, and walks into the dark of its lair, unhurried. Behind it, the way stands open.",
    "portrait_description": "A massive minotaur warrior with great curved horns, coal-red eyes, matted dark fur, gripping a huge battle axe, painterly and grounded, menacing but weary"
   }
