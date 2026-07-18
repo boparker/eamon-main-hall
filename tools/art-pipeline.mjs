@@ -21,7 +21,7 @@
 // This is the "Latitude evals" idea applied to art: the spec is the room text,
 // and every image is tested against its spec before a human sees it.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync , copyFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 // Prefer a DEDICATED key for offline art runs so they never rate-limit the
@@ -62,9 +62,24 @@ function imageBlock(path) {
 const PAINTERLY = 'painterly matte finish of the animated series Arcane by studio Fortiche, a moving-oil-painting look with visible directional brushstrokes and matte hand-painted texture';
 const NEG = 'NOT busy, NOT cluttered, NOT evenly lit, no allover detail, NOT photorealistic, NOT a photograph, NOT glossy, NOT a 3d render, NOT CGI, no text, no words, no letters, no watermark, no signature, no border, no UI.';
 const NO_FIGURES = 'An empty environment — no people, no figures, no person, no silhouette of a person, no creatures.';
-const ENCLOSED = 'Fully enclosed underground unless the description explicitly says otherwise: no sky, no horizon, no outside vista, no castle, no buildings. Raw rough-hewn cave rock, cracked and damp with age — NEVER dressed masonry, polished stone or palace architecture; any door is battered aged rough timber with rusted iron, set directly into the rock.';
-const LOUD = `Cinematic signature keyframe, ${PAINTERLY}: one dominant focal element, a SINGLE dramatic motivated light source, deep chiaroscuro with crushed black shadow, a restricted palette, generous negative space, high contrast, atmospheric depth. ${NO_FIGURES} ${ENCLOSED} ${NEG}`;
-const QUIET = `Quiet understated background, ${PAINTERLY}: a single soft dim light, mostly deep shadow and empty space, a restrained cold desaturated palette, calm and low-drama, minimal detail with a few small grace notes. Deliberately NOT a hero shot. ${NO_FIGURES} ${ENCLOSED} ${NEG}`;
+// Setting contract, chosen PER ROOM by biome — the beginners-cave version
+// hardcoded 'enclosed raw cave', which forced the Minotaur's beaches,
+// temple and forest to be painted as caves (40 rooms flagged in one run).
+const BIOMES = {
+  cave: 'Fully enclosed underground: no sky, no horizon, no outside vista, no buildings. Raw rough-hewn cave rock, cracked and damp with age — NEVER dressed masonry, polished stone or palace architecture; any door is battered aged rough timber with rusted iron, set directly into the rock.',
+  river: 'A vast enclosed cavern holding a dark underground river: black slow water, wet sand or shingle beaches, raw rough-hewn rock walls and ceiling lost in shadow. No sky, no daylight, no outside world — the only light is dim and artificial or phosphorescent.',
+  temple: 'An ancient subterranean temple cut and built by hands long dead: crude old worked-stone masonry, squat pillars, cracked flagstones, soot-stained carvings — ancient and oppressive, NEVER polished palace grandeur; timber and iron are old and battered.',
+  outdoor: 'An outdoor scene: open air, natural daylight or dusk, trees, undergrowth or open ground as the text describes. Grounded and slightly somber — a real place after a long darkness, not a fantasy vista.',
+};
+function biomeFor(room) {
+  const t = `${room.name} ${room.narration_text ?? room.description ?? ''}`.toLowerCase();
+  if (/forest|clearing|bushes|road|outside|daylight|open air|camp/.test(t)) return 'outdoor';
+  if (/river|beach|grotto|shore|water's edge|boat/.test(t)) return 'river';
+  if (/temple|chapel|altar|idol|sanctuary|treasury|vestry|worship|well-built|smithy|blacksmith/.test(t)) return 'temple';
+  return 'cave';
+}
+const LOUD = (biome) => `Cinematic signature keyframe, ${PAINTERLY}: one dominant focal element, a SINGLE dramatic motivated light source, deep chiaroscuro with crushed black shadow, a restricted palette, generous negative space, high contrast, atmospheric depth. ${NO_FIGURES} ${BIOMES[biome]} ${NEG}`;
+const QUIET = (biome) => `Quiet understated background, ${PAINTERLY}: a single soft dim light, mostly deep shadow and empty space, a restrained cold desaturated palette, calm and low-drama, minimal detail with a few small grace notes. Deliberately NOT a hero shot. ${NO_FIGURES} ${BIOMES[biome]} ${NEG}`;
 
 // ── BRIEF: description → visual scene spec ───────────────────────────────────
 const BRIEF_SYSTEM = `You turn a text-adventure room description into a VISUAL SCENE BRIEF for an image model painting the room's background art. Reply with ONLY JSON:
@@ -137,12 +152,24 @@ async function paint(prompt, outPath) {
 
 function promptFrom(brief, register) {
   // Style LEADS the prompt (order matters: subject-first drags flux toward
-  // ornate realism; register-first keeps the cinematic hand).
-  return `${register} THE SCENE: ${brief.subject} CAMERA: ${brief.camera}. LIGHT: ${brief.light}. MUST SHOW: ${brief.must_show.join('; ')}. AVOID: ${(brief.must_not ?? []).join('; ')}. Keep it restrained: rough-hewn and rocky, humble materials, one light source, generous shadow — never ornate, gilded, baroque or grand.`;
+  // ornate realism; register-first keeps the cinematic hand). EXCEPT when the
+  // room has named centerpiece props (coffin, altar, anvil, mirror): flux
+  // drops trailing props, so prop-critical rooms lead with the subject and
+  // repeat the must-shows early — the style register follows immediately.
+  const musts = brief.must_show ?? [];
+  const propCritical = musts.length >= 2;
+  if (propCritical) {
+    return `${brief.subject} PROMINENTLY FEATURING, clearly visible: ${musts.join('; ')}. ${register} CAMERA: ${brief.camera}. LIGHT: ${brief.light}. AVOID: ${(brief.must_not ?? []).join('; ')}. Keep it restrained: humble materials, one light source, generous shadow — never ornate, gilded, baroque or grand.`;
+  }
+  return `${register} THE SCENE: ${brief.subject} CAMERA: ${brief.camera}. LIGHT: ${brief.light}. MUST SHOW: ${musts.join('; ')}. AVOID: ${(brief.must_not ?? []).join('; ')}. Keep it restrained: rough-hewn and rocky, humble materials, one light source, generous shadow — never ornate, gilded, baroque or grand.`;
 }
 
 // ── Runner ───────────────────────────────────────────────────────────────────
-const SIGNATURE_ROOMS = new Set([1, 4, 18, 22, 26]); // beginners-cave beats; extend per adventure
+const SIGNATURE_SETS = {
+  'beginners-cave': [1, 4, 18, 22, 26],
+  // Minotaur beats: the shaft fall, the mirror, the chapel (Lil), the lair, the gypsy clearing.
+  'lair-of-the-minotaur': [1, 5, 52, 87, 90],
+};
 
 const [, , mode, manifestPath, ...roomArgs] = process.argv;
 if (!mode || !manifestPath) {
@@ -173,7 +200,7 @@ if (mode === 'verify') {
 if (mode === 'paint') {
   mkdirSync(`art-out/pipeline/${advId}`, { recursive: true });
   for (const room of rooms) {
-    const register = SIGNATURE_ROOMS.has(room.room_number) ? LOUD : QUIET;
+    const register = (new Set(SIGNATURE_SETS[advId] ?? []).has(room.room_number) ? LOUD : QUIET)(biomeFor(room));
     const out = `art-out/pipeline/${advId}/room-${room.room_number}.png`;
     try {
       const brief = await makeBrief(room);
@@ -187,6 +214,7 @@ if (mode === 'paint') {
         prompt = `${promptFrom(brief, register)} CRITICAL FIXES from a failed previous attempt: ${(verdict.reasons ?? []).join('; ')}.`;
       }
       results.push({ room: room.room_number, name: room.name, verdict: verdict?.verdict ?? 'error', reasons: verdict?.reasons ?? [] });
+      paintedByText.set(textKey, { out, room: room.room_number, verdict: verdict?.verdict ?? 'error' });
       if (verdict?.verdict !== 'pass') console.log(`✗ room ${room.room_number} FLAGGED for human review`);
     } catch (e) { results.push({ room: room.room_number, name: room.name, verdict: 'error', reasons: [e.message] }); console.log('! room', room.room_number, e.message); }
   }

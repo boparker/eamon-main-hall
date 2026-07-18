@@ -74,6 +74,10 @@ export function parseCommand(input) {
     return { type: 'search', source: 'rules' };
   }
 
+  if (command === 'dig' || /^dig\b/.test(command)) {
+    return { type: 'dig', source: 'rules' };
+  }
+
   if (command === 'inventory' || command === 'inv' || command === 'i') {
     return { type: 'inventory', source: 'rules' };
   }

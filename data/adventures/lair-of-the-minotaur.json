@@ -1,0 +1,3124 @@
+{
+ "adventure": {
+  "id": "lair-of-the-minotaur",
+  "name": "The Lair of the Minotaur",
+  "description": "What respectable castle doesn't have a minotaur pit to throw meddlesome thieves into? And you might just be mistaken for one of those thieves. This is one of the earliest Eamon adventures, written by Donald Brown just after the original Beginner's Cave. It is a good example of the style of the first adventures, circa 1980.",
+  "artist_style": "earle",
+  "difficulty": 2,
+  "author": "Donald Brown (ported)",
+  "intro": "You had arranged to meet in the town of Dunderhaven with your friend, Larcenous Lil. When you arrived, you learned that Lil had come into town flat broke, and had tried to pick up some easy cash by burglarizing a nearby castle.\n\nShe hasn't been seen since.\n\nMaking your own subtle entrance into the castle, all seemed to be going well until suddenly the lights go on and you see yourself surrounded by bowmen and a fat, ugly man on a throne. He sneers at you and says, \"Well, boys, another thief. I guess we'll send this scoundrel to meet the first.\"\n\nWith that, he pulls a lever, and the bottom drops out of the floor.\n\nYou slide down a long, narrow chute, with stony walls close on either side. You you land with a thud on the floor of a dark chamber.",
+  "start_room": 1,
+  "full_description": "What respectable castle doesn't have a minotaur pit to throw meddlesome thieves into? And you might just be mistaken for one of those thieves. This is one of the earliest Eamon adventures, written by Donald Brown just after the original Beginner's Cave. It is a good example of the style of the first adventures, circa 1980.",
+  "text_source": "Eamon adventure #2 (c. 1980), data via Eamon Remastered (MIT)",
+  "image_preference": "generated"
+ },
+ "mechanics": {
+  "water_rooms": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16
+  ],
+  "shore_rooms": [
+   6,
+   7,
+   8,
+   17,
+   23,
+   27
+  ],
+  "vehicle": {
+   "item": "boat",
+   "board_text": "You push off — the boat rocks, then steadies under you.",
+   "leave_text": "You drag the boat up onto the shore.",
+   "blocked_text": "The river is far too swift to swim. You need a boat."
+  },
+  "death_rooms": {
+   "16": "Light ahead — a grate blocks the river. The current is faster than your arms. The boat splinters against the iron, and the water takes you."
+  },
+  "say_triggers": [
+   {
+    "word": "magic",
+    "near_item": "huge-stone",
+    "reveals": "emerald",
+    "text": "As you say the word, there is a small eruption from the center of the stone and an emerald pops out of it.",
+    "once": true
+   }
+  ],
+  "dig_sites": [
+   {
+    "tool": "shovel",
+    "room_number": 27,
+    "reveals": "gold-coins",
+    "found_text": "The shovel strikes something — a rotted pouch, heavy with gold coins!",
+    "nothing_text": "You dig a while and find only wet sand."
+   }
+  ],
+  "cursed_items": [
+   {
+    "slug": "jewel-of-molinar",
+    "damage": "1d10",
+    "text": "As you touch the jewel, an electric shock runs up your arm. You hear a voice chuckling as it says, \"I told you not to touch it.\""
+   }
+  ],
+  "guarded_items": [
+   {
+    "slug": "books",
+    "guard": "high-priest",
+    "text": "The High Priest snaps, \"Hey! Get your hands off my books!\""
+   }
+  ]
+ },
+ "locations": [
+  {
+   "id": "lair-of-the-minotaur-1",
+   "room_number": 1,
+   "name": "Beneath the Trap Door",
+   "narration_text": "You are at the bottom of a long shaft.  There is no way to climb back up.  The natural light is very dim here, but you can see an exit to the south.",
+   "background_description": "You are at the bottom of a long shaft.  There is no way to climb back up.  The natural light is very dim here, but you can see an exit to the south.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 2,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "below the trap door. (S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-2",
+   "room_number": 2,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with an east/west corridor and a north-bound passage.",
+   "background_description": "You are at an intersection with an east/west corridor and a north-bound passage.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 1,
+    "south": null,
+    "east": 7,
+    "west": 3,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; N and E/W.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-3",
+   "room_number": 3,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with an east-bound corridor going into a north/south passage.",
+   "background_description": "You are at an intersection with an east-bound corridor going into a north/south passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 4,
+    "south": 5,
+    "east": 2,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; E and N/S.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-4",
+   "room_number": 4,
+   "name": "The Coffin Room",
+   "narration_text": "You are in a small chamber with the only exit to the south.  Standing in the middle of the chamber is a coffin.",
+   "background_description": "You are in a small chamber with the only exit to the south.  Standing in the middle of the chamber is a coffin.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 3,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   },
+   "canonical_name": "in the coffin room. (S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-5",
+   "room_number": 5,
+   "name": "The Stone Room",
+   "narration_text": "You are in a small chamber with the only exit to the north.  A large stone stands in the room and a mirror is embedded in the wall.  In the mirror you see the word \"CIGAM\".",
+   "background_description": "You are in a small chamber with the only exit to the north.  A large stone stands in the room and a mirror is embedded in the wall.  In the mirror you see the word \"CIGAM\".",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 3,
+    "south": null,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the stone room. (N)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-6",
+   "room_number": 6,
+   "name": "The North Beach",
+   "narration_text": "You are on the north end of a very long beach.  To the east is a river which flows swiftly southward.",
+   "background_description": "You are on the north end of a very long beach.  To the east is a river which flows swiftly southward.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 7,
+    "east": 9,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the north beach. (S/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-7",
+   "room_number": 7,
+   "name": "The Middle Beach",
+   "narration_text": "You are in the middle of a long beach which runs north and south.  You cannot tell if there is anything at either end.  A tunnel leads back to the west.  To the east is a river which runs swiftly southward.",
+   "background_description": "You are in the middle of a long beach which runs north and south.  You cannot tell if there is anything at either end.  A tunnel leads back to the west.  To the east is a river which runs swiftly southward.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 6,
+    "south": 8,
+    "east": 10,
+    "west": 2,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the middle beach. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-8",
+   "room_number": 8,
+   "name": "The South Beach",
+   "narration_text": "You are on the south end of a very long beach.  To the east is a river which flows swiftly southward.",
+   "background_description": "You are on the south end of a very long beach.  To the east is a river which flows swiftly southward.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 7,
+    "south": null,
+    "east": 11,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the south beach. (N/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-9",
+   "room_number": 9,
+   "name": "The River, Near the North Beach",
+   "narration_text": "You are sailing the river in your rickety old boat.  To the east is a cliff wall--Can't land there.  You may land on the north beach to the west or follow the river south.  The strong current prevents travel north.",
+   "background_description": "You are sailing the river in your rickety old boat.  To the east is a cliff wall--Can't land there.  You may land on the north beach to the west or follow the river south.  The strong current prevents travel north.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 10,
+    "east": null,
+    "west": 6,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the river, near the north beach. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-10",
+   "room_number": 10,
+   "name": "The River, Near the Middle Beach",
+   "narration_text": "You are sailing the river in your rickety old boat.  To the west is the middle of the long beach.  The river continues south.",
+   "background_description": "You are sailing the river in your rickety old boat.  To the west is the middle of the long beach.  The river continues south.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 11,
+    "east": null,
+    "west": 7,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the river, near the middle beach. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-11",
+   "room_number": 11,
+   "name": "The River, Near the South Beach",
+   "narration_text": "You are sailing the river in your rickety old boat.  To the west is the south end of the long beach.  If you continue taking the boat south you will go into a tunnel where you cannot make out any details.",
+   "background_description": "You are sailing the river in your rickety old boat.  To the west is the south end of the long beach.  If you continue taking the boat south you will go into a tunnel where you cannot make out any details.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 12,
+    "east": null,
+    "west": 8,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "on the river, near the south beach. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-12",
+   "room_number": 12,
+   "name": "The Sailing the River, in a Tunnel",
+   "narration_text": "You are drifting through a tunnel, with no beaches on either side of the river to land on.  You can only continue downstream to the south.",
+   "background_description": "You are drifting through a tunnel, with no beaches on either side of the river to land on.  You can only continue downstream to the south.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 13,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "sailing the river, in a tunnel. (S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-13",
+   "room_number": 13,
+   "name": "The Sailing the River, Near the North Grotto",
+   "narration_text": "Cliff walls keep you from landing to the east.  To the west is a small grotto, called 'North Grotto'.  The river continues south and appears to ride next to other grottos.",
+   "background_description": "Cliff walls keep you from landing to the east.  To the west is a small grotto, called 'North Grotto'.  The river continues south and appears to ride next to other grottos.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 14,
+    "east": null,
+    "west": 17,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "sailing the river, near the north grotto. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-14",
+   "room_number": 14,
+   "name": "The Sailing the River, Near the Middle Grotto",
+   "narration_text": "To the west is a small grotto with a sign saying, 'Middle Grotto'.  The river continues south, going next to another grotto.",
+   "background_description": "To the west is a small grotto with a sign saying, 'Middle Grotto'.  The river continues south, going next to another grotto.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 15,
+    "east": null,
+    "west": 23,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "sailing the river, near the middle grotto. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-15",
+   "room_number": 15,
+   "name": "The Sailing the River, Near the South Grotto",
+   "narration_text": "To the west is a small grotto with a sign saying, 'South Grotto'.  The river continues south, turning into a tunnel where you cannot make out any details.",
+   "background_description": "To the west is a small grotto with a sign saying, 'South Grotto'.  The river continues south, turning into a tunnel where you cannot make out any details.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 16,
+    "east": null,
+    "west": 27,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "sailing the river, near the south grotto. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-16",
+   "room_number": 16,
+   "name": "The Grate",
+   "narration_text": "As you enter the tunnel, you see light ahead.  It is coming through a grate which blocks the river.  You boat smashes into it, is destroyed, and you drown.",
+   "background_description": "As you enter the tunnel, you see light ahead.  It is coming through a grate which blocks the river.  You boat smashes into it, is destroyed, and you drown.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "crashing into a grate!",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-17",
+   "room_number": 17,
+   "name": "The North Grotto",
+   "narration_text": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.",
+   "background_description": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 13,
+    "west": 18,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "in the north grotto. (E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-18",
+   "room_number": 18,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 17,
+    "west": 19,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-19",
+   "room_number": 19,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading east and south.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading east and south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 20,
+    "east": 18,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (S/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-20",
+   "room_number": 20,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 19,
+    "south": 21,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-21",
+   "room_number": 21,
+   "name": "The Cross of Two Corridors",
+   "narration_text": "You are at a large opening with exits in all four directions.  You see the remains of a campfire here.",
+   "background_description": "You are at a large opening with exits in all four directions.  You see the remains of a campfire here.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 20,
+    "south": 24,
+    "east": 22,
+    "west": 28,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   },
+   "canonical_name": "in a cross of two corridors. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-22",
+   "room_number": 22,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 23,
+    "west": 21,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-23",
+   "room_number": 23,
+   "name": "The Middle Grotto",
+   "narration_text": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.",
+   "background_description": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 14,
+    "west": 22,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "in the middle grotto. (E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-24",
+   "room_number": 24,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 21,
+    "south": 25,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-25",
+   "room_number": 25,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading north and east.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading north and east.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 24,
+    "south": null,
+    "east": 26,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (N/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-26",
+   "room_number": 26,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 27,
+    "west": 25,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-27",
+   "room_number": 27,
+   "name": "The South Grotto",
+   "narration_text": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.  The ground here looks as if it has been recently dug up.",
+   "background_description": "You are in a small grotto.  To the east is a swiftly flowing river.  A tunnel leads into blackness to the west.  The ground here looks as if it has been recently dug up.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 15,
+    "west": 26,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "canonical_name": "in the south grotto. (E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-28",
+   "room_number": 28,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 21,
+    "west": 29,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-29",
+   "room_number": 29,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are at a four-way intersection, with exits leading into darkness.  You feel a cool breeze here, but you can't tell where it is coming from.",
+   "background_description": "You are at a four-way intersection, with exits leading into darkness.  You feel a cool breeze here, but you can't tell where it is coming from.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 30,
+    "south": 39,
+    "east": 28,
+    "west": 53,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-30",
+   "room_number": 30,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 31,
+    "south": 29,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-31",
+   "room_number": 31,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with an east/west corridor and a south-bound passage.",
+   "background_description": "You are at an intersection with an east/west corridor and a south-bound passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 30,
+    "east": 32,
+    "west": 34,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; S and E/W.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-32",
+   "room_number": 32,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 33,
+    "west": 31,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-33",
+   "room_number": 33,
+   "name": "The Bag Room",
+   "narration_text": "You are in a small, featureless chamber with the only exit to the west.",
+   "background_description": "You are in a small, featureless chamber with the only exit to the west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 32,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the bag room. (W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-34",
+   "room_number": 34,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading north and east.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading north and east.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 35,
+    "south": null,
+    "east": 31,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (N/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-35",
+   "room_number": 35,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 36,
+    "south": 34,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-36",
+   "room_number": 36,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 37,
+    "south": 35,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-37",
+   "room_number": 37,
+   "name": "The Witt's End",
+   "narration_text": "A sign on the wall says, \"STOP!  GO NO FURTHER!  DUNGEON UNDER CONSTRUCTION BEYOND HERE.  DANGER!  --- Witt Construction Company\".",
+   "background_description": "A sign on the wall says, \"STOP!  GO NO FURTHER!  DUNGEON UNDER CONSTRUCTION BEYOND HERE.  DANGER!  --- Witt Construction Company\".",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 38,
+    "south": 36,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at Witt's End. (N/S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-38",
+   "room_number": 38,
+   "name": "The Insanity Room",
+   "narration_text": "You are in a room designed to attack your very mind.  Exits go off in >>all<< directions, and mad scrawlings on the wall threaten to reduce you to a babbling idiot if you look at them too long.",
+   "background_description": "You are in a room designed to attack your very mind.  Exits go off in >>all<< directions, and mad scrawlings on the wall threaten to reduce you to a babbling idiot if you look at them too long.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 38,
+    "south": 38,
+    "east": 38,
+    "west": 37,
+    "up": 38,
+    "down": 38
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the insanity room.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-39",
+   "room_number": 39,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a very well-built corridor going from north to south.",
+   "background_description": "You are in a very well-built corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 29,
+    "south": 40,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-40",
+   "room_number": 40,
+   "name": "The Temple Entrance",
+   "narration_text": "To the south is a huge, open door with a sign over it reading, \"Temple of Kalimar\".  Scratched beside the door is the saying, \"ABANDON HOPE ALL YE WHO ENTER HERE\".",
+   "background_description": "To the south is a huge, open door with a sign over it reading, \"Temple of Kalimar\".  Scratched beside the door is the saying, \"ABANDON HOPE ALL YE WHO ENTER HERE\".",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 39,
+    "south": 41,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "temple",
+    "volume": 0.22
+   },
+   "canonical_name": "at the temple entrance. (N/S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-41",
+   "room_number": 41,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are at a four-way intersection, with very well-built tunnels going off in all four directions.",
+   "background_description": "You are at a four-way intersection, with very well-built tunnels going off in all four directions.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 40,
+    "south": 46,
+    "east": 44,
+    "west": 42,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-42",
+   "room_number": 42,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a well-built corridor going from east to west.",
+   "background_description": "You are in a well-built corridor going from east to west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 41,
+    "west": 43,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-43",
+   "room_number": 43,
+   "name": "The Jewel Room",
+   "narration_text": "You are in a small room with the only exit to the east.  A stand here has written on it, \"JEWEL OF MOLINAR -- DO NOT TOUCH!\"",
+   "background_description": "You are in a small room with the only exit to the east.  A stand here has written on it, \"JEWEL OF MOLINAR -- DO NOT TOUCH!\"",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 42,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the jewel room. (E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-44",
+   "room_number": 44,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a well-built corridor going from east to west.",
+   "background_description": "You are in a well-built corridor going from east to west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 45,
+    "west": 41,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-45",
+   "room_number": 45,
+   "name": "The Supplies Room",
+   "narration_text": "You are in what appears to be a storage room.  The floor is littered with odds and ends which are valueless to you.",
+   "background_description": "You are in what appears to be a storage room.  The floor is littered with odds and ends which are valueless to you.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 44,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the supplies room. (W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-46",
+   "room_number": 46,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a well-built corridor going from north to south.",
+   "background_description": "You are in a well-built corridor going from north to south.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 41,
+    "south": 47,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-47",
+   "room_number": 47,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are at a four-way intersection, with very well-built tunnels going off in all four directions.",
+   "background_description": "You are at a four-way intersection, with very well-built tunnels going off in all four directions.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 46,
+    "south": 52,
+    "east": 50,
+    "west": 48,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-48",
+   "room_number": 48,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a well-built corridor going from east to west.",
+   "background_description": "You are in a well-built corridor going from east to west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 47,
+    "west": 49,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-49",
+   "room_number": 49,
+   "name": "The High Priest's Room",
+   "narration_text": "You are in a bedroom garishly decorated by purple drapes and sequins (which are magically held in place and cannot be gotten).  There is a faint scent of incense in the air.",
+   "background_description": "You are in a bedroom garishly decorated by purple drapes and sequins (which are magically held in place and cannot be gotten).  There is a faint scent of incense in the air.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 48,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "temple",
+    "volume": 0.22
+   },
+   "canonical_name": "in the high priest's room. (E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-50",
+   "room_number": 50,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a well-built corridor going from east to west.",
+   "background_description": "You are in a well-built corridor going from east to west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 51,
+    "west": 47,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-51",
+   "room_number": 51,
+   "name": "The Priest's Treasury",
+   "narration_text": "You are in what was once a treasury, with empty bags marked \"FOR HOLDING GREAT TREASURE\" on the floor.  They disintegrate when you try to pick them up.",
+   "background_description": "You are in what was once a treasury, with empty bags marked \"FOR HOLDING GREAT TREASURE\" on the floor.  They disintegrate when you try to pick them up.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 50,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "temple",
+    "volume": 0.22
+   },
+   "canonical_name": "in the priest's treasury. (W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-52",
+   "room_number": 52,
+   "name": "The Chapel of Kalimar",
+   "narration_text": "You are in a huge chamber.  On the south wall stands a huge leering idol.  In the center of the room is a sacrificial altar, stained with the blood of past victims.",
+   "background_description": "You are in a huge chamber.  On the south wall stands a huge leering idol.  In the center of the room is a sacrificial altar, stained with the blood of past victims.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 47,
+    "south": null,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "temple",
+    "volume": 0.22
+   },
+   "canonical_name": "in the chapel. (N)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-53",
+   "room_number": 53,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 29,
+    "west": 54,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-54",
+   "room_number": 54,
+   "name": "The East/west Corridor With a Grate to the West",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 53,
+    "west": 55,
+    "up": null,
+    "down": null
+   },
+   "locked_exits": {
+    "west": {
+     "door": "iron-grate",
+     "key": "skeleton-key",
+     "text": "You see the sturdy iron grate which blocks passage west.  As you study it, you notice a small key hole."
+    }
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor with a grate to the west.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-55",
+   "room_number": 55,
+   "name": "The Blacksmith's Room",
+   "narration_text": "You are in a hot and steamy blacksmith's workshop.  His tools are welded to an anvil that is too heavy to lift.",
+   "background_description": "You are in a hot and steamy blacksmith's workshop.  His tools are welded to an anvil that is too heavy to lift.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 56,
+    "south": 65,
+    "east": 54,
+    "west": 69,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the blacksmith's room. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-56",
+   "room_number": 56,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 57,
+    "south": 55,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-57",
+   "room_number": 57,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading south and west.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading south and west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 56,
+    "east": null,
+    "west": 58,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (S/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-58",
+   "room_number": 58,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 57,
+    "west": 59,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-59",
+   "room_number": 59,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are at a four-way intersection, with exits leading into darkness.",
+   "background_description": "You are at a four-way intersection, with exits leading into darkness.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 60,
+    "south": 70,
+    "east": 58,
+    "west": 71,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-60",
+   "room_number": 60,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 61,
+    "south": 59,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-61",
+   "room_number": 61,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with a north/south corridor and a west-bound passage.",
+   "background_description": "You are at an intersection with a north/south corridor and a west-bound passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 62,
+    "south": 60,
+    "east": null,
+    "west": 74,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; W and N/S.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-62",
+   "room_number": 62,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 63,
+    "south": 61,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-63",
+   "room_number": 63,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are still in the labyrinth, at a four-way intersection. All four exits lead into darkness.",
+   "background_description": "You are still in the labyrinth, at a four-way intersection. All four exits lead into darkness.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 66,
+    "south": 62,
+    "east": 64,
+    "west": 73,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-64",
+   "room_number": 64,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 65,
+    "west": 63,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-65",
+   "room_number": 65,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading north and west.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading north and west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 55,
+    "south": null,
+    "east": null,
+    "west": 64,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (N/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-66",
+   "room_number": 66,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 67,
+    "south": 63,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-67",
+   "room_number": 67,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 68,
+    "south": 66,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-68",
+   "room_number": 68,
+   "name": "The Four-way Intersection",
+   "narration_text": "You are deep in the labyrinth. You wish you had a piece of string to mark your way. Tunnels lead north, south, east, and west into darkness.",
+   "background_description": "You are deep in the labyrinth. You wish you had a piece of string to mark your way. Tunnels lead north, south, east, and west into darkness.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 70,
+    "south": 67,
+    "east": 69,
+    "west": 72,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a four-way intersection. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-69",
+   "room_number": 69,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 55,
+    "west": 68,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-70",
+   "room_number": 70,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 59,
+    "south": 68,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-71",
+   "room_number": 71,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 59,
+    "west": 82,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-72",
+   "room_number": 72,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 68,
+    "west": 80,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-73",
+   "room_number": 73,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 63,
+    "west": 77,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-74",
+   "room_number": 74,
+   "name": "The East/west Corridor",
+   "narration_text": "You are in a twisty corridor going from east to west.",
+   "background_description": "You are in a twisty corridor going from east to west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 61,
+    "west": 75,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in an east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-75",
+   "room_number": 75,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with an east/west corridor and a north-bound passage.",
+   "background_description": "You are at an intersection with an east/west corridor and a north-bound passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 76,
+    "south": null,
+    "east": 74,
+    "west": 83,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; N and E/W.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-76",
+   "room_number": 76,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 77,
+    "south": 75,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-77",
+   "room_number": 77,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with a north/south corridor and a east-bound passage.",
+   "background_description": "You are at an intersection with a north/south corridor and a east-bound passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 78,
+    "south": 76,
+    "east": 73,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; E and N/S.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-78",
+   "room_number": 78,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 79,
+    "south": 77,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-79",
+   "room_number": 79,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 80,
+    "south": 78,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-80",
+   "room_number": 80,
+   "name": "The T-intersection",
+   "narration_text": "You are at an intersection with a north/south corridor and a east-bound passage.",
+   "background_description": "You are at an intersection with a north/south corridor and a east-bound passage.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 81,
+    "south": 79,
+    "east": 72,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a T-intersection; E and N/S.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-81",
+   "room_number": 81,
+   "name": "The North/south Corridor",
+   "narration_text": "You are in a twisty corridor going from north to south.",
+   "background_description": "You are in a twisty corridor going from north to south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 82,
+    "south": 80,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-82",
+   "room_number": 82,
+   "name": "The Bend in the Corridor",
+   "narration_text": "You are at a sharp bend in the corridor, with exits leading east and south.",
+   "background_description": "You are at a sharp bend in the corridor, with exits leading east and south.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": 81,
+    "east": 71,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (S/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-83",
+   "room_number": 83,
+   "name": "The Rough East/west Corridor",
+   "narration_text": "You are in a very rough corridor going from east to west.  it appears as if it may have been carved naturally, and a slight breeze comes from the west.",
+   "background_description": "You are in a very rough corridor going from east to west.  it appears as if it may have been carved naturally, and a slight breeze comes from the west.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 75,
+    "west": 84,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a rough east/west corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-84",
+   "room_number": 84,
+   "name": "The Bend in the Corridor",
+   "narration_text": "The rough corridor takes a sharp bend here, going north and east.",
+   "background_description": "The rough corridor takes a sharp bend here, going north and east.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 85,
+    "south": null,
+    "east": 83,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "at a bend in the corridor. (N/E)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-85",
+   "room_number": 85,
+   "name": "The Rough North/south Corridor",
+   "narration_text": "You are in a very rough corridor going from north to south.  It seems as if there is a slight slant of the corridor, rising up to the north!",
+   "background_description": "You are in a very rough corridor going from north to south.  It seems as if there is a slight slant of the corridor, rising up to the north!",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 86,
+    "south": 84,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a rough north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-86",
+   "room_number": 86,
+   "name": "The Rough North/south Corridor",
+   "narration_text": "You are in a very rough corridor going from north to south, with a definite rise to the north.",
+   "background_description": "You are in a very rough corridor going from north to south, with a definite rise to the north.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 87,
+    "south": 85,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a rough north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-87",
+   "room_number": 87,
+   "name": "The Lair of the Minotaur",
+   "narration_text": "You are in a large chamber, with tunnels exiting to the north and south.  The odor of minotaur droppings fills the air.",
+   "background_description": "You are in a large chamber, with tunnels exiting to the north and south.  The odor of minotaur droppings fills the air.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 88,
+    "south": 86,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the minotaur's lair!",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-88",
+   "room_number": 88,
+   "name": "The Rough North/south Corridor",
+   "narration_text": "You are in a very rough north to south corridor that rises up to the north.",
+   "background_description": "You are in a very rough north to south corridor that rises up to the north.",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 89,
+    "south": 87,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in a rough north/south corridor.",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-89",
+   "room_number": 89,
+   "name": "The Tunnel Entrance",
+   "narration_text": "You are at the entrance to the tunnel, hidden from view by some bushes.  To the south is the entrance back into the caves.  To the north is a large clearing.",
+   "background_description": "You are at the entrance to the tunnel, hidden from view by some bushes.  To the south is the entrance back into the caves.  To the north is a large clearing.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 90,
+    "south": 88,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   },
+   "canonical_name": "at the tunnel entrance. (N/S)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-90",
+   "room_number": 90,
+   "name": "The Gypsy Camp",
+   "narration_text": "You are in a large clearing.  To the east and west is thick forest.  A road stretches off to the north.  To the south you can make out the cave entrance.",
+   "background_description": "You are in a large clearing.  To the east and west is thick forest.  A road stretches off to the north.  To the south you can make out the cave entrance.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 91,
+    "south": 89,
+    "east": 92,
+    "west": 92,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   },
+   "canonical_name": "in the Gypsy camp. (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-91",
+   "room_number": 91,
+   "name": "The Road to Town",
+   "narration_text": "The road leads south back to the Gypsy camp, and north to the Main Hall.",
+   "background_description": "The road leads south back to the Gypsy camp, and north to the Main Hall.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": "main-hall",
+    "south": 90,
+    "east": 92,
+    "west": 92,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   },
+   "canonical_name": "on the road to town.  (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  },
+  {
+   "id": "lair-of-the-minotaur-92",
+   "room_number": 92,
+   "name": "The Forest",
+   "narration_text": "You are in a dark, thick forest.  You may walk in any direction, but you cannot be sure of where you are wandering.",
+   "background_description": "You are in a dark, thick forest.  You may walk in any direction, but you cannot be sure of where you are wandering.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 92,
+    "south": 92,
+    "east": 90,
+    "west": 90,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   },
+   "canonical_name": "in the forest.  (N/S/E/W)",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980) via Eamon Remastered fixtures"
+  }
+ ],
+ "characters": [
+  {
+   "id": "lair-of-the-minotaur-skeleton",
+   "name": "Skeleton",
+   "slug": "skeleton",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "There is an animated skeleton here, who has for a weapon ten very sharp bony fingers.",
+   "first_encounter_text": "The coffin lid bursts open — a skeleton lunges out, ten sharp bony fingers reaching for your throat!",
+   "hp": 15,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "damage_dice": "1d5",
+   "gold": 0,
+   "location_room": 4,
+   "hidden_until_opened": "coffin",
+   "canonical_name": "Skeleton",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-killer-bunny",
+   "name": "Killer Bunny",
+   "slug": "killer-bunny",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "You see swimming towards you a large rabbit with soft tan fur and a maniacal look in his pink eyes.",
+   "first_encounter_text": "On the bank sits a small, soft, white rabbit. It turns its head. Its eyes are wrong. Its teeth are very, very wrong.",
+   "hp": 2,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "damage_dice": "1d3",
+   "gold": 0,
+   "location_room": 14,
+   "canonical_name": "Killer Bunny",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "A small white rabbit with bottomless black eyes and a taste for blood. It cannot be reasoned with, exactly — but it can be respected from a distance.",
+   "acts": [
+    {
+     "verb": "freeze",
+     "label": "Stay very still",
+     "shift": 35,
+     "success_text": "You go absolutely still. The rabbit's nose twitches once, twice... and it loses interest in you entirely."
+    }
+   ],
+   "yields_at_regard": 60,
+   "yield_text": "The rabbit sits back on its haunches and begins washing its face, as though you had never been worth the trouble.",
+   "spare_text": "You back away slowly. The rabbit watches you go with its terrible little eyes. You feel you have survived something significant.",
+   "portrait_description": "A small innocent-looking white rabbit with subtly wrong pitch-black eyes and a fleck of red at its mouth, sitting by a dark river bank"
+  },
+  {
+   "id": "lair-of-the-minotaur-wandering-minstrel-eye",
+   "name": "Wandering Minstrel",
+   "slug": "wandering-minstrel-eye",
+   "type": "npc",
+   "friendliness": "friendly",
+   "description": "You see floating three feet off the ground a huge disembodied eye.  It has no limbs, but from somewhere it is humming a song:  A Wandering Minstrel Eye.",
+   "first_encounter_text": "You see floating three feet off the ground a huge disembodied eye.  It has no limbs, but from somewhere it is humming a song:  A Wandering Minstrel Eye.",
+   "hp": 15,
+   "current_hp_from": "hp",
+   "agility": 7,
+   "damage_dice": "1d2",
+   "gold": 0,
+   "location_room": 24,
+   "canonical_name": "Wandering Minstrel Eye",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "A wandering minstrel who took one wrong turn years ago and has been performing for skeletons and priests since. Starved for an audience that claps. Knows every corridor by song.",
+   "portrait_description": "A threadbare cheerful minstrel with a battered lute, patched bright clothes gone grey with cave dust, hopeful eyes"
+  },
+  {
+   "id": "lair-of-the-minotaur-black-knight",
+   "name": "Black Knight",
+   "slug": "black-knight",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "You see a knight carrying a sword and outfitted in black chain mail.  He does not look friendly!",
+   "first_encounter_text": "You see a knight carrying a sword and outfitted in black chain mail.  He does not look friendly!",
+   "hp": 15,
+   "current_hp_from": "hp",
+   "agility": 8,
+   "damage_dice": "1d8",
+   "gold": 0,
+   "location_room": 21,
+   "canonical_name": "Black Knight",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "The Black Knight — an armored duelist who guards the crossroads because a vow binds him there. Courteous, implacable, weary of killing trespassers who never observe the forms. Honors courtesy with courtesy.",
+   "acts": [
+    {
+     "verb": "salute",
+     "label": "Salute",
+     "shift": 30,
+     "success_text": "You offer a formal salute. The visor inclines a precise inch. \"At last,\" the knight says, \"one who knows the forms.\""
+    }
+   ],
+   "yields_at_regard": 60,
+   "yield_text": "The black blade lowers. \"Well fought, and well spoken. The vow binds me here — but it says nothing of you passing.\"",
+   "spare_text": "The Black Knight steps aside from the crossroads and salutes you — this time, first.",
+   "portrait_description": "A knight in scarred black plate armor, closed visor, longsword held in a formal guard, standing in a torchlit stone crossroads"
+  },
+  {
+   "id": "lair-of-the-minotaur-priest",
+   "name": "Priest",
+   "slug": "priest",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "You see a man dressed in flowing religious garb.  He is wearing chain mail and is carrying a mace.",
+   "first_encounter_text": "You see a man dressed in flowing religious garb.  He is wearing chain mail and is carrying a mace.",
+   "hp": 11,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "damage_dice": "1d4",
+   "gold": 0,
+   "location_room": 52,
+   "canonical_name": "Priest",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "frees_on_defeat": "larcenous-lil",
+   "persona": "A priest of Kalimar keeping the chapel and its prisoner. A true believer, brittle about it — he knows holding a woman chained to an altar is not holiness, and hates being reminded.",
+   "acts": [
+    {
+     "verb": "shame",
+     "label": "Shame",
+     "shift": 25,
+     "success_text": "\"Does Kalimar smile on chains, priest?\" His mouth works. The censer trembles in his hand."
+    }
+   ],
+   "yields_at_regard": 55,
+   "yields_at_hp": 4,
+   "yield_text": "The priest sinks onto the altar step, head in his hands. \"Take her. It was never... take her.\"",
+   "spare_text": "You leave the priest kneeling at his own altar — praying, this time, like he means it.",
+   "portrait_description": "A gaunt priest in dark ceremonial robes with a bronze censer, hollow-eyed, guilt and zeal fighting in his face, chapel candlelight"
+  },
+  {
+   "id": "lair-of-the-minotaur-high-priest",
+   "name": "High Priest",
+   "slug": "high-priest",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "You see a man dressed in the robes of a high priest.  He wears chain mail and has a morning star in his hand.",
+   "first_encounter_text": "You see a man dressed in the robes of a high priest.  He wears chain mail and has a morning star in his hand.",
+   "hp": 13,
+   "current_hp_from": "hp",
+   "agility": 16,
+   "damage_dice": "1d5",
+   "gold": 0,
+   "location_room": 49,
+   "canonical_name": "High Priest",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "The High Priest of Kalimar — proud, learned, and possessive of his library. More scholar than fighter; his faith is mostly bibliography at this point.",
+   "acts": [
+    {
+     "verb": "kneel",
+     "label": "Kneel",
+     "shift": 20,
+     "success_text": "You bend a knee before the altar of Kalimar. The High Priest's scowl softens into surprised approval."
+    }
+   ],
+   "yields_at_regard": 60,
+   "yields_at_hp": 5,
+   "yield_text": "The High Priest lowers his morning star, breathing hard. \"Enough. Kalimar preaches mercy — occasionally.\"",
+   "spare_text": "He straightens his robes with immense dignity, as though the whole affair had been a doctrinal debate he narrowly won.",
+   "portrait_description": "An imposing elderly high priest in ornate temple vestments holding a morning star, surrounded by candlelight and old books"
+  },
+  {
+   "id": "lair-of-the-minotaur-blacksmith",
+   "name": "Blacksmith",
+   "slug": "blacksmith",
+   "type": "enemy",
+   "friendliness": "random",
+   "description": "You see a huge, burly man wearing the apron and gloves of a blacksmith.  He carries a hammer in his right hand that has strange red stains on it.",
+   "first_encounter_text": "You see a huge, burly man wearing the apron and gloves of a blacksmith.  He carries a hammer in his right hand that has strange red stains on it.",
+   "hp": 12,
+   "current_hp_from": "hp",
+   "agility": 15,
+   "damage_dice": "1d4",
+   "gold": 0,
+   "location_room": 55,
+   "canonical_name": "Blacksmith",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "The lair's blacksmith — a broad, soot-black man who shoes the minotaur's gates and mends the temple's iron. Not evil, just employed. Immensely proud of his anvil.",
+   "acts": [
+    {
+     "verb": "admire",
+     "label": "Admire his work",
+     "shift": 30,
+     "success_text": "You run a thumb along a hinge he forged and say so. The hammer lowers. \"Aye... that one came out well,\" he admits."
+    }
+   ],
+   "yields_at_regard": 55,
+   "yield_text": "The blacksmith sets his hammer on the anvil. \"I'm paid to smith, not to die. We're square.\"",
+   "spare_text": "He nods once, spits in his palm, and offers you his enormous hand.",
+   "portrait_description": "A broad-shouldered soot-covered blacksmith with a leather apron and forge hammer, firelit smithy, gruff but honest face"
+  },
+  {
+   "id": "lair-of-the-minotaur-gypsy",
+   "name": "Gypsy",
+   "slug": "gypsy",
+   "type": "enemy",
+   "friendliness": "random",
+   "description": "You see a carefree Gypsy here, playing an accordion.  His music is so lovely that you almost fail to notice the wicked broad sword lying next to him.",
+   "first_encounter_text": "You see a carefree Gypsy here, playing an accordion.  His music is so lovely that you almost fail to notice the wicked broad sword lying next to him.",
+   "hp": 18,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "damage_dice": "1d8",
+   "gold": 0,
+   "location_room": 90,
+   "canonical_name": "Gypsy",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "A traveling fortune-teller camped in the clearing beyond the lair — sharp-eyed, unhurried, amused by adventurers. Knows more about the castle above than she says.",
+   "acts": [
+    {
+     "verb": "offer",
+     "label": "Cross her palm",
+     "shift": 25,
+     "success_text": "You press a coin into her palm. She smiles like a door unlocking. \"Now THAT is how a fortune begins.\""
+    }
+   ],
+   "yields_at_regard": 55,
+   "yield_text": "She raises her hands, still smiling. \"Peace, traveler. The cards never said we had to be enemies.\"",
+   "spare_text": "\"Wise,\" she says, shuffling her worn cards. \"The hanged man was never your card anyway.\"",
+   "portrait_description": "A weathered traveling fortune teller in layered shawls and coin jewelry beside a camp fire, knowing smile, worn tarot cards"
+  },
+  {
+   "id": "lair-of-the-minotaur-larcenous-lil",
+   "name": "Larcenous Lil",
+   "slug": "larcenous-lil",
+   "type": "npc",
+   "friendliness": "friendly",
+   "description": "You see your old pal, Larcenous Lil! She thanks you for freeing her. She is rubbing her wrists from where the chains cut into her skin, but she otherwise seems unharmed.",
+   "first_encounter_text": "Chained by the altar is a woman you would know anywhere — Larcenous Lil, looking bored with captivity and delighted to see you. \"Took you long enough,\" she says.",
+   "hp": 16,
+   "current_hp_from": "hp",
+   "agility": 18,
+   "damage_dice": "1d6",
+   "gold": 0,
+   "location_room": 52,
+   "canonical_name": "Larcenous Lil",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "escort": true,
+   "persona": "Larcenous Lil — a quick-fingered thief and the player's old friend, held captive in the chapel by the Priest of Kalimar. Sharp-tongued, unrepentant about the botched castle job, secretly relieved to be found. Loyal to those who come back for her.",
+   "portrait_description": "A wiry, sharp-eyed young woman with cropped dark hair and a crooked grin, wearing burglar's leathers, wrists chained but posture defiant"
+  },
+  {
+   "id": "lair-of-the-minotaur-minotaur",
+   "name": "Minotaur",
+   "slug": "minotaur",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "You see before you a minotaur, straight out of the legends with his bulls head, human body, and a very nasty battle axe.  He does not smell very clean.",
+   "first_encounter_text": "The walls shake with a bellow. Out of the dark comes the Minotaur — taller than any man, bull-horned, eyes like coals, a battle axe in its fists. This is the master of the lair, and you are in it.",
+   "hp": 24,
+   "current_hp_from": "hp",
+   "agility": 14,
+   "damage_dice": "1d10",
+   "gold": 0,
+   "location_room": 87,
+   "canonical_name": "Minotaur",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "persona": "The Minotaur of the pit — a huge bull-headed warrior bred in darkness to kill the castle's cast-offs. He has never been spoken to as anything but a monster. Beneath the bellowing is something old and tired that remembers being calf-young. Respects courage; despises pity.",
+   "acts": [
+    {
+     "verb": "salute",
+     "label": "Salute",
+     "shift": 25,
+     "success_text": "You raise your weapon in salute, as to a worthy foe. The Minotaur stops. No one has ever done that."
+    },
+    {
+     "verb": "listen",
+     "label": "Listen",
+     "shift": 20,
+     "success_text": "You lower your guard a fraction and simply listen. The bellowing falters into something almost like words — almost like loneliness."
+    }
+   ],
+   "yields_at_regard": 70,
+   "yields_at_hp": 8,
+   "telegraph": {
+    "every": 3,
+    "name": "horn charge",
+    "multiplier": 2,
+    "warn_text": "The Minotaur drops its head — those horns are aimed at your chest!"
+   },
+   "yield_text": "The great axe drags to the floor. The Minotaur stands heaving, watching you with its coal eyes — waiting to learn what you are.",
+   "spare_text": "You step back and lower your weapon. The Minotaur regards you for a long moment... then turns, and walks into the dark of its lair, unhurried. Behind it, the way stands open.",
+   "portrait_description": "A massive minotaur warrior with great curved horns, coal-red eyes, matted dark fur, gripping a huge battle axe, painterly and grounded, menacing but weary"
+  }
+ ],
+ "items": [
+  {
+   "id": "lair-of-the-minotaur-lantern",
+   "name": "lantern",
+   "slug": "lantern",
+   "type": "misc",
+   "collectible": true,
+   "value": 2,
+   "weight": 4,
+   "description": "You see a lantern here, brightly lighting the room.",
+   "canonical_name": "lantern",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "light_source": true
+  },
+  {
+   "id": "lair-of-the-minotaur-skeleton-key",
+   "name": "skeleton key",
+   "slug": "skeleton-key",
+   "type": "treasure",
+   "collectible": true,
+   "value": 0,
+   "weight": 1,
+   "description": "You see a rusty old skeleton key here.",
+   "canonical_name": "skeleton key",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-boat",
+   "name": "boat",
+   "slug": "boat",
+   "type": "treasure",
+   "collectible": true,
+   "value": 0,
+   "weight": -999,
+   "description": "You see a large, rickety boat. It is too heavy to carry, but you can use it to travel on the river.",
+   "canonical_name": "boat",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-bottle",
+   "name": "bottle",
+   "slug": "bottle",
+   "type": "potion",
+   "collectible": true,
+   "value": 0,
+   "weight": 1,
+   "description": "You see an empty bottle here.  A label reads, \"Acme Red Herring Oil\".",
+   "canonical_name": "bottle",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-water",
+   "name": "water",
+   "slug": "water",
+   "type": "treasure",
+   "collectible": true,
+   "value": 0,
+   "weight": -999,
+   "description": "This is plain, ordinary salt water.",
+   "canonical_name": "water",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-gold-coins",
+   "name": "gold coins",
+   "slug": "gold-coins",
+   "type": "treasure",
+   "collectible": true,
+   "value": 100,
+   "weight": 40,
+   "description": "You see one hundred gold coins, slightly damp from the dirt.",
+   "canonical_name": "gold coins",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-bag",
+   "name": "bag",
+   "slug": "bag",
+   "type": "container",
+   "collectible": false,
+   "value": 20,
+   "weight": -999,
+   "description": "You see a bag here with the label, \"Acme Bag Company\".",
+   "canonical_name": "bag",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-emerald",
+   "name": "emerald",
+   "slug": "emerald",
+   "type": "treasure",
+   "collectible": true,
+   "value": 50,
+   "weight": 5,
+   "description": "You see a large green emerald here.",
+   "canonical_name": "emerald",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-shovel",
+   "name": "shovel",
+   "slug": "shovel",
+   "type": "treasure",
+   "collectible": true,
+   "value": 4,
+   "weight": 10,
+   "description": "You see a small shovel here.",
+   "canonical_name": "shovel",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-jewel-of-molinar",
+   "name": "jewel of molinar",
+   "slug": "jewel-of-molinar",
+   "type": "treasure",
+   "collectible": true,
+   "value": 150,
+   "weight": 10,
+   "description": "You see a jewel (possibly an opal) that glows in the darkness.",
+   "canonical_name": "Jewel of Molinar",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-books",
+   "name": "books",
+   "slug": "books",
+   "type": "treasure",
+   "collectible": true,
+   "value": 250,
+   "weight": 50,
+   "description": "You see many ancient books.  They are written in a language you cannot read.",
+   "canonical_name": "books",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-silver-coins",
+   "name": "silver coins",
+   "slug": "silver-coins",
+   "type": "treasure",
+   "collectible": true,
+   "value": 500,
+   "weight": 100,
+   "description": "You see 5,000 silver coins here!",
+   "canonical_name": "silver coins",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-candlestick",
+   "name": "candlestick",
+   "slug": "candlestick",
+   "type": "treasure",
+   "collectible": true,
+   "value": 75,
+   "weight": 8,
+   "description": "You see a large candlestick made out of gold and silver.",
+   "canonical_name": "candlestick",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-dagger",
+   "name": "dagger",
+   "slug": "dagger",
+   "type": "weapon",
+   "collectible": true,
+   "value": 100,
+   "weight": 5,
+   "description": "You see a small jeweled dagger here.  It has a bright blue gem in the handle, to contrast with the dull red stains on the blade.",
+   "canonical_name": "dagger",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d4",
+   "magic": true
+  },
+  {
+   "id": "lair-of-the-minotaur-anvil",
+   "name": "anvil",
+   "slug": "anvil",
+   "type": "treasure",
+   "collectible": true,
+   "value": 300,
+   "weight": 300,
+   "description": "You see a beautiful anvil here, made out of gold.  The reflections of the light from the lantern in the shine are almost hypnotic.",
+   "canonical_name": "anvil",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-coffin",
+   "name": "coffin",
+   "slug": "coffin",
+   "type": "container",
+   "collectible": false,
+   "value": 0,
+   "weight": -999,
+   "description": "You see a huge, closed coffin here.",
+   "canonical_name": "coffin",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-sword",
+   "name": "sword",
+   "slug": "sword",
+   "type": "weapon",
+   "collectible": true,
+   "value": 50,
+   "weight": 3,
+   "description": "You see a high-quality standard sword.",
+   "canonical_name": "sword",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d8"
+  },
+  {
+   "id": "lair-of-the-minotaur-mace",
+   "name": "mace",
+   "slug": "mace",
+   "type": "weapon",
+   "collectible": true,
+   "value": 10,
+   "weight": 3,
+   "description": "You see a fair quality mace.",
+   "canonical_name": "mace",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d4"
+  },
+  {
+   "id": "lair-of-the-minotaur-morning-star",
+   "name": "morning star",
+   "slug": "morning-star",
+   "type": "weapon",
+   "collectible": true,
+   "value": 100,
+   "weight": 3,
+   "description": "You see a glowing morning star here.",
+   "canonical_name": "morning star",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d6",
+   "magic": true
+  },
+  {
+   "id": "lair-of-the-minotaur-hammer",
+   "name": "hammer",
+   "slug": "hammer",
+   "type": "weapon",
+   "collectible": true,
+   "value": 100,
+   "weight": 3,
+   "description": "You see a hammer which can be used as either a metal-working tool or a war hammer.",
+   "canonical_name": "hammer",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d3",
+   "magic": true
+  },
+  {
+   "id": "lair-of-the-minotaur-broad-sword",
+   "name": "broad sword",
+   "slug": "broad-sword",
+   "type": "weapon",
+   "collectible": true,
+   "value": 100,
+   "weight": 3,
+   "description": "You see a nasty-looking broad sword.",
+   "canonical_name": "broad sword",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d7",
+   "magic": true
+  },
+  {
+   "id": "lair-of-the-minotaur-short-sword",
+   "name": "short sword",
+   "slug": "short-sword",
+   "type": "weapon",
+   "collectible": true,
+   "value": 40,
+   "weight": 3,
+   "description": "You see a sharp short sword with your friend's initials on it.",
+   "canonical_name": "short sword",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d5"
+  },
+  {
+   "id": "lair-of-the-minotaur-battle-axe",
+   "name": "battle axe",
+   "slug": "battle-axe",
+   "type": "weapon",
+   "collectible": true,
+   "value": 100,
+   "weight": 5,
+   "description": "You see a huge battle axe here, with a bull's head carved into the handle.",
+   "canonical_name": "battle axe",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
+   "damage_dice": "1d10",
+   "magic": true
+  },
+  {
+   "id": "lair-of-the-minotaur-huge-stone",
+   "name": "huge stone",
+   "slug": "huge-stone",
+   "type": "treasure",
+   "collectible": true,
+   "value": 0,
+   "weight": -999,
+   "description": "You see a huge stone here, with a hole in the top that you can neither see nor reach into.",
+   "canonical_name": "huge stone",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-leaflet",
+   "name": "leaflet",
+   "slug": "leaflet",
+   "type": "scroll",
+   "collectible": true,
+   "value": 0,
+   "weight": 1,
+   "description": "You see a tattered sheet of paper lying at your feet.  It looks as if every adventurer in the land has read it.",
+   "canonical_name": "leaflet",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  },
+  {
+   "id": "lair-of-the-minotaur-silver-key",
+   "name": "silver key",
+   "slug": "silver-key",
+   "type": "treasure",
+   "collectible": true,
+   "value": 10,
+   "weight": 1,
+   "description": "The priest dropped a shiny silver key with a skull-shaped handle.",
+   "canonical_name": "silver key",
+   "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)"
+  }
+ ],
+ "placements": [
+  {
+   "item_slug": "lantern",
+   "room_number": 1,
+   "hidden": false
+  },
+  {
+   "item_slug": "boat",
+   "room_number": 6,
+   "hidden": false
+  },
+  {
+   "item_slug": "bottle",
+   "room_number": 8,
+   "hidden": false
+  },
+  {
+   "item_slug": "bag",
+   "room_number": 33,
+   "hidden": false
+  },
+  {
+   "item_slug": "emerald",
+   "room_number": 5,
+   "hidden": true,
+   "container": "huge-stone"
+  },
+  {
+   "item_slug": "shovel",
+   "room_number": 45,
+   "hidden": false
+  },
+  {
+   "item_slug": "jewel-of-molinar",
+   "room_number": 43,
+   "hidden": false
+  },
+  {
+   "item_slug": "books",
+   "room_number": 49,
+   "hidden": false
+  },
+  {
+   "item_slug": "silver-coins",
+   "room_number": 51,
+   "hidden": false
+  },
+  {
+   "item_slug": "candlestick",
+   "room_number": 52,
+   "hidden": false
+  },
+  {
+   "item_slug": "dagger",
+   "room_number": 52,
+   "hidden": false
+  },
+  {
+   "item_slug": "anvil",
+   "room_number": 55,
+   "hidden": false
+  },
+  {
+   "item_slug": "coffin",
+   "room_number": 4,
+   "hidden": false
+  },
+  {
+   "item_slug": "sword",
+   "room_number": 21,
+   "hidden": true,
+   "after_defeating": "black-knight"
+  },
+  {
+   "item_slug": "mace",
+   "room_number": 52,
+   "hidden": true,
+   "after_defeating": "priest"
+  },
+  {
+   "item_slug": "morning-star",
+   "room_number": 49,
+   "hidden": true,
+   "after_defeating": "high-priest"
+  },
+  {
+   "item_slug": "hammer",
+   "room_number": 55,
+   "hidden": true,
+   "after_defeating": "blacksmith"
+  },
+  {
+   "item_slug": "broad-sword",
+   "room_number": 90,
+   "hidden": true,
+   "after_defeating": "gypsy"
+  },
+  {
+   "item_slug": "short-sword",
+   "room_number": 21,
+   "hidden": true,
+   "after_defeating": "black-knight"
+  },
+  {
+   "item_slug": "battle-axe",
+   "room_number": 87,
+   "hidden": true,
+   "after_defeating": "minotaur"
+  },
+  {
+   "item_slug": "huge-stone",
+   "room_number": 5,
+   "hidden": false
+  },
+  {
+   "item_slug": "leaflet",
+   "room_number": 1,
+   "hidden": false
+  },
+  {
+   "item_slug": "silver-key",
+   "room_number": 52,
+   "hidden": true,
+   "after_defeating": "priest"
+  }
+ ]
+}
