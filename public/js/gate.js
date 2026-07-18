@@ -24,7 +24,7 @@ function card(adventure) {
     if (adventure.id) {
       const img = document.createElement('img');
       img.className = 'gate-cover-img';
-      img.src = `scenes/${adventure.id}/cover.png`;
+      img.src = `scenes/${adventure.id}/cover.png?v=2`; // bump when a cover is re-authored (week-long media cache)
       img.alt = adventure.name ?? '';
       img.onload = () => { cover.textContent = ''; cover.appendChild(img); };
       img.onerror = () => {};
