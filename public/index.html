@@ -237,6 +237,18 @@
     #game-screen.reading #readied-bar,
     #game-screen.reading #location-title,
     #game-screen.reading #thinking { display: none; }
+    /* ── Prologue (story setup screen) ── */
+    #prologue { position: fixed; inset: 0; z-index: 70; background: rgba(4,3,2,0.9); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+    #prologue[hidden] { display: none; }
+    .prologue-panel { width: min(680px, 94vw); max-height: 90vh; overflow: auto; background: linear-gradient(160deg, #17110a, #0d0906); border: 1px solid var(--gold-dim); border-radius: 12px; box-shadow: 0 0 90px rgba(0,0,0,0.9); }
+    #prologue-cover { height: clamp(140px, 24vh, 220px); background-size: cover; background-position: center; border-bottom: 1px solid var(--gold-dim); }
+    .prologue-body { padding: 20px 28px 26px; }
+    .prologue-title { font-family: var(--font-head); font-size: clamp(1.3rem, 3vw, 1.9rem); color: var(--gold); letter-spacing: 0.06em; }
+    .prologue-byline { font-size: 0.76rem; font-style: italic; color: rgba(200,168,75,0.65); margin: 4px 0 14px; }
+    .prologue-text p { margin: 0 0 12px; line-height: 1.65; color: #e6dcc6; font-size: 0.98rem; }
+    #prologue-begin { display: block; margin: 18px auto 0; padding: 10px 26px; font-family: var(--font-head); font-size: 0.9rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); background: rgba(200,168,75,0.08); border: 1px solid var(--gold); border-radius: 6px; cursor: pointer; }
+    #prologue-begin:hover { background: rgba(200,168,75,0.2); }
+
     /* ── Journal map (fog-of-war, hand-drawn feel) ── */
     #hud-map-btn[hidden] { display: none; }
     #journal-map { position: fixed; inset: 0; z-index: 60; background: rgba(6,4,2,0.78); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
@@ -1035,6 +1047,18 @@
   </div>
 
   <!-- ═ HALL OF RECORDS (the Archivist's codex + tribute) ═ -->
+  <div id="prologue" hidden>
+    <div class="prologue-panel">
+      <div id="prologue-cover" aria-hidden="true"></div>
+      <div class="prologue-body">
+        <div id="prologue-title" class="prologue-title"></div>
+        <div id="prologue-byline" class="prologue-byline"></div>
+        <div id="prologue-text" class="prologue-text"></div>
+        <button id="prologue-begin" type="button">Begin the Adventure &#9656;</button>
+      </div>
+    </div>
+  </div>
+
   <div id="journal-map" hidden>
     <div class="jm-panel">
       <button id="journal-map-close" aria-label="Close map">×</button>

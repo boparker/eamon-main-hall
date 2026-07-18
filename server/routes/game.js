@@ -1467,7 +1467,20 @@ export function createGameRouter(rawDeps = {}) {
         knownAdventureIds: new Set(adventures.map((manifest) => manifest.adventure.id)),
       });
       if (!runRow) return error(res, 404, 'Could not start adventure for this character.', 'not-found');
-      return res.status(201).json(roomResponse({ adventure, run: rowRun(runRow), character, event: { type: 'start_adventure' }, intent: { type: 'start_adventure', source: 'rules' } }));
+      const startResponse = roomResponse({ adventure, run: rowRun(runRow), character, event: { type: 'start_adventure' }, intent: { type: 'start_adventure', source: 'rules' } });
+      // The story setup: the original adventures opened with framing text
+      // (Lil's botched heist, the throne room, the trap-door lever) before
+      // room one. The client shows it as a full-screen prologue.
+      if (adventure.adventure.intro) {
+        startResponse.state.intro = {
+          title: adventure.adventure.name,
+          author: adventure.adventure.author ?? null,
+          year: adventure.adventure.year ?? null,
+          text: adventure.adventure.intro,
+          cover: `scenes/${adventure.adventure.id}/cover.png?v=2`,
+        };
+      }
+      return res.status(201).json(startResponse);
     } catch (err) {
       return next(err);
     }

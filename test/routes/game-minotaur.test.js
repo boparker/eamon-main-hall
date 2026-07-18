@@ -195,3 +195,19 @@ test('the coffin: opening it springs the skeleton ambush', async () => {
   assert.match(open.body.text, /skeleton/i);
   assert.ok(open.body.state.combat, 'skeleton ambush starts combat');
 });
+
+test('starting the adventure carries the story prologue', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const created = await request(app, 'POST', '/api/game/characters', {
+    ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 10, gold: 0,
+    adventuresCompleted: ['beginners-cave'],
+  });
+  const started = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId: created.body.state.character.id, adventureId: 'lair-of-the-minotaur' });
+  const intro = started.body.state.intro;
+  assert.ok(intro, 'start response carries state.intro');
+  assert.equal(intro.title, 'The Lair of the Minotaur');
+  assert.equal(intro.author, 'Donald Brown');
+  assert.match(intro.text, /Larcenous Lil/);
+  assert.match(intro.cover, /cover\.png/);
+});
