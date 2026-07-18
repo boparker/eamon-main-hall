@@ -132,6 +132,8 @@ function adventureSummary(manifest) {
     name: manifest.adventure.name,
     description: manifest.adventure.description ?? '',
     difficulty: manifest.adventure.difficulty ?? null,
+    author: manifest.adventure.author ?? null,
+    year: manifest.adventure.year ?? null,
     startRoom: manifest.adventure.start_room,
   };
 }
@@ -949,7 +951,7 @@ function recordsResponse({ player, character, characters, adventures, prefix = '
     event: { type: 'hall_records' },
     text: prefix || `The Archivist looks up from a great ledger and inclines his head. "Welcome to the Hall of Records${character?.name ? `, ${character.name}` : ''}. Here the Guild keeps its lore — how an adventurer's mettle is measured, the ways of arms and mercy, and the memory of those who first lit this lamp. Read a while, and go the wiser for it."${hasQuill(character) ? '' : ` On the counter rests a long grey quill in a case of worn leather, marked ${QUILL.price} gold.`}`,
     choices: [...(hasQuill(character) ? [] : [`The Chronicler's Quill (${QUILL.price} gold)`]), 'Return to Great Hall'],
-    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true, ledger: reputationRead(computeReputation(character?.chronicle), character?.name), quill: { owned: hasQuill(character), price: QUILL.price }, note: prefix || null } } }),
+    state: hallState({ player, character, characters, adventures, extra: { locationTitle: HALL_OF_RECORDS_TITLE, records: { open: true, ledger: reputationRead(computeReputation(character?.chronicle), character?.name), quill: { owned: hasQuill(character), price: QUILL.price }, note: prefix || null, authors: adventures.map((a) => ({ name: a.adventure.name, author: a.adventure.author ?? 'author unknown', year: a.adventure.year ?? null })) } } }),
   });
 }
 

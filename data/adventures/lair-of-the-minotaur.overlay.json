@@ -1,138 +1,242 @@
 {
-  "skip_monsters": ["slippery-sven"],
-  "adventure": {
-    "difficulty": 2,
-    "image_preference": "generated"
-  },
-  "mechanics": {
-    "water_rooms": [9, 10, 11, 12, 13, 14, 15, 16],
-    "shore_rooms": [6, 7, 8, 17, 23, 27],
-    "vehicle": { "item": "boat", "board_text": "You push off — the boat rocks, then steadies under you.", "leave_text": "You drag the boat up onto the shore.", "blocked_text": "The river is far too swift to swim. You need a boat." },
-    "death_rooms": { "16": "Light ahead — a grate blocks the river. The current is faster than your arms. The boat splinters against the iron, and the water takes you." },
-    "say_triggers": [
-      { "word": "magic", "near_item": "huge-stone", "reveals": "emerald", "text": "As you say the word, there is a small eruption from the center of the stone and an emerald pops out of it.", "once": true }
-    ],
-    "dig_sites": [
-      { "tool": "shovel", "room_number": 27, "reveals": "gold-coins", "found_text": "The shovel strikes something — a rotted pouch, heavy with gold coins!", "nothing_text": "You dig a while and find only wet sand." }
-    ],
-    "cursed_items": [
-      { "slug": "jewel-of-molinar", "damage": "1d10", "text": "As you touch the jewel, an electric shock runs up your arm. You hear a voice chuckling as it says, \"I told you not to touch it.\"" }
-    ],
-    "guarded_items": [
-      { "slug": "books", "guard": "high-priest", "text": "The High Priest snaps, \"Hey! Get your hands off my books!\"" }
-    ]
-  },
-  "characters": [
-    {
-      "slug": "larcenous-lil",
-      "location_room": 52,
-      "type": "npc",
-      "friendliness": "friendly",
-      "escort": true,
-      "persona": "Larcenous Lil — a quick-fingered thief and the player's old friend, held captive in the chapel by the Priest of Kalimar. Sharp-tongued, unrepentant about the botched castle job, secretly relieved to be found. Loyal to those who come back for her.",
-      "first_encounter_text": "Chained by the altar is a woman you would know anywhere — Larcenous Lil, looking bored with captivity and delighted to see you. \"Took you long enough,\" she says.",
-      "portrait_description": "A wiry, sharp-eyed young woman with cropped dark hair and a crooked grin, wearing burglar's leathers, wrists chained but posture defiant"
-    },
-    {
-      "slug": "minotaur",
-      "persona": "The Minotaur of the pit — a huge bull-headed warrior bred in darkness to kill the castle's cast-offs. He has never been spoken to as anything but a monster. Beneath the bellowing is something old and tired that remembers being calf-young. Respects courage; despises pity.",
-      "first_encounter_text": "The walls shake with a bellow. Out of the dark comes the Minotaur — taller than any man, bull-horned, eyes like coals, a battle axe in its fists. This is the master of the lair, and you are in it.",
-      "acts": [
-        { "verb": "salute", "label": "Salute", "shift": 25, "success_text": "You raise your weapon in salute, as to a worthy foe. The Minotaur stops. No one has ever done that." },
-        { "verb": "listen", "label": "Listen", "shift": 20, "success_text": "You lower your guard a fraction and simply listen. The bellowing falters into something almost like words — almost like loneliness." }
-      ],
-      "yields_at_regard": 70,
-      "yields_at_hp": 8,
-      "telegraph": { "every": 3, "name": "horn charge", "multiplier": 2, "warn_text": "The Minotaur drops its head — those horns are aimed at your chest!" },
-      "yield_text": "The great axe drags to the floor. The Minotaur stands heaving, watching you with its coal eyes — waiting to learn what you are.",
-      "spare_text": "You step back and lower your weapon. The Minotaur regards you for a long moment... then turns, and walks into the dark of its lair, unhurried. Behind it, the way stands open.",
-      "portrait_description": "A massive minotaur warrior with great curved horns, coal-red eyes, matted dark fur, gripping a huge battle axe, painterly and grounded, menacing but weary"
-    },
-    {
-      "slug": "black-knight",
-      "persona": "The Black Knight — an armored duelist who guards the crossroads because a vow binds him there. Courteous, implacable, weary of killing trespassers who never observe the forms. Honors courtesy with courtesy.",
-      "acts": [
-        { "verb": "salute", "label": "Salute", "shift": 30, "success_text": "You offer a formal salute. The visor inclines a precise inch. \"At last,\" the knight says, \"one who knows the forms.\"" }
-      ],
-      "yields_at_regard": 60,
-      "yield_text": "The black blade lowers. \"Well fought, and well spoken. The vow binds me here — but it says nothing of you passing.\"",
-      "spare_text": "The Black Knight steps aside from the crossroads and salutes you — this time, first.",
-      "portrait_description": "A knight in scarred black plate armor, closed visor, longsword held in a formal guard, standing in a torchlit stone crossroads"
-    },
-    {
-      "slug": "priest",
-      "frees_on_defeat": "larcenous-lil",
-      "persona": "A priest of Kalimar keeping the chapel and its prisoner. A true believer, brittle about it — he knows holding a woman chained to an altar is not holiness, and hates being reminded.",
-      "acts": [
-        { "verb": "shame", "label": "Shame", "shift": 25, "success_text": "\"Does Kalimar smile on chains, priest?\" His mouth works. The censer trembles in his hand." }
-      ],
-      "yields_at_regard": 55,
-      "yields_at_hp": 4,
-      "yield_text": "The priest sinks onto the altar step, head in his hands. \"Take her. It was never... take her.\"",
-      "spare_text": "You leave the priest kneeling at his own altar — praying, this time, like he means it.",
-      "portrait_description": "A gaunt priest in dark ceremonial robes with a bronze censer, hollow-eyed, guilt and zeal fighting in his face, chapel candlelight"
-    },
-    {
-      "slug": "high-priest",
-      "persona": "The High Priest of Kalimar — proud, learned, and possessive of his library. More scholar than fighter; his faith is mostly bibliography at this point.",
-      "acts": [
-        { "verb": "kneel", "label": "Kneel", "shift": 20, "success_text": "You bend a knee before the altar of Kalimar. The High Priest's scowl softens into surprised approval." }
-      ],
-      "yields_at_regard": 60,
-      "yields_at_hp": 5,
-      "yield_text": "The High Priest lowers his morning star, breathing hard. \"Enough. Kalimar preaches mercy — occasionally.\"",
-      "spare_text": "He straightens his robes with immense dignity, as though the whole affair had been a doctrinal debate he narrowly won.",
-      "portrait_description": "An imposing elderly high priest in ornate temple vestments holding a morning star, surrounded by candlelight and old books"
-    },
-    {
-      "slug": "blacksmith",
-      "persona": "The lair's blacksmith — a broad, soot-black man who shoes the minotaur's gates and mends the temple's iron. Not evil, just employed. Immensely proud of his anvil.",
-      "acts": [
-        { "verb": "admire", "label": "Admire his work", "shift": 30, "success_text": "You run a thumb along a hinge he forged and say so. The hammer lowers. \"Aye... that one came out well,\" he admits." }
-      ],
-      "yields_at_regard": 55,
-      "yield_text": "The blacksmith sets his hammer on the anvil. \"I'm paid to smith, not to die. We're square.\"",
-      "spare_text": "He nods once, spits in his palm, and offers you his enormous hand.",
-      "portrait_description": "A broad-shouldered soot-covered blacksmith with a leather apron and forge hammer, firelit smithy, gruff but honest face"
-    },
-    {
-      "slug": "gypsy",
-      "persona": "A traveling fortune-teller camped in the clearing beyond the lair — sharp-eyed, unhurried, amused by adventurers. Knows more about the castle above than she says.",
-      "acts": [
-        { "verb": "offer", "label": "Cross her palm", "shift": 25, "success_text": "You press a coin into her palm. She smiles like a door unlocking. \"Now THAT is how a fortune begins.\"" }
-      ],
-      "yields_at_regard": 55,
-      "yield_text": "She raises her hands, still smiling. \"Peace, traveler. The cards never said we had to be enemies.\"",
-      "spare_text": "\"Wise,\" she says, shuffling her worn cards. \"The hanged man was never your card anyway.\"",
-      "portrait_description": "A weathered traveling fortune teller in layered shawls and coin jewelry beside a camp fire, knowing smile, worn tarot cards"
-    },
-    {
-      "slug": "killer-bunny",
-      "persona": "A small white rabbit with bottomless black eyes and a taste for blood. It cannot be reasoned with, exactly — but it can be respected from a distance.",
-      "first_encounter_text": "On the bank sits a small, soft, white rabbit. It turns its head. Its eyes are wrong. Its teeth are very, very wrong.",
-      "acts": [
-        { "verb": "freeze", "label": "Stay very still", "shift": 35, "success_text": "You go absolutely still. The rabbit's nose twitches once, twice... and it loses interest in you entirely." }
-      ],
-      "yields_at_regard": 60,
-      "yield_text": "The rabbit sits back on its haunches and begins washing its face, as though you had never been worth the trouble.",
-      "spare_text": "You back away slowly. The rabbit watches you go with its terrible little eyes. You feel you have survived something significant.",
-      "portrait_description": "A small innocent-looking white rabbit with subtly wrong pitch-black eyes and a fleck of red at its mouth, sitting by a dark river bank"
-    },
-    {
-      "slug": "wandering-minstrel-eye",
-      "name": "Wandering Minstrel",
-      "persona": "A wandering minstrel who took one wrong turn years ago and has been performing for skeletons and priests since. Starved for an audience that claps. Knows every corridor by song.",
-      "portrait_description": "A threadbare cheerful minstrel with a battered lute, patched bright clothes gone grey with cave dust, hopeful eyes"
-    },
-    {
-      "slug": "skeleton",
-      "first_encounter_text": "The coffin lid bursts open — a skeleton lunges out, ten sharp bony fingers reaching for your throat!"
-    }
+ "skip_monsters": [
+  "slippery-sven"
+ ],
+ "adventure": {
+  "difficulty": 2,
+  "image_preference": "generated",
+  "author": "Donald Brown",
+  "year": 1980
+ },
+ "mechanics": {
+  "water_rooms": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16
   ],
-  "locations": [
-    { "room_number": 1, "name": "Beneath the Trap Door" },
-    { "room_number": 16, "name": "The Grate" },
-    { "room_number": 52, "name": "The Chapel of Kalimar" },
-    { "room_number": 87, "name": "The Lair of the Minotaur" }
+  "shore_rooms": [
+   6,
+   7,
+   8,
+   17,
+   23,
+   27
+  ],
+  "vehicle": {
+   "item": "boat",
+   "board_text": "You push off \u2014 the boat rocks, then steadies under you.",
+   "leave_text": "You drag the boat up onto the shore.",
+   "blocked_text": "The river is far too swift to swim. You need a boat."
+  },
+  "death_rooms": {
+   "16": "Light ahead \u2014 a grate blocks the river. The current is faster than your arms. The boat splinters against the iron, and the water takes you."
+  },
+  "say_triggers": [
+   {
+    "word": "magic",
+    "near_item": "huge-stone",
+    "reveals": "emerald",
+    "text": "As you say the word, there is a small eruption from the center of the stone and an emerald pops out of it.",
+    "once": true
+   }
+  ],
+  "dig_sites": [
+   {
+    "tool": "shovel",
+    "room_number": 27,
+    "reveals": "gold-coins",
+    "found_text": "The shovel strikes something \u2014 a rotted pouch, heavy with gold coins!",
+    "nothing_text": "You dig a while and find only wet sand."
+   }
+  ],
+  "cursed_items": [
+   {
+    "slug": "jewel-of-molinar",
+    "damage": "1d10",
+    "text": "As you touch the jewel, an electric shock runs up your arm. You hear a voice chuckling as it says, \"I told you not to touch it.\""
+   }
+  ],
+  "guarded_items": [
+   {
+    "slug": "books",
+    "guard": "high-priest",
+    "text": "The High Priest snaps, \"Hey! Get your hands off my books!\""
+   }
   ]
+ },
+ "characters": [
+  {
+   "slug": "larcenous-lil",
+   "location_room": 52,
+   "type": "npc",
+   "friendliness": "friendly",
+   "escort": true,
+   "persona": "Larcenous Lil \u2014 a quick-fingered thief and the player's old friend, held captive in the chapel by the Priest of Kalimar. Sharp-tongued, unrepentant about the botched castle job, secretly relieved to be found. Loyal to those who come back for her.",
+   "first_encounter_text": "Chained by the altar is a woman you would know anywhere \u2014 Larcenous Lil, looking bored with captivity and delighted to see you. \"Took you long enough,\" she says.",
+   "portrait_description": "A wiry, sharp-eyed young woman with cropped dark hair and a crooked grin, wearing burglar's leathers, wrists chained but posture defiant"
+  },
+  {
+   "slug": "minotaur",
+   "persona": "The Minotaur of the pit \u2014 a huge bull-headed warrior bred in darkness to kill the castle's cast-offs. He has never been spoken to as anything but a monster. Beneath the bellowing is something old and tired that remembers being calf-young. Respects courage; despises pity.",
+   "first_encounter_text": "The walls shake with a bellow. Out of the dark comes the Minotaur \u2014 taller than any man, bull-horned, eyes like coals, a battle axe in its fists. This is the master of the lair, and you are in it.",
+   "acts": [
+    {
+     "verb": "salute",
+     "label": "Salute",
+     "shift": 25,
+     "success_text": "You raise your weapon in salute, as to a worthy foe. The Minotaur stops. No one has ever done that."
+    },
+    {
+     "verb": "listen",
+     "label": "Listen",
+     "shift": 20,
+     "success_text": "You lower your guard a fraction and simply listen. The bellowing falters into something almost like words \u2014 almost like loneliness."
+    }
+   ],
+   "yields_at_regard": 70,
+   "yields_at_hp": 8,
+   "telegraph": {
+    "every": 3,
+    "name": "horn charge",
+    "multiplier": 2,
+    "warn_text": "The Minotaur drops its head \u2014 those horns are aimed at your chest!"
+   },
+   "yield_text": "The great axe drags to the floor. The Minotaur stands heaving, watching you with its coal eyes \u2014 waiting to learn what you are.",
+   "spare_text": "You step back and lower your weapon. The Minotaur regards you for a long moment... then turns, and walks into the dark of its lair, unhurried. Behind it, the way stands open.",
+   "portrait_description": "A massive minotaur warrior with great curved horns, coal-red eyes, matted dark fur, gripping a huge battle axe, painterly and grounded, menacing but weary"
+  },
+  {
+   "slug": "black-knight",
+   "persona": "The Black Knight \u2014 an armored duelist who guards the crossroads because a vow binds him there. Courteous, implacable, weary of killing trespassers who never observe the forms. Honors courtesy with courtesy.",
+   "acts": [
+    {
+     "verb": "salute",
+     "label": "Salute",
+     "shift": 30,
+     "success_text": "You offer a formal salute. The visor inclines a precise inch. \"At last,\" the knight says, \"one who knows the forms.\""
+    }
+   ],
+   "yields_at_regard": 60,
+   "yield_text": "The black blade lowers. \"Well fought, and well spoken. The vow binds me here \u2014 but it says nothing of you passing.\"",
+   "spare_text": "The Black Knight steps aside from the crossroads and salutes you \u2014 this time, first.",
+   "portrait_description": "A knight in scarred black plate armor, closed visor, longsword held in a formal guard, standing in a torchlit stone crossroads"
+  },
+  {
+   "slug": "priest",
+   "frees_on_defeat": "larcenous-lil",
+   "persona": "A priest of Kalimar keeping the chapel and its prisoner. A true believer, brittle about it \u2014 he knows holding a woman chained to an altar is not holiness, and hates being reminded.",
+   "acts": [
+    {
+     "verb": "shame",
+     "label": "Shame",
+     "shift": 25,
+     "success_text": "\"Does Kalimar smile on chains, priest?\" His mouth works. The censer trembles in his hand."
+    }
+   ],
+   "yields_at_regard": 55,
+   "yields_at_hp": 4,
+   "yield_text": "The priest sinks onto the altar step, head in his hands. \"Take her. It was never... take her.\"",
+   "spare_text": "You leave the priest kneeling at his own altar \u2014 praying, this time, like he means it.",
+   "portrait_description": "A gaunt priest in dark ceremonial robes with a bronze censer, hollow-eyed, guilt and zeal fighting in his face, chapel candlelight"
+  },
+  {
+   "slug": "high-priest",
+   "persona": "The High Priest of Kalimar \u2014 proud, learned, and possessive of his library. More scholar than fighter; his faith is mostly bibliography at this point.",
+   "acts": [
+    {
+     "verb": "kneel",
+     "label": "Kneel",
+     "shift": 20,
+     "success_text": "You bend a knee before the altar of Kalimar. The High Priest's scowl softens into surprised approval."
+    }
+   ],
+   "yields_at_regard": 60,
+   "yields_at_hp": 5,
+   "yield_text": "The High Priest lowers his morning star, breathing hard. \"Enough. Kalimar preaches mercy \u2014 occasionally.\"",
+   "spare_text": "He straightens his robes with immense dignity, as though the whole affair had been a doctrinal debate he narrowly won.",
+   "portrait_description": "An imposing elderly high priest in ornate temple vestments holding a morning star, surrounded by candlelight and old books"
+  },
+  {
+   "slug": "blacksmith",
+   "persona": "The lair's blacksmith \u2014 a broad, soot-black man who shoes the minotaur's gates and mends the temple's iron. Not evil, just employed. Immensely proud of his anvil.",
+   "acts": [
+    {
+     "verb": "admire",
+     "label": "Admire his work",
+     "shift": 30,
+     "success_text": "You run a thumb along a hinge he forged and say so. The hammer lowers. \"Aye... that one came out well,\" he admits."
+    }
+   ],
+   "yields_at_regard": 55,
+   "yield_text": "The blacksmith sets his hammer on the anvil. \"I'm paid to smith, not to die. We're square.\"",
+   "spare_text": "He nods once, spits in his palm, and offers you his enormous hand.",
+   "portrait_description": "A broad-shouldered soot-covered blacksmith with a leather apron and forge hammer, firelit smithy, gruff but honest face"
+  },
+  {
+   "slug": "gypsy",
+   "persona": "A traveling fortune-teller camped in the clearing beyond the lair \u2014 sharp-eyed, unhurried, amused by adventurers. Knows more about the castle above than she says.",
+   "acts": [
+    {
+     "verb": "offer",
+     "label": "Cross her palm",
+     "shift": 25,
+     "success_text": "You press a coin into her palm. She smiles like a door unlocking. \"Now THAT is how a fortune begins.\""
+    }
+   ],
+   "yields_at_regard": 55,
+   "yield_text": "She raises her hands, still smiling. \"Peace, traveler. The cards never said we had to be enemies.\"",
+   "spare_text": "\"Wise,\" she says, shuffling her worn cards. \"The hanged man was never your card anyway.\"",
+   "portrait_description": "A weathered traveling fortune teller in layered shawls and coin jewelry beside a camp fire, knowing smile, worn tarot cards"
+  },
+  {
+   "slug": "killer-bunny",
+   "persona": "A small white rabbit with bottomless black eyes and a taste for blood. It cannot be reasoned with, exactly \u2014 but it can be respected from a distance.",
+   "first_encounter_text": "On the bank sits a small, soft, white rabbit. It turns its head. Its eyes are wrong. Its teeth are very, very wrong.",
+   "acts": [
+    {
+     "verb": "freeze",
+     "label": "Stay very still",
+     "shift": 35,
+     "success_text": "You go absolutely still. The rabbit's nose twitches once, twice... and it loses interest in you entirely."
+    }
+   ],
+   "yields_at_regard": 60,
+   "yield_text": "The rabbit sits back on its haunches and begins washing its face, as though you had never been worth the trouble.",
+   "spare_text": "You back away slowly. The rabbit watches you go with its terrible little eyes. You feel you have survived something significant.",
+   "portrait_description": "A small innocent-looking white rabbit with subtly wrong pitch-black eyes and a fleck of red at its mouth, sitting by a dark river bank"
+  },
+  {
+   "slug": "wandering-minstrel-eye",
+   "name": "Wandering Minstrel",
+   "persona": "A wandering minstrel who took one wrong turn years ago and has been performing for skeletons and priests since. Starved for an audience that claps. Knows every corridor by song.",
+   "portrait_description": "A threadbare cheerful minstrel with a battered lute, patched bright clothes gone grey with cave dust, hopeful eyes"
+  },
+  {
+   "slug": "skeleton",
+   "first_encounter_text": "The coffin lid bursts open \u2014 a skeleton lunges out, ten sharp bony fingers reaching for your throat!"
+  }
+ ],
+ "locations": [
+  {
+   "room_number": 1,
+   "name": "Beneath the Trap Door"
+  },
+  {
+   "room_number": 16,
+   "name": "The Grate"
+  },
+  {
+   "room_number": 52,
+   "name": "The Chapel of Kalimar"
+  },
+  {
+   "room_number": 87,
+   "name": "The Lair of the Minotaur"
+  }
+ ]
 }

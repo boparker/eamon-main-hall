@@ -1,1319 +1,1320 @@
 {
-  "adventure": {
-    "id": "beginners-cave",
-    "name": "The Beginner's Cave",
-    "description": "The Beginner's Cave has been set up by the Warlord as a service to all Free Adventurers, giving them a chance to try their skills in a not-too-dangerous setting.",
-    "artist_style": "Eyvind Earle",
-    "inspiration_artist": "Eyvind Earle Sleeping Beauty 1959",
-    "style_prompt_prefix": "Eyvind Earle Sleeping Beauty 1959 style, geometric angular Gothic architecture, jewel-tone palette of deep purples and midnight blues with burnished gold accents, Byzantine and Persian miniature influence, architectural depth with layered planes, painterly backgrounds with light-defined detail, flat graphic characters with subtle shading, Celtic ornamental details",
-    "music_track": "cave-static-teeth.mp3",
-    "difficulty": 1,
-    "author": "Donald Brown",
-    "image_preference": "upload",
-    "intro": "You stand at the entrance to a cave. A sign over the entrance reads \"Beginners Only!\" Your heart quickens as you grip your weapon. Whatever lies within, fame and fortune await the brave — or a quick death awaits the foolish.",
-    "start_room": 1,
-    "full_description": "Let us all toast the Warlord for restocking the cave daily!\r\n\r\nOnly beginners are supposed to enter the cave (but any character can). Knight Marshall William Misslefire is on duty to prevent inexperienced adventurers from doing anything really foolish (like entering the cave with no weapon at all!).\r\n\r\nTo return to the Main Hall, just leave the cave (by getting to the cave entrance and moving north). Once you have done so, Sam Slicker, the local dealer for treasures and booty, will pay you in gold for any items that you have collected (with the price adjusted slightly depending upon your charisma).\r\n\r\nCONVERSION NOTES:\r\n\r\nThis is the true and original Beginner's Cave and actually the first Classic Eamon adventure, written by Donald Brown nearly three decades ago. In an attempt to preserve the flavor of the Classic Eamon experience, very little new content was added upon conversion to Eamon Deluxe conversion. Just the standard Eamon Deluxe enhancements and the addition of a few embedded artifacts which were  already hinted at in the descriptions. Although designed as a simple outing for new characters, the Beginner's Cave captures the unique experience of Eamon very well and is, in many ways, one of the best adventures ever written for it.",
-    "text_source": "kdechant/eamon adventure/data/001-the-beginners-cave.json"
+ "adventure": {
+  "id": "beginners-cave",
+  "name": "The Beginner's Cave",
+  "description": "The Beginner's Cave has been set up by the Warlord as a service to all Free Adventurers, giving them a chance to try their skills in a not-too-dangerous setting.",
+  "artist_style": "Eyvind Earle",
+  "inspiration_artist": "Eyvind Earle Sleeping Beauty 1959",
+  "style_prompt_prefix": "Eyvind Earle Sleeping Beauty 1959 style, geometric angular Gothic architecture, jewel-tone palette of deep purples and midnight blues with burnished gold accents, Byzantine and Persian miniature influence, architectural depth with layered planes, painterly backgrounds with light-defined detail, flat graphic characters with subtle shading, Celtic ornamental details",
+  "music_track": "cave-static-teeth.mp3",
+  "difficulty": 1,
+  "author": "Donald Brown",
+  "image_preference": "upload",
+  "intro": "You stand at the entrance to a cave. A sign over the entrance reads \"Beginners Only!\" Your heart quickens as you grip your weapon. Whatever lies within, fame and fortune await the brave \u2014 or a quick death awaits the foolish.",
+  "start_room": 1,
+  "full_description": "Let us all toast the Warlord for restocking the cave daily!\r\n\r\nOnly beginners are supposed to enter the cave (but any character can). Knight Marshall William Misslefire is on duty to prevent inexperienced adventurers from doing anything really foolish (like entering the cave with no weapon at all!).\r\n\r\nTo return to the Main Hall, just leave the cave (by getting to the cave entrance and moving north). Once you have done so, Sam Slicker, the local dealer for treasures and booty, will pay you in gold for any items that you have collected (with the price adjusted slightly depending upon your charisma).\r\n\r\nCONVERSION NOTES:\r\n\r\nThis is the true and original Beginner's Cave and actually the first Classic Eamon adventure, written by Donald Brown nearly three decades ago. In an attempt to preserve the flavor of the Classic Eamon experience, very little new content was added upon conversion to Eamon Deluxe conversion. Just the standard Eamon Deluxe enhancements and the addition of a few embedded artifacts which were  already hinted at in the descriptions. Although designed as a simple outing for new characters, the Beginner's Cave captures the unique experience of Eamon very well and is, in many ways, one of the best adventures ever written for it.",
+  "text_source": "kdechant/eamon adventure/data/001-the-beginners-cave.json",
+  "year": 1979
+ },
+ "locations": [
+  {
+   "id": "beginners-cave-1",
+   "room_number": 1,
+   "name": "Cave Entrance",
+   "narration_text": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north, the road climbs back to town. A weathered signpost beside it reads: \"ADVENTURERS \u2014 head NORTH to end your expedition. Sam Slicker will buy whatever treasure you carry out.\"",
+   "background_description": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": "main-hall",
+    "south": 2,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the cave entrance. (N/S)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   }
   },
-  "locations": [
+  {
+   "id": "beginners-cave-2",
+   "room_number": 2,
+   "name": "Dark North/South Tunnel",
+   "narration_text": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
+   "background_description": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 1,
+    "south": 4,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a dark north/south tunnel.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-3",
+   "room_number": 3,
+   "name": "West Side Chamber",
+   "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
+   "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 4,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in the west side chamber. (E)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-4",
+   "room_number": 4,
+   "name": "Large Chamber",
+   "narration_text": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
+   "background_description": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 2,
+    "south": 7,
+    "east": 5,
+    "west": 3,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a large chamber. (N/S/E/W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-5",
+   "room_number": 5,
+   "name": "East Side Chamber",
+   "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
+   "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 4,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in the east side chamber. (W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-6",
+   "room_number": 6,
+   "name": "West Cell",
+   "narration_text": "You are in a small stark cell with a door on the east side of the room. One flagstone in the floor sits slightly proud of the rest, as though it has been pried up and set back many times.",
+   "background_description": "You are in a small stark cell with a door on the east side of the room.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 7,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a west cell. (E)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-7",
+   "room_number": 7,
+   "name": "North End of Long Passage",
+   "narration_text": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
+   "background_description": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 4,
+    "south": 10,
+    "east": 8,
+    "west": 6,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the north end of a long passage. (N/S/E/W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-8",
+   "room_number": 8,
+   "name": "East Cell",
+   "narration_text": "You are in a small stark cell with a door on the west side of the room.",
+   "background_description": "You are in a small stark cell with a door on the west side of the room.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 7,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east cell. (W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-9",
+   "room_number": 9,
+   "name": "West Cell",
+   "narration_text": "You are in a small stark cell with a door on the east side.",
+   "background_description": "You are in a small stark cell with a door on the east side.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 10,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a west cell. (E)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-10",
+   "room_number": 10,
+   "name": "Middle of Long Passage",
+   "narration_text": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
+   "background_description": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 7,
+    "south": 13,
+    "east": 11,
+    "west": 9,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the middle of a long passage. (N/S/E/W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-11",
+   "room_number": 11,
+   "name": "East Cell",
+   "narration_text": "You are in a small stark cell with a door on the west side.",
+   "background_description": "You are in a small stark cell with a door on the west side.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 10,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east cell. (W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-12",
+   "room_number": 12,
+   "name": "West Cell",
+   "narration_text": "You are in a small stark cell with a door on the east side.",
+   "background_description": "You are in a small stark cell with a door on the east side.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 13,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a west cell. (E)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-13",
+   "room_number": 13,
+   "name": "South End of Long Passage",
+   "narration_text": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
+   "background_description": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 10,
+    "south": 15,
+    "east": 14,
+    "west": 12,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the south end of a long passage. (N/S/E/W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-14",
+   "room_number": 14,
+   "name": "East Cell",
+   "narration_text": "You are in a small stark cell with a door on the west side.",
+   "background_description": "You are in a small stark cell with a door on the west side.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 13,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east cell. (W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-15",
+   "room_number": 15,
+   "name": "Broken North/South Tunnel",
+   "narration_text": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
+   "background_description": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 13,
+    "south": 20,
+    "east": 16,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in a broken north/south tunnel.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-16",
+   "room_number": 16,
+   "name": "Secret East/West Tunnel",
+   "narration_text": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
+   "background_description": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 17,
+    "west": 15,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east/west tunnel with faint music.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "temple",
+    "volume": 0.08
+   }
+  },
+  {
+   "id": "beginners-cave-17",
+   "room_number": 17,
+   "name": "East/West Tunnel with Loud Music",
+   "narration_text": "You can very clearly hear religious music being played and can smell incense from the east.",
+   "background_description": "You can very clearly hear religious music being played and can smell incense from the east.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 18,
+    "west": 16,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east/west tunnel with loud music.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "temple",
+    "volume": 0.22
+   }
+  },
+  {
+   "id": "beginners-cave-18",
+   "room_number": 18,
+   "name": "The Temple",
+   "narration_text": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
+   "background_description": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 17,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the temple. (W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "temple",
+    "volume": 0.35
+   }
+  },
+  {
+   "id": "beginners-cave-19",
+   "room_number": 19,
+   "name": "The Library",
+   "narration_text": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
+   "background_description": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 20,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in the library. (E)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cell",
+    "volume": 0.25
+   }
+  },
+  {
+   "id": "beginners-cave-20",
+   "room_number": 20,
+   "name": "T-Intersection",
+   "narration_text": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
+   "background_description": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 15,
+    "south": null,
+    "east": 21,
+    "west": 19,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at a T-intersection; North by E/W.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-21",
+   "room_number": 21,
+   "name": "East/West Tunnel",
+   "narration_text": "You are in an unremarkable tunnel. You can see torch light in both directions.",
+   "background_description": "You are in an unremarkable tunnel. You can see torch light in both directions.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 22,
+    "west": 20,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east/west tunnel.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-22",
+   "room_number": 22,
+   "name": "Top of Stairway",
+   "narration_text": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
+   "background_description": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 21,
+    "up": null,
+    "down": 23
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the top of a stairway. (W/D)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.25
+   }
+  },
+  {
+   "id": "beginners-cave-23",
+   "room_number": 23,
+   "name": "Bottom of Stairway",
+   "narration_text": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
+   "background_description": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 24,
+    "west": null,
+    "up": 22,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are at the bottom of a stairway. (E/U)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.25
+   }
+  },
+  {
+   "id": "beginners-cave-24",
+   "room_number": 24,
+   "name": "Rough Tunnel",
+   "narration_text": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
+   "background_description": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 25,
+    "west": 23,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east/west tunnel.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "tunnel",
+    "volume": 0.3
+   }
+  },
+  {
+   "id": "beginners-cave-25",
+   "room_number": 25,
+   "name": "Tunnel Smelling of Salt",
+   "narration_text": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
+   "background_description": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 26,
+    "west": 24,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in an east/west tunnel smelling of salt.",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cove",
+    "volume": 0.15
+   }
+  },
+  {
+   "id": "beginners-cave-26",
+   "room_number": 26,
+   "name": "The Pirate's Cove",
+   "narration_text": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
+   "background_description": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
+   "light_level": "dim",
+   "is_combat_zone": true,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 25,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "canonical_name": "You are in the Pirate's Cove. (E/W)",
+   "text_source": "kdechant/eamon room.description",
+   "ambience": {
+    "track": "cove",
+    "volume": 0.35
+   }
+  }
+ ],
+ "characters": [
+  {
+   "id": "beginners-cave-rat",
+   "name": "Rat",
+   "slug": "rat",
+   "type": "enemy",
+   "is_hostile": true,
+   "hostility": "hostile",
+   "friendliness": "hostile",
+   "description": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
+   "first_encounter_text": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
+   "hp": 2,
+   "current_hp_from": "hp",
+   "agility": 3,
+   "weapon": "claws",
+   "damage_dice": "1d4",
+   "gold": 0,
+   "location_room": 3,
+   "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style.",
+   "canonical_name": "Rat",
+   "text_source": "kdechant/eamon monster.description",
+   "flees_to_room": 4
+  },
+  {
+   "id": "beginners-cave-priest",
+   "name": "Priest",
+   "slug": "priest",
+   "type": "enemy",
+   "is_hostile": true,
+   "hostility": "hostile",
+   "friendliness": "hostile",
+   "description": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
+   "first_encounter_text": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
+   "hp": 10,
+   "current_hp_from": "hp",
+   "agility": 6,
+   "weapon": "mace",
+   "damage_dice": "2d6",
+   "gold": 15,
+   "location_room": 18,
+   "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style.",
+   "canonical_name": "Priest",
+   "text_source": "kdechant/eamon monster.description",
+   "frees_on_defeat": "cynthia",
+   "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman.",
+   "persona": "A once-gentle temple priest driven mad by years alone among the cave's dark altars. He believes the bloody altar demands a sacrifice. Somewhere beneath the madness he remembers his liturgy, his order, and his shame. He responds to scripture, calm authority, and reminders of who he was; threats and mockery feed the madness.",
+   "acts": [
     {
-      "id": "beginners-cave-1",
-      "room_number": 1,
-      "name": "Cave Entrance",
-      "narration_text": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north, the road climbs back to town. A weathered signpost beside it reads: \"ADVENTURERS — head NORTH to end your expedition. Sam Slicker will buy whatever treasure you carry out.\"",
-      "background_description": "The entrance is to the south with a sign over it reading, \"Beginners Only!\". To the north is the road back to town.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": "main-hall",
-        "south": 2,
-        "east": null,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the cave entrance. (N/S)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "entrance",
-        "volume": 0.3
-      }
+     "verb": "reason",
+     "label": "Reason with",
+     "shift": -10,
+     "success_text": "You try to reason with the priest, but logic is a language he no longer speaks. His eyes burn brighter. \"The altar HUNGERS,\" he howls."
     },
     {
-      "id": "beginners-cave-2",
-      "room_number": 2,
-      "name": "Dark North/South Tunnel",
-      "narration_text": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
-      "background_description": "To the north you see bright light streaming in from the outside. To the south you see flickering torch light, but you cannot make out any details.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 1,
-        "south": 4,
-        "east": null,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a dark north/south tunnel.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-3",
-      "room_number": 3,
-      "name": "West Side Chamber",
-      "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
-      "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the east.",
-      "light_level": "dim",
-      "is_combat_zone": true,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 4,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in the west side chamber. (E)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-4",
-      "room_number": 4,
-      "name": "Large Chamber",
-      "narration_text": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
-      "background_description": "You are in a huge chamber where the roof rises out of sight. Burning torches line the walls making it easy to see. Tunnels lead north and south, and there are small chambers to the east and west.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 2,
-        "south": 7,
-        "east": 5,
-        "west": 3,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a large chamber. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-5",
-      "room_number": 5,
-      "name": "East Side Chamber",
-      "narration_text": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
-      "background_description": "It is very cold here and the only light comes in dimly from the large chamber to the west.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 4,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in the east side chamber. (W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-6",
-      "room_number": 6,
-      "name": "West Cell",
-      "narration_text": "You are in a small stark cell with a door on the east side of the room. One flagstone in the floor sits slightly proud of the rest, as though it has been pried up and set back many times.",
-      "background_description": "You are in a small stark cell with a door on the east side of the room.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 7,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-7",
-      "room_number": 7,
-      "name": "North End of Long Passage",
-      "narration_text": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
-      "background_description": "A tunnel goes north and east and west are doors that are bolted shut. (Locking something in?). In the dim light you can see that the hall goes south but you cannot make out any details.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 4,
-        "south": 10,
-        "east": 8,
-        "west": 6,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the north end of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-8",
-      "room_number": 8,
-      "name": "East Cell",
-      "narration_text": "You are in a small stark cell with a door on the west side of the room.",
-      "background_description": "You are in a small stark cell with a door on the west side of the room.",
-      "light_level": "dim",
-      "is_combat_zone": true,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 7,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-9",
-      "room_number": 9,
-      "name": "West Cell",
-      "narration_text": "You are in a small stark cell with a door on the east side.",
-      "background_description": "You are in a small stark cell with a door on the east side.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 10,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-10",
-      "room_number": 10,
-      "name": "Middle of Long Passage",
-      "narration_text": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
-      "background_description": "Doors are bolted on both sides of you (east and west). The hall extends north and south.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 7,
-        "south": 13,
-        "east": 11,
-        "west": 9,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the middle of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-11",
-      "room_number": 11,
-      "name": "East Cell",
-      "narration_text": "You are in a small stark cell with a door on the west side.",
-      "background_description": "You are in a small stark cell with a door on the west side.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 10,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-12",
-      "room_number": 12,
-      "name": "West Cell",
-      "narration_text": "You are in a small stark cell with a door on the east side.",
-      "background_description": "You are in a small stark cell with a door on the east side.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 13,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a west cell. (E)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-13",
-      "room_number": 13,
-      "name": "South End of Long Passage",
-      "narration_text": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
-      "background_description": "To your great shock there are doors to the east and west. The hall goes north from here and a broken tunnel goes south.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 10,
-        "south": 15,
-        "east": 14,
-        "west": 12,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the south end of a long passage. (N/S/E/W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-14",
-      "room_number": 14,
-      "name": "East Cell",
-      "narration_text": "You are in a small stark cell with a door on the west side.",
-      "background_description": "You are in a small stark cell with a door on the west side.",
-      "light_level": "dim",
-      "is_combat_zone": true,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 13,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east cell. (W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-15",
-      "room_number": 15,
-      "name": "Broken North/South Tunnel",
-      "narration_text": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
-      "background_description": "The sides of the tunnel are very broken and rough. You see torch light to the south. The east wall has a smooth shape in the center, about the size of a door.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 13,
-        "south": 20,
-        "east": 16,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in a broken north/south tunnel.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-16",
-      "room_number": 16,
-      "name": "Secret East/West Tunnel",
-      "narration_text": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
-      "background_description": "You are in a secret east/west passage. You hear a faint melody coming from the east.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 17,
-        "west": 15,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east/west tunnel with faint music.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "temple",
-        "volume": 0.08
-      }
-    },
-    {
-      "id": "beginners-cave-17",
-      "room_number": 17,
-      "name": "East/West Tunnel with Loud Music",
-      "narration_text": "You can very clearly hear religious music being played and can smell incense from the east.",
-      "background_description": "You can very clearly hear religious music being played and can smell incense from the east.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 18,
-        "west": 16,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east/west tunnel with loud music.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "temple",
-        "volume": 0.22
-      }
-    },
-    {
-      "id": "beginners-cave-18",
-      "room_number": 18,
-      "name": "The Temple",
-      "narration_text": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
-      "background_description": "You are in a temple that has paintings of great deeds covering the walls. There are two altars here, one covered with gold paint and the other stained with blood. The only exit leads to the west.",
-      "light_level": "dim",
-      "is_combat_zone": true,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 17,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the temple. (W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "temple",
-        "volume": 0.35
-      }
-    },
-    {
-      "id": "beginners-cave-19",
-      "room_number": 19,
-      "name": "The Library",
-      "narration_text": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
-      "background_description": "You are in what was obviously once a library. Most of the books have been destroyed, with the scraps left lying on the ground. A door, torn from its hinges, also lies on the floor. The exit is to the east.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 20,
-        "west": null,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in the library. (E)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cell",
-        "volume": 0.25
-      }
-    },
-    {
-      "id": "beginners-cave-20",
-      "room_number": 20,
-      "name": "T-Intersection",
-      "narration_text": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
-      "background_description": "A brightly burning torch is bolted to the south wall. Dark tunnels lead north and east. To the west is a place where once a door stood, but it has been torn from its hinges.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": 15,
-        "south": null,
-        "east": 21,
-        "west": 19,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at a T-intersection; North by E/W.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-21",
-      "room_number": 21,
-      "name": "East/West Tunnel",
-      "narration_text": "You are in an unremarkable tunnel. You can see torch light in both directions.",
-      "background_description": "You are in an unremarkable tunnel. You can see torch light in both directions.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 22,
-        "west": 20,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east/west tunnel.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-22",
-      "room_number": 22,
-      "name": "Top of Stairway",
-      "narration_text": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
-      "background_description": "You are at an unremarkable stone landing at the top of a flight of stairs. A single torch is bolted to the wall. A tunnel heads back west. It looks very dark down there...",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 21,
-        "up": null,
-        "down": 23
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the top of a stairway. (W/D)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.25
-      }
-    },
-    {
-      "id": "beginners-cave-23",
-      "room_number": 23,
-      "name": "Bottom of Stairway",
-      "narration_text": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
-      "background_description": "You are at an unremarkable stone landing at the bottom of a flight of stairs. A light can be seen at the top and a very dim light can be seen down the tunnel to the east.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 24,
-        "west": null,
-        "up": 22,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are at the bottom of a stairway. (E/U)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.25
-      }
-    },
-    {
-      "id": "beginners-cave-24",
-      "room_number": 24,
-      "name": "Rough Tunnel",
-      "narration_text": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
-      "background_description": "You are in a very rough tunnel carved out of a series of natural caverns. Dim light can be seen in both directions.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 25,
-        "west": 23,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east/west tunnel.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "tunnel",
-        "volume": 0.3
-      }
-    },
-    {
-      "id": "beginners-cave-25",
-      "room_number": 25,
-      "name": "Tunnel Smelling of Salt",
-      "narration_text": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
-      "background_description": "You see light to the east, and feel a cool wind coming from there. In the wind you smell a hint of salt.",
-      "light_level": "dim",
-      "is_combat_zone": false,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": 26,
-        "west": 24,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in an east/west tunnel smelling of salt.",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cove",
-        "volume": 0.15
-      }
-    },
-    {
-      "id": "beginners-cave-26",
-      "room_number": 26,
-      "name": "The Pirate's Cove",
-      "narration_text": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
-      "background_description": "You are at a small bay. Cliffs rise on either side of you so that the only exit is back in the tunnel to the west. A broken old boat is resting on the bank of the rough and stormy sea. All around you is salt water, as far as the eye can see.",
-      "light_level": "dim",
-      "is_combat_zone": true,
-      "exits": {
-        "north": null,
-        "south": null,
-        "east": null,
-        "west": 25,
-        "up": null,
-        "down": null
-      },
-      "treasure": [],
-      "requires": null,
-      "canonical_name": "You are in the Pirate's Cove. (E/W)",
-      "text_source": "kdechant/eamon room.description",
-      "ambience": {
-        "track": "cove",
-        "volume": 0.35
-      }
+     "verb": "pray",
+     "label": "Pray with",
+     "shift": 25,
+     "success_text": "You raise your voice in the old liturgy \u2014 the one painted on these very walls. The priest falters mid-snarl. His lips move with yours, remembering.",
+     "repeat_text": "You pray again. The mace droops in his hand; tears cut clean lines down his filthy face."
     }
-  ],
-  "characters": [
+   ],
+   "yields_at_regard": 80,
+   "telegraph": {
+    "every": 3,
+    "name": "overhead blow",
+    "multiplier": 2,
+    "warn_text": "The priest raises his mace high overhead, shrieking a broken litany \u2014 a crushing blow is coming!"
+   },
+   "yield_text": "The mad light gutters out of the priest's eyes. The mace clatters to the stone and he sinks to his knees before the bloody altar, mumbling the old words. The fight is over, if you will let it be.",
+   "spare_text": "You lower your weapon. The priest unbinds Cynthia with shaking hands and presses his temple purse upon you, weeping. \"The altar is fed enough,\" he whispers, and begins, slowly, to scrub the old blood from the stone.",
+   "spare_gold": 15
+  },
+  {
+   "id": "beginners-cave-cynthia",
+   "name": "Cynthia",
+   "slug": "cynthia",
+   "type": "npc",
+   "is_hostile": false,
+   "hostility": "friendly",
+   "friendliness": "friendly",
+   "description": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+   "first_encounter_text": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
+   "dialogue": "Cynthia gazes at you with wide, vacant eyes, then brightens. \"Oh! Have you come to take me home? Father \u2014 Duke Luxom \u2014 will reward you ever so handsomely if you see me safely out of this dreadful cave.\"",
+   "hp": 5,
+   "current_hp_from": "hp",
+   "agility": 5,
+   "weapon": null,
+   "damage_dice": "0d0",
+   "gold": 0,
+   "location_room": 18,
+   "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style.",
+   "canonical_name": "Cynthia",
+   "text_source": "kdechant/eamon monster.description",
+   "escort": true,
+   "persona": "Duke Luxom's sweet, sheltered, not-too-bright daughter, kidnapped by the mad priest and frightened half out of her wits. She chatters when nervous, dotes on her rescuer, and is endearingly literal-minded. She knows only what she has seen: the priest, the temple, and the long dark walk from the cave mouth."
+  },
+  {
+   "id": "beginners-cave-hermit",
+   "name": "Hermit",
+   "slug": "hermit",
+   "type": "npc",
+   "is_hostile": false,
+   "hostility": "neutral",
+   "friendliness": "neutral",
+   "description": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
+   "first_encounter_text": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
+   "dialogue": "The old hermit fixes you with a rheumy eye. \"Glory-seekers, the lot of you. Heed an old man: not every chest in these caves wants opening \u2014 some have teeth.\"",
+   "hp": 13,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "weapon": "axe",
+   "damage_dice": "2d8",
+   "gold": 10,
+   "location_room": 5,
+   "encounter_behavior": "random",
+   "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style.",
+   "canonical_name": "Hermit",
+   "text_source": "kdechant/eamon monster.description",
+   "persona": "A grizzled hermit who has lived alone in this cave for forty years and likes it that way. Cantankerous, suspicious of glory-seekers, but lonely underneath and full of hard-won cave wisdom. Plain speech, honesty, and good listening win him over; flattery and bravado bore him.",
+   "acts": [
     {
-      "id": "beginners-cave-rat",
-      "name": "Rat",
-      "slug": "rat",
-      "type": "enemy",
-      "is_hostile": true,
-      "hostility": "hostile",
-      "friendliness": "hostile",
-      "description": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
-      "first_encounter_text": "You see three huge rats charging at you! One is black, one is brown, and one is tan. Each one has sharp white teeth.",
-      "hp": 2,
-      "current_hp_from": "hp",
-      "agility": 3,
-      "weapon": "claws",
-      "damage_dice": "1d4",
-      "gold": 0,
-      "location_room": 3,
-      "portrait_description": "Three oversized cave rats with sharp white teeth, one black, one brown, and one tan, charging low through dim torchlight in Eyvind Earle flat graphic style.",
-      "canonical_name": "Rat",
-      "text_source": "kdechant/eamon monster.description",
-      "flees_to_room": 4
-    },
-    {
-      "id": "beginners-cave-priest",
-      "name": "Priest",
-      "slug": "priest",
-      "type": "enemy",
-      "is_hostile": true,
-      "hostility": "hostile",
-      "friendliness": "hostile",
-      "description": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
-      "first_encounter_text": "There is a huge man in religious garb with an insane look on his face here. In his right hand, he carries a mace.",
-      "hp": 10,
-      "current_hp_from": "hp",
-      "agility": 6,
-      "weapon": "mace",
-      "damage_dice": "2d6",
-      "gold": 15,
-      "location_room": 18,
-      "portrait_description": "Huge wild-eyed priest in heavy religious garb gripping a mace, dramatic angular silhouette, Eyvind Earle Sleeping Beauty 1959 style.",
-      "canonical_name": "Priest",
-      "text_source": "kdechant/eamon monster.description",
-      "frees_on_defeat": "cynthia",
-      "captive_intro": "A huge, wild-eyed priest in blood-stained robes stands over a stone altar, a curved knife raised above a bound young woman.",
-      "persona": "A once-gentle temple priest driven mad by years alone among the cave's dark altars. He believes the bloody altar demands a sacrifice. Somewhere beneath the madness he remembers his liturgy, his order, and his shame. He responds to scripture, calm authority, and reminders of who he was; threats and mockery feed the madness.",
-      "acts": [
-        {
-          "verb": "reason",
-          "label": "Reason with",
-          "shift": -10,
-          "success_text": "You try to reason with the priest, but logic is a language he no longer speaks. His eyes burn brighter. \"The altar HUNGERS,\" he howls."
-        },
-        {
-          "verb": "pray",
-          "label": "Pray with",
-          "shift": 25,
-          "success_text": "You raise your voice in the old liturgy — the one painted on these very walls. The priest falters mid-snarl. His lips move with yours, remembering.",
-          "repeat_text": "You pray again. The mace droops in his hand; tears cut clean lines down his filthy face."
-        }
-      ],
-      "yields_at_regard": 80,
-      "telegraph": {
-        "every": 3,
-        "name": "overhead blow",
-        "multiplier": 2,
-        "warn_text": "The priest raises his mace high overhead, shrieking a broken litany — a crushing blow is coming!"
-      },
-      "yield_text": "The mad light gutters out of the priest's eyes. The mace clatters to the stone and he sinks to his knees before the bloody altar, mumbling the old words. The fight is over, if you will let it be.",
-      "spare_text": "You lower your weapon. The priest unbinds Cynthia with shaking hands and presses his temple purse upon you, weeping. \"The altar is fed enough,\" he whispers, and begins, slowly, to scrub the old blood from the stone.",
-      "spare_gold": 15
-    },
-    {
-      "id": "beginners-cave-cynthia",
-      "name": "Cynthia",
-      "slug": "cynthia",
-      "type": "npc",
-      "is_hostile": false,
-      "hostility": "friendly",
-      "friendliness": "friendly",
-      "description": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
-      "first_encounter_text": "You see a beautiful girl in a flowing white dress. You recognize her as Cynthia Luxom, Duke Luxom's not-too-bright daughter.",
-      "dialogue": "Cynthia gazes at you with wide, vacant eyes, then brightens. \"Oh! Have you come to take me home? Father — Duke Luxom — will reward you ever so handsomely if you see me safely out of this dreadful cave.\"",
-      "hp": 5,
-      "current_hp_from": "hp",
-      "agility": 5,
-      "weapon": null,
-      "damage_dice": "0d0",
-      "gold": 0,
-      "location_room": 18,
-      "portrait_description": "Beautiful young noblewoman in a flowing white dress, innocent expression, jewel-tone shadows and Celtic ornamental trim, Eyvind Earle flat graphic style.",
-      "canonical_name": "Cynthia",
-      "text_source": "kdechant/eamon monster.description",
-      "escort": true,
-      "persona": "Duke Luxom's sweet, sheltered, not-too-bright daughter, kidnapped by the mad priest and frightened half out of her wits. She chatters when nervous, dotes on her rescuer, and is endearingly literal-minded. She knows only what she has seen: the priest, the temple, and the long dark walk from the cave mouth."
-    },
-    {
-      "id": "beginners-cave-hermit",
-      "name": "Hermit",
-      "slug": "hermit",
-      "type": "npc",
-      "is_hostile": false,
-      "hostility": "neutral",
-      "friendliness": "neutral",
-      "description": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
-      "first_encounter_text": "There is a grizzled old hermit (who smells as if he hasn't taken a bath in forty years) in the room.",
-      "dialogue": "The old hermit fixes you with a rheumy eye. \"Glory-seekers, the lot of you. Heed an old man: not every chest in these caves wants opening — some have teeth.\"",
-      "hp": 13,
-      "current_hp_from": "hp",
-      "agility": 12,
-      "weapon": "axe",
-      "damage_dice": "2d8",
-      "gold": 10,
-      "location_room": 5,
-      "encounter_behavior": "random",
-      "portrait_description": "Grizzled old hermit with tangled hair and weathered clothes, carrying an axe, wary neutral stance, Eyvind Earle flat graphic style.",
-      "canonical_name": "Hermit",
-      "text_source": "kdechant/eamon monster.description",
-      "persona": "A grizzled hermit who has lived alone in this cave for forty years and likes it that way. Cantankerous, suspicious of glory-seekers, but lonely underneath and full of hard-won cave wisdom. Plain speech, honesty, and good listening win him over; flattery and bravado bore him.",
-      "acts": [
-        {
-          "verb": "apologize",
-          "label": "Apologize to",
-          "shift": 25,
-          "success_text": "You lower your weapon and say, plainly, that you meant no harm trespassing in his home. The hermit's axe-arm eases. \"Hmph. Forty years, and that's the first apology these walls have heard.\""
-        }
-      ],
-      "yields_at_regard": 70,
-      "befriend_on_spare": true,
-      "yield_text": "The hermit plants his axe-head on the stone and leans on it, studying you with one rheumy eye. \"Well. Maybe you're not like the others.\"",
-      "spare_text": "The hermit spits on his palm and offers his hand. \"You'll do. Stay close — I know every crack of this cave, and most of what's hungry in it.\""
-    },
-    {
-      "id": "beginners-cave-gorilla",
-      "name": "Gorilla",
-      "slug": "gorilla",
-      "type": "enemy",
-      "is_hostile": true,
-      "hostility": "hostile",
-      "friendliness": "hostile",
-      "description": "There is a huge, hairy, strong and angry gorilla in the room with you!",
-      "first_encounter_text": "There is a huge, hairy, strong and angry gorilla in the room with you!",
-      "hp": 12,
-      "current_hp_from": "hp",
-      "agility": 11,
-      "weapon": "fists",
-      "damage_dice": "2d6",
-      "gold": 0,
-      "location_room": 8,
-      "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style.",
-      "canonical_name": "Gorilla",
-      "text_source": "kdechant/eamon monster.description",
-      "persona": "A frightened wild animal, not a monster: dragged into this cave and locked in a cell it does not understand. It cannot speak and does not understand words, only tone — softness, stillness, and open hands. Sudden moves and shouting terrify it into violence.",
-      "acts": [
-        {
-          "verb": "calm",
-          "label": "Calm",
-          "shift": 30,
-          "success_text": "You lower your weapon, open your empty palms, and hum low and steady. The gorilla's screaming stops. It watches your hands, knuckles still planted, breathing hard.",
-          "repeat_text": "You keep your palms open and your voice low. The great shoulders drop an inch. It huffs — wary, but no longer wild."
-        },
-        {
-          "verb": "posture",
-          "label": "Posture at",
-          "shift": -15,
-          "success_text": "You beat your chest and roar back at it. Bad idea. The gorilla's answering bellow shakes dust from the ceiling."
-        }
-      ],
-      "yields_at_regard": 60,
-      "yields_at_hp": 3,
-      "telegraph": {
-        "every": 2,
-        "name": "charge",
-        "multiplier": 2,
-        "warn_text": "The gorilla rears to its full height and beats its chest — it is about to charge!"
-      },
-      "yield_text": "The gorilla backs against the cell wall, hooting softly, one long arm curled over its head. It does not want to fight you. It never did.",
-      "spare_text": "You step back and leave the doorway clear. The gorilla watches you a long moment — then knuckles past you, unhurried, and settles in the far corner with its back to the wall. Something like peace returns to the little cell."
-    },
-    {
-      "id": "beginners-cave-heinrich",
-      "name": "Heinrich",
-      "slug": "heinrich",
-      "type": "npc",
-      "is_hostile": false,
-      "hostility": "neutral",
-      "friendliness": "neutral",
-      "description": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
-      "first_encounter_text": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
-      "dialogue": "Heinrich grins and thumps his shield. \"Well met, friend! Heinrich Schmidt, at your service. Stick close and watch your flank — these tunnels have chewed up better than you and me both.\"",
-      "hp": 15,
-      "current_hp_from": "hp",
-      "agility": 7,
-      "weapon": "sword",
-      "damage_dice": "2d8",
-      "gold": 25,
-      "location_room": 6,
-      "encounter_behavior": "random",
-      "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style.",
-      "canonical_name": "Heinrich",
-      "text_source": "kdechant/eamon monster.description",
-      "persona": "A cheerful journeyman sellsword, more salesman than killer — he literally wears a name-tag sticker on his shield. Professional about violence, never personal. He respects courtesy, good humor, and sensible deals; if he has drawn steel on you it is strictly business, and he would honestly rather not.",
-      "acts": [
-        {
-          "verb": "apologize",
-          "label": "Apologize to",
-          "shift": 25,
-          "success_text": "\"Whoa, whoa.\" You raise an open hand and tell Heinrich this fight is a misunderstanding. He peers at you over his shield rim. \"Huh. You know, you don't LOOK like the usual cave riffraff.\""
-        }
-      ],
-      "yields_at_regard": 70,
-      "befriend_on_spare": true,
-      "yield_text": "Heinrich steps back and lowers his longsword with a professional nod. \"Tell you what — no hard feelings, eh? Steel's expensive and you seem decent.\"",
-      "spare_text": "Heinrich sheathes his sword with a flourish and thumps your shoulder. \"Heinrich Schmidt, at your service after all! Stick with me, friend — two blades walk farther than one.\""
-    },
-    {
-      "id": "beginners-cave-mimic",
-      "name": "Mimic",
-      "slug": "mimic",
-      "type": "enemy",
-      "is_hostile": true,
-      "hostility": "hostile",
-      "friendliness": "hostile",
-      "description": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
-      "first_encounter_text": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
-      "hp": 7,
-      "current_hp_from": "hp",
-      "agility": 12,
-      "weapon": "tentacles",
-      "damage_dice": "1d8",
-      "gold": 0,
-      "location_room": 14,
-      "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style.",
-      "canonical_name": "Mimic",
-      "text_source": "kdechant/eamon monster.description",
-      "hidden_until_opened": "mimic-chest",
-      "persona": "A mimic disguised as a wooden chest, very hungry and very bad at small talk. If spoken to while disguised it answers in a muffled, woody voice, pretending unconvincingly to be ordinary furniture ('I am a normal chest. Chests do not talk. Please come closer.'). It cannot resist replying, which is its great weakness as an ambush predator."
-    },
-    {
-      "id": "beginners-cave-pirate",
-      "name": "Pirate",
-      "slug": "pirate",
-      "type": "enemy",
-      "is_hostile": true,
-      "hostility": "hostile",
-      "friendliness": "hostile",
-      "description": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
-      "first_encounter_text": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
-      "hp": 5,
-      "current_hp_from": "hp",
-      "agility": 14,
-      "weapon": "TrollsFire",
-      "damage_dice": "2d10",
-      "gold": 50,
-      "location_room": 26,
-      "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style.",
-      "canonical_name": "Pirate",
-      "text_source": "kdechant/eamon monster.description",
-      "flees_after_round": 1,
-      "persona": "A vain, theatrical old corsair marooned in this cove with his beloved engraved sword TrollsFire and a rotting boat. He is a coward at heart who masks fear with swagger. He respects flattery of his legend, fair bargains, and anyone who can out-talk him; he despises being laughed at. He desperately wants to leave this cave but will not admit it.",
-      "acts": [
-        {
-          "verb": "parley",
-          "label": "Parley with",
-          "shift": 20,
-          "success_text": "\"Parley, is it?\" The pirate's blade dips a hand's width. \"Aye... I know the old code. Speak your piece, landlubber, and speak it pretty.\"",
-          "repeat_text": "The pirate leans on a rock, sword loose in his grip, half-enjoying the negotiation. \"Go on. I'm listening.\""
-        },
-        {
-          "verb": "taunt",
-          "label": "Taunt",
-          "shift": -20,
-          "success_text": "You laugh at his silk clothes and his broken little boat. The pirate's face goes scarlet. \"INSOLENT DOG!\" Vanity is the one thing he'll fight for."
-        }
-      ],
-      "yields_at_regard": 70,
-      "yields_at_hp": 2,
-      "yield_text": "The pirate staggers back against his ruined boat, sword point dropping to the sand. \"Hold — HOLD, devil take you!\" he pants. \"Perhaps... perhaps we needn't finish this dance.\"",
-      "spare_text": "The pirate stares at you, then barks a disbelieving laugh. \"Mercy, from a guild rat! Ha!\" He unbuckles TrollsFire, scabbard and all, and presses it into your hands with his coin purse. \"Take her — she's brought me nothing but grief. And tell them ashore that One-Eyed Filmore paid his debts.\" He shoves his wretched boat toward the waves.",
-      "spare_gold": 50
+     "verb": "apologize",
+     "label": "Apologize to",
+     "shift": 25,
+     "success_text": "You lower your weapon and say, plainly, that you meant no harm trespassing in his home. The hermit's axe-arm eases. \"Hmph. Forty years, and that's the first apology these walls have heard.\""
     }
-  ],
-  "items": [
+   ],
+   "yields_at_regard": 70,
+   "befriend_on_spare": true,
+   "yield_text": "The hermit plants his axe-head on the stone and leans on it, studying you with one rheumy eye. \"Well. Maybe you're not like the others.\"",
+   "spare_text": "The hermit spits on his palm and offers his hand. \"You'll do. Stay close \u2014 I know every crack of this cave, and most of what's hungry in it.\""
+  },
+  {
+   "id": "beginners-cave-gorilla",
+   "name": "Gorilla",
+   "slug": "gorilla",
+   "type": "enemy",
+   "is_hostile": true,
+   "hostility": "hostile",
+   "friendliness": "hostile",
+   "description": "There is a huge, hairy, strong and angry gorilla in the room with you!",
+   "first_encounter_text": "There is a huge, hairy, strong and angry gorilla in the room with you!",
+   "hp": 12,
+   "current_hp_from": "hp",
+   "agility": 11,
+   "weapon": "fists",
+   "damage_dice": "2d6",
+   "gold": 0,
+   "location_room": 8,
+   "portrait_description": "Huge angry gorilla with heavy shoulders and clenched fists, dark fur against dim cavern light, Eyvind Earle flat graphic style.",
+   "canonical_name": "Gorilla",
+   "text_source": "kdechant/eamon monster.description",
+   "persona": "A frightened wild animal, not a monster: dragged into this cave and locked in a cell it does not understand. It cannot speak and does not understand words, only tone \u2014 softness, stillness, and open hands. Sudden moves and shouting terrify it into violence.",
+   "acts": [
     {
-      "id": "beginners-cave-diamonds",
-      "name": "diamonds",
-      "slug": "diamonds",
-      "type": "treasure",
-      "description": "You see a large pile of gleaming diamonds here!",
-      "value": 200,
-      "weight": 3,
-      "canonical_name": "diamonds",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 3
+     "verb": "calm",
+     "label": "Calm",
+     "shift": 30,
+     "success_text": "You lower your weapon, open your empty palms, and hum low and steady. The gorilla's screaming stops. It watches your hands, knuckles still planted, breathing hard.",
+     "repeat_text": "You keep your palms open and your voice low. The great shoulders drop an inch. It huffs \u2014 wary, but no longer wild."
     },
     {
-      "id": "beginners-cave-axe",
-      "name": "axe",
-      "slug": "axe",
-      "type": "weapon",
-      "description": "You see a standard Marcos axe here.",
-      "value": 20,
-      "weight": 8,
-      "damage_dice": "2d8",
-      "canonical_name": "axe",
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-healing-potion",
-      "name": "healing potion",
-      "slug": "healing-potion",
-      "type": "potion",
-      "description": "There is a bottle with a strange potion inside of it here! It has a label stuck to it that you could READ.",
-      "value": 50,
-      "weight": 2,
-      "heal_amount": 6,
-      "effect_description": "Drink to heal 6 hit points.",
-      "uses": 1,
-      "canonical_name": "bottle",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 5
-    },
-    {
-      "id": "beginners-cave-chest",
-      "name": "chest",
-      "slug": "chest",
-      "type": "container",
-      "collectible": false,
-      "value": 0,
-      "weight": -999,
-      "description": "A sturdy iron-bound chest sits against the wall, its lid shut."
-    },
-    {
-      "id": "beginners-cave-sword",
-      "name": "sword",
-      "slug": "sword",
-      "type": "weapon",
-      "description": "There is a poor quality Marcos sword here.",
-      "value": 15,
-      "weight": 6,
-      "damage_dice": "2d8",
-      "canonical_name": "sword",
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-sack-of-coins",
-      "name": "sack of coins",
-      "slug": "sack-of-coins",
-      "type": "treasure",
-      "description": "You find a sack with 50 gold coins inside!",
-      "value": 50,
-      "weight": 5,
-      "canonical_name": "sack of coins",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 8
-    },
-    {
-      "id": "beginners-cave-spices",
-      "name": "spices",
-      "slug": "spices",
-      "type": "treasure",
-      "description": "You find several spices. They are of a rare variety and quite valuable.",
-      "value": 30,
-      "weight": 3,
-      "canonical_name": "spices",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 18
-    },
-    {
-      "id": "beginners-cave-glowing-book",
-      "name": "glowing book",
-      "slug": "glowing-book",
-      "type": "misc",
-      "description": "There is an old book here. It glows in the darkness and is remarkably well preserved.",
-      "value": 80,
-      "weight": 3,
-      "text": "The book contains ancient lore about the cave's history. It is of great scholarly value.",
-      "effect_description": "Readable lore item; contains ancient scholarship about the cave.",
-      "canonical_name": "book",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 19,
-      "read_effect": "fatal_transform",
-      "read_effect_text": "You open the glowing book and read its first line aloud. The air shivers — your arms fuse to your sides, your skin runs to silver scales, and you drop to the cold stone a tiny gasping fish. There is no water here. You suffocate on dry rock within moments.",
-      "read_effect_text_at": {
-        "26": "You read the glowing book aloud at the water's edge. You shrink to a tiny silver fish and flop — by sheer dumb luck — into the sea! For one triumphant instant you think you've cheated the curse... then a passing gull plucks you from the waves and swallows you whole. An amusing, and rather sticky, end."
-      }
-    },
-    {
-      "id": "beginners-cave-trollsfire",
-      "name": "TrollsFire",
-      "slug": "trollsfire",
-      "type": "weapon",
-      "description": "The Pirate was carrying a beautiful sword. Carved on the hilt, in intricate detail, is the sword's name, \"TrollsFire\".",
-      "value": 125,
-      "weight": 8,
-      "damage_dice": "2d10",
-      "canonical_name": "TrollsFire",
-      "text_source": "kdechant/eamon artifact.description",
-      "magic_word": "trollsfire",
-      "stats": {
-        "damage": "2d10",
-        "weaponOdds": 0,
-        "flameDamage": "3d12",
-        "flameOdds": 40
-      }
-    },
-    {
-      "id": "beginners-cave-jewels",
-      "name": "jewels",
-      "slug": "jewels",
-      "type": "treasure",
-      "description": "There is a large pile of jewels here!",
-      "value": 168,
-      "weight": 5,
-      "canonical_name": "jewels",
-      "text_source": "kdechant/eamon artifact.description",
-      "source_room_number": 26
-    },
-    {
-      "id": "beginners-cave-inscription-get-all",
-      "name": "inscription",
-      "slug": "inscription-get-all",
-      "type": "misc",
-      "description": "You see an inscription on the wall which reads, \"You needn't gather treasure one piece at a time. Type TAKE ALL (or GET ALL) to scoop up everything loose in a room at once. Fixtures, the fallen, and signs like this one stay where they are.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "inscription",
-      "source_room_number": 9,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-inscription-case-sensitive",
-      "name": "inscription",
-      "slug": "inscription-case-sensitive",
-      "type": "misc",
-      "description": "An inscription on the wall reads, \"Two ways to act, traveller: tap one of the choices below, or simply type what you wish to do. Capital letters and small make no difference here.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "inscription",
-      "source_room_number": 11,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-inscription-abbreviations",
-      "name": "inscription",
-      "slug": "inscription-abbreviations",
-      "type": "misc",
-      "description": "Written on the wall are the words, \"To walk a passage, name its direction — or just its first letter. N, S, E, W carry you north, south, east and west; U and D, up and down.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "inscription",
-      "source_room_number": 11,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-writing-command-history",
-      "name": "writing",
-      "slug": "writing-command-history",
-      "type": "misc",
-      "description": "You see some words chiseled into the wall: \"You are not bound to the buttons. In the box below you may type a command in your own words — MOVE WEST, ATTACK THE RAT, READ THE WALL — then press Send.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "writing",
-      "source_room_number": 21,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-inscription-hidden-items",
-      "name": "inscription",
-      "slug": "inscription-hidden-items",
-      "type": "misc",
-      "description": "There are some words written here: \"Lost your bearings? Type LOOK and the chamber will tell you again what lies within it, who shares it with you, and where its passages lead.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "inscription",
-      "source_room_number": 24,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-writing-ready-wear",
-      "name": "writing",
-      "slug": "writing-ready-wear",
-      "type": "misc",
-      "description": "You see some words carved into the wall: \"Change your weapon with the READY command (e.g., READY SWORD). Don armour or a shield with WEAR, and take them off with REMOVE. Should you find a finer blade in the dark, ready it at once.\"",
-      "value": 0,
-      "weight": -999,
-      "canonical_name": "writing",
-      "source_room_number": 7,
-      "collectible": false,
-      "text_source": "kdechant/eamon artifact.description"
-    },
-    {
-      "id": "beginners-cave-scroll-passage-home",
-      "name": "scroll",
-      "slug": "scroll-passage-home",
-      "type": "scroll",
-      "description": "You unfurl a scroll from among the pirate's effects. In a hurried hand it reads: \"Stranger — there is no deeper door in this cave, only the way you entered. When your satchel is heavy and your wounds will bear no more, make for the Cave Entrance and head NORTH. Sam Slicker will weigh your plunder into gold and the Guild will mark the deed done. But fall here, or never leave, and you carry nothing home.\"",
-      "value": 0,
-      "weight": -999,
-      "collectible": false
-    },
-    {
-      "id": "beginners-cave-loose-flagstone",
-      "name": "loose flagstone",
-      "slug": "loose-flagstone",
-      "type": "feature",
-      "description": "You work your fingers under the loose flagstone and lever it up. Beneath it, scratched into the rock, is a shallow hollow — some prisoner's secret hiding place.",
-      "value": 0,
-      "weight": -999,
-      "collectible": false
-    },
-    {
-      "id": "beginners-cave-prisoners-silver",
-      "name": "silver coins",
-      "slug": "prisoners-silver",
-      "type": "treasure",
-      "description": "A small twist of cloth holds a handful of tarnished silver coins — a prisoner's hidden savings, never spent.",
-      "value": 75,
-      "weight": 1
-    },
-    {
-      "id": "beginners-cave-mimic-chest",
-      "slug": "mimic-chest",
-      "name": "chest",
-      "type": "container",
-      "description": "A wooden chest sits invitingly against the cavern wall, its lid slightly ajar.",
-      "value": 0,
-      "weight": -999,
-      "collectible": false
-    },
-    {
-      "id": "beginners-cave-gold-ring",
-      "slug": "gold-ring",
-      "name": "gold ring",
-      "type": "treasure",
-      "description": "A heavy gold ring lies among the mimic's remains.",
-      "value": 60,
-      "weight": 1
+     "verb": "posture",
+     "label": "Posture at",
+     "shift": -15,
+     "success_text": "You beat your chest and roar back at it. Bad idea. The gorilla's answering bellow shakes dust from the ceiling."
     }
-  ],
-  "placements": [
+   ],
+   "yields_at_regard": 60,
+   "yields_at_hp": 3,
+   "telegraph": {
+    "every": 2,
+    "name": "charge",
+    "multiplier": 2,
+    "warn_text": "The gorilla rears to its full height and beats its chest \u2014 it is about to charge!"
+   },
+   "yield_text": "The gorilla backs against the cell wall, hooting softly, one long arm curled over its head. It does not want to fight you. It never did.",
+   "spare_text": "You step back and leave the doorway clear. The gorilla watches you a long moment \u2014 then knuckles past you, unhurried, and settles in the far corner with its back to the wall. Something like peace returns to the little cell."
+  },
+  {
+   "id": "beginners-cave-heinrich",
+   "name": "Heinrich",
+   "slug": "heinrich",
+   "type": "npc",
+   "is_hostile": false,
+   "hostility": "neutral",
+   "friendliness": "neutral",
+   "description": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+   "first_encounter_text": "A human warrior stands before you, armed with a longsword and carrying a shield. On his shield is a sticker which says, \"Hi, I'm Heinrich!\"",
+   "dialogue": "Heinrich grins and thumps his shield. \"Well met, friend! Heinrich Schmidt, at your service. Stick close and watch your flank \u2014 these tunnels have chewed up better than you and me both.\"",
+   "hp": 15,
+   "current_hp_from": "hp",
+   "agility": 7,
+   "weapon": "sword",
+   "damage_dice": "2d8",
+   "gold": 25,
+   "location_room": 6,
+   "encounter_behavior": "random",
+   "portrait_description": "Human warrior with longsword and shield bearing a Hi, I am Heinrich sticker, neutral mercenary expression, Eyvind Earle flat graphic style.",
+   "canonical_name": "Heinrich",
+   "text_source": "kdechant/eamon monster.description",
+   "persona": "A cheerful journeyman sellsword, more salesman than killer \u2014 he literally wears a name-tag sticker on his shield. Professional about violence, never personal. He respects courtesy, good humor, and sensible deals; if he has drawn steel on you it is strictly business, and he would honestly rather not.",
+   "acts": [
     {
-      "item_slug": "loose-flagstone",
-      "room_number": 6,
-      "hidden": false
-    },
-    {
-      "item_slug": "prisoners-silver",
-      "room_number": 6,
-      "hidden": true,
-      "revealedBy": "loose-flagstone"
-    },
-    {
-      "item_slug": "diamonds",
-      "room_number": 3,
-      "hidden": false
-    },
-    {
-      "item_slug": "axe",
-      "after_defeating": "hermit"
-    },
-    {
-      "item_slug": "chest",
-      "room_number": 5,
-      "hidden": false
-    },
-    {
-      "item_slug": "healing-potion",
-      "room_number": 5,
-      "hidden": true,
-      "container": "chest"
-    },
-    {
-      "item_slug": "sword",
-      "after_defeating": "heinrich"
-    },
-    {
-      "item_slug": "sack-of-coins",
-      "room_number": 8,
-      "hidden": false
-    },
-    {
-      "item_slug": "spices",
-      "room_number": 18,
-      "hidden": false
-    },
-    {
-      "item_slug": "glowing-book",
-      "room_number": 19,
-      "hidden": false
-    },
-    {
-      "item_slug": "trollsfire",
-      "after_defeating": "pirate"
-    },
-    {
-      "item_slug": "scroll-passage-home",
-      "after_defeating": "pirate"
-    },
-    {
-      "item_slug": "jewels",
-      "room_number": 26,
-      "hidden": false
-    },
-    {
-      "item_slug": "inscription-get-all",
-      "room_number": 9,
-      "hidden": false
-    },
-    {
-      "item_slug": "inscription-case-sensitive",
-      "room_number": 11,
-      "hidden": false
-    },
-    {
-      "item_slug": "inscription-abbreviations",
-      "room_number": 11,
-      "hidden": false
-    },
-    {
-      "item_slug": "writing-command-history",
-      "room_number": 21,
-      "hidden": false
-    },
-    {
-      "item_slug": "inscription-hidden-items",
-      "room_number": 24,
-      "hidden": false
-    },
-    {
-      "item_slug": "writing-ready-wear",
-      "room_number": 7,
-      "hidden": false
-    },
-    {
-      "item_slug": "mimic-chest",
-      "room_number": 14,
-      "hidden": false
-    },
-    {
-      "item_slug": "gold-ring",
-      "after_defeating": "mimic"
+     "verb": "apologize",
+     "label": "Apologize to",
+     "shift": 25,
+     "success_text": "\"Whoa, whoa.\" You raise an open hand and tell Heinrich this fight is a misunderstanding. He peers at you over his shield rim. \"Huh. You know, you don't LOOK like the usual cave riffraff.\""
     }
-  ]
+   ],
+   "yields_at_regard": 70,
+   "befriend_on_spare": true,
+   "yield_text": "Heinrich steps back and lowers his longsword with a professional nod. \"Tell you what \u2014 no hard feelings, eh? Steel's expensive and you seem decent.\"",
+   "spare_text": "Heinrich sheathes his sword with a flourish and thumps your shoulder. \"Heinrich Schmidt, at your service after all! Stick with me, friend \u2014 two blades walk farther than one.\""
+  },
+  {
+   "id": "beginners-cave-mimic",
+   "name": "Mimic",
+   "slug": "mimic",
+   "type": "enemy",
+   "is_hostile": true,
+   "hostility": "hostile",
+   "friendliness": "hostile",
+   "description": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
+   "first_encounter_text": "A chest-shaped monster is in the room, holding you with two tentacles and attempting to disassemble you with a third one.",
+   "hp": 7,
+   "current_hp_from": "hp",
+   "agility": 12,
+   "weapon": "tentacles",
+   "damage_dice": "1d8",
+   "gold": 0,
+   "location_room": 14,
+   "portrait_description": "Chest-shaped monster with grasping tentacles and jagged lid-mouth, lurking in dim cell shadows, Eyvind Earle flat graphic style.",
+   "canonical_name": "Mimic",
+   "text_source": "kdechant/eamon monster.description",
+   "hidden_until_opened": "mimic-chest",
+   "persona": "A mimic disguised as a wooden chest, very hungry and very bad at small talk. If spoken to while disguised it answers in a muffled, woody voice, pretending unconvincingly to be ordinary furniture ('I am a normal chest. Chests do not talk. Please come closer.'). It cannot resist replying, which is its great weakness as an ambush predator."
+  },
+  {
+   "id": "beginners-cave-pirate",
+   "name": "Pirate",
+   "slug": "pirate",
+   "type": "enemy",
+   "is_hostile": true,
+   "hostility": "hostile",
+   "friendliness": "hostile",
+   "description": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
+   "first_encounter_text": "You see a man with a beard and a brass ring in his ear. He is wearing clothes made out of silk and is wielding a very fancily engraved sword.",
+   "hp": 5,
+   "current_hp_from": "hp",
+   "agility": 14,
+   "weapon": "TrollsFire",
+   "damage_dice": "2d10",
+   "gold": 50,
+   "location_room": 26,
+   "portrait_description": "Bearded pirate with brass earring and silk clothes, wielding an ornate sword named TrollsFire, windswept cove backdrop, Eyvind Earle flat graphic style.",
+   "canonical_name": "Pirate",
+   "text_source": "kdechant/eamon monster.description",
+   "flees_after_round": 1,
+   "persona": "A vain, theatrical old corsair marooned in this cove with his beloved engraved sword TrollsFire and a rotting boat. He is a coward at heart who masks fear with swagger. He respects flattery of his legend, fair bargains, and anyone who can out-talk him; he despises being laughed at. He desperately wants to leave this cave but will not admit it.",
+   "acts": [
+    {
+     "verb": "parley",
+     "label": "Parley with",
+     "shift": 20,
+     "success_text": "\"Parley, is it?\" The pirate's blade dips a hand's width. \"Aye... I know the old code. Speak your piece, landlubber, and speak it pretty.\"",
+     "repeat_text": "The pirate leans on a rock, sword loose in his grip, half-enjoying the negotiation. \"Go on. I'm listening.\""
+    },
+    {
+     "verb": "taunt",
+     "label": "Taunt",
+     "shift": -20,
+     "success_text": "You laugh at his silk clothes and his broken little boat. The pirate's face goes scarlet. \"INSOLENT DOG!\" Vanity is the one thing he'll fight for."
+    }
+   ],
+   "yields_at_regard": 70,
+   "yields_at_hp": 2,
+   "yield_text": "The pirate staggers back against his ruined boat, sword point dropping to the sand. \"Hold \u2014 HOLD, devil take you!\" he pants. \"Perhaps... perhaps we needn't finish this dance.\"",
+   "spare_text": "The pirate stares at you, then barks a disbelieving laugh. \"Mercy, from a guild rat! Ha!\" He unbuckles TrollsFire, scabbard and all, and presses it into your hands with his coin purse. \"Take her \u2014 she's brought me nothing but grief. And tell them ashore that One-Eyed Filmore paid his debts.\" He shoves his wretched boat toward the waves.",
+   "spare_gold": 50
+  }
+ ],
+ "items": [
+  {
+   "id": "beginners-cave-diamonds",
+   "name": "diamonds",
+   "slug": "diamonds",
+   "type": "treasure",
+   "description": "You see a large pile of gleaming diamonds here!",
+   "value": 200,
+   "weight": 3,
+   "canonical_name": "diamonds",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 3
+  },
+  {
+   "id": "beginners-cave-axe",
+   "name": "axe",
+   "slug": "axe",
+   "type": "weapon",
+   "description": "You see a standard Marcos axe here.",
+   "value": 20,
+   "weight": 8,
+   "damage_dice": "2d8",
+   "canonical_name": "axe",
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-healing-potion",
+   "name": "healing potion",
+   "slug": "healing-potion",
+   "type": "potion",
+   "description": "There is a bottle with a strange potion inside of it here! It has a label stuck to it that you could READ.",
+   "value": 50,
+   "weight": 2,
+   "heal_amount": 6,
+   "effect_description": "Drink to heal 6 hit points.",
+   "uses": 1,
+   "canonical_name": "bottle",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 5
+  },
+  {
+   "id": "beginners-cave-chest",
+   "name": "chest",
+   "slug": "chest",
+   "type": "container",
+   "collectible": false,
+   "value": 0,
+   "weight": -999,
+   "description": "A sturdy iron-bound chest sits against the wall, its lid shut."
+  },
+  {
+   "id": "beginners-cave-sword",
+   "name": "sword",
+   "slug": "sword",
+   "type": "weapon",
+   "description": "There is a poor quality Marcos sword here.",
+   "value": 15,
+   "weight": 6,
+   "damage_dice": "2d8",
+   "canonical_name": "sword",
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-sack-of-coins",
+   "name": "sack of coins",
+   "slug": "sack-of-coins",
+   "type": "treasure",
+   "description": "You find a sack with 50 gold coins inside!",
+   "value": 50,
+   "weight": 5,
+   "canonical_name": "sack of coins",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 8
+  },
+  {
+   "id": "beginners-cave-spices",
+   "name": "spices",
+   "slug": "spices",
+   "type": "treasure",
+   "description": "You find several spices. They are of a rare variety and quite valuable.",
+   "value": 30,
+   "weight": 3,
+   "canonical_name": "spices",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 18
+  },
+  {
+   "id": "beginners-cave-glowing-book",
+   "name": "glowing book",
+   "slug": "glowing-book",
+   "type": "misc",
+   "description": "There is an old book here. It glows in the darkness and is remarkably well preserved.",
+   "value": 80,
+   "weight": 3,
+   "text": "The book contains ancient lore about the cave's history. It is of great scholarly value.",
+   "effect_description": "Readable lore item; contains ancient scholarship about the cave.",
+   "canonical_name": "book",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 19,
+   "read_effect": "fatal_transform",
+   "read_effect_text": "You open the glowing book and read its first line aloud. The air shivers \u2014 your arms fuse to your sides, your skin runs to silver scales, and you drop to the cold stone a tiny gasping fish. There is no water here. You suffocate on dry rock within moments.",
+   "read_effect_text_at": {
+    "26": "You read the glowing book aloud at the water's edge. You shrink to a tiny silver fish and flop \u2014 by sheer dumb luck \u2014 into the sea! For one triumphant instant you think you've cheated the curse... then a passing gull plucks you from the waves and swallows you whole. An amusing, and rather sticky, end."
+   }
+  },
+  {
+   "id": "beginners-cave-trollsfire",
+   "name": "TrollsFire",
+   "slug": "trollsfire",
+   "type": "weapon",
+   "description": "The Pirate was carrying a beautiful sword. Carved on the hilt, in intricate detail, is the sword's name, \"TrollsFire\".",
+   "value": 125,
+   "weight": 8,
+   "damage_dice": "2d10",
+   "canonical_name": "TrollsFire",
+   "text_source": "kdechant/eamon artifact.description",
+   "magic_word": "trollsfire",
+   "stats": {
+    "damage": "2d10",
+    "weaponOdds": 0,
+    "flameDamage": "3d12",
+    "flameOdds": 40
+   }
+  },
+  {
+   "id": "beginners-cave-jewels",
+   "name": "jewels",
+   "slug": "jewels",
+   "type": "treasure",
+   "description": "There is a large pile of jewels here!",
+   "value": 168,
+   "weight": 5,
+   "canonical_name": "jewels",
+   "text_source": "kdechant/eamon artifact.description",
+   "source_room_number": 26
+  },
+  {
+   "id": "beginners-cave-inscription-get-all",
+   "name": "inscription",
+   "slug": "inscription-get-all",
+   "type": "misc",
+   "description": "You see an inscription on the wall which reads, \"You needn't gather treasure one piece at a time. Type TAKE ALL (or GET ALL) to scoop up everything loose in a room at once. Fixtures, the fallen, and signs like this one stay where they are.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "inscription",
+   "source_room_number": 9,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-inscription-case-sensitive",
+   "name": "inscription",
+   "slug": "inscription-case-sensitive",
+   "type": "misc",
+   "description": "An inscription on the wall reads, \"Two ways to act, traveller: tap one of the choices below, or simply type what you wish to do. Capital letters and small make no difference here.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "inscription",
+   "source_room_number": 11,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-inscription-abbreviations",
+   "name": "inscription",
+   "slug": "inscription-abbreviations",
+   "type": "misc",
+   "description": "Written on the wall are the words, \"To walk a passage, name its direction \u2014 or just its first letter. N, S, E, W carry you north, south, east and west; U and D, up and down.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "inscription",
+   "source_room_number": 11,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-writing-command-history",
+   "name": "writing",
+   "slug": "writing-command-history",
+   "type": "misc",
+   "description": "You see some words chiseled into the wall: \"You are not bound to the buttons. In the box below you may type a command in your own words \u2014 MOVE WEST, ATTACK THE RAT, READ THE WALL \u2014 then press Send.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "writing",
+   "source_room_number": 21,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-inscription-hidden-items",
+   "name": "inscription",
+   "slug": "inscription-hidden-items",
+   "type": "misc",
+   "description": "There are some words written here: \"Lost your bearings? Type LOOK and the chamber will tell you again what lies within it, who shares it with you, and where its passages lead.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "inscription",
+   "source_room_number": 24,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-writing-ready-wear",
+   "name": "writing",
+   "slug": "writing-ready-wear",
+   "type": "misc",
+   "description": "You see some words carved into the wall: \"Change your weapon with the READY command (e.g., READY SWORD). Don armour or a shield with WEAR, and take them off with REMOVE. Should you find a finer blade in the dark, ready it at once.\"",
+   "value": 0,
+   "weight": -999,
+   "canonical_name": "writing",
+   "source_room_number": 7,
+   "collectible": false,
+   "text_source": "kdechant/eamon artifact.description"
+  },
+  {
+   "id": "beginners-cave-scroll-passage-home",
+   "name": "scroll",
+   "slug": "scroll-passage-home",
+   "type": "scroll",
+   "description": "You unfurl a scroll from among the pirate's effects. In a hurried hand it reads: \"Stranger \u2014 there is no deeper door in this cave, only the way you entered. When your satchel is heavy and your wounds will bear no more, make for the Cave Entrance and head NORTH. Sam Slicker will weigh your plunder into gold and the Guild will mark the deed done. But fall here, or never leave, and you carry nothing home.\"",
+   "value": 0,
+   "weight": -999,
+   "collectible": false
+  },
+  {
+   "id": "beginners-cave-loose-flagstone",
+   "name": "loose flagstone",
+   "slug": "loose-flagstone",
+   "type": "feature",
+   "description": "You work your fingers under the loose flagstone and lever it up. Beneath it, scratched into the rock, is a shallow hollow \u2014 some prisoner's secret hiding place.",
+   "value": 0,
+   "weight": -999,
+   "collectible": false
+  },
+  {
+   "id": "beginners-cave-prisoners-silver",
+   "name": "silver coins",
+   "slug": "prisoners-silver",
+   "type": "treasure",
+   "description": "A small twist of cloth holds a handful of tarnished silver coins \u2014 a prisoner's hidden savings, never spent.",
+   "value": 75,
+   "weight": 1
+  },
+  {
+   "id": "beginners-cave-mimic-chest",
+   "slug": "mimic-chest",
+   "name": "chest",
+   "type": "container",
+   "description": "A wooden chest sits invitingly against the cavern wall, its lid slightly ajar.",
+   "value": 0,
+   "weight": -999,
+   "collectible": false
+  },
+  {
+   "id": "beginners-cave-gold-ring",
+   "slug": "gold-ring",
+   "name": "gold ring",
+   "type": "treasure",
+   "description": "A heavy gold ring lies among the mimic's remains.",
+   "value": 60,
+   "weight": 1
+  }
+ ],
+ "placements": [
+  {
+   "item_slug": "loose-flagstone",
+   "room_number": 6,
+   "hidden": false
+  },
+  {
+   "item_slug": "prisoners-silver",
+   "room_number": 6,
+   "hidden": true,
+   "revealedBy": "loose-flagstone"
+  },
+  {
+   "item_slug": "diamonds",
+   "room_number": 3,
+   "hidden": false
+  },
+  {
+   "item_slug": "axe",
+   "after_defeating": "hermit"
+  },
+  {
+   "item_slug": "chest",
+   "room_number": 5,
+   "hidden": false
+  },
+  {
+   "item_slug": "healing-potion",
+   "room_number": 5,
+   "hidden": true,
+   "container": "chest"
+  },
+  {
+   "item_slug": "sword",
+   "after_defeating": "heinrich"
+  },
+  {
+   "item_slug": "sack-of-coins",
+   "room_number": 8,
+   "hidden": false
+  },
+  {
+   "item_slug": "spices",
+   "room_number": 18,
+   "hidden": false
+  },
+  {
+   "item_slug": "glowing-book",
+   "room_number": 19,
+   "hidden": false
+  },
+  {
+   "item_slug": "trollsfire",
+   "after_defeating": "pirate"
+  },
+  {
+   "item_slug": "scroll-passage-home",
+   "after_defeating": "pirate"
+  },
+  {
+   "item_slug": "jewels",
+   "room_number": 26,
+   "hidden": false
+  },
+  {
+   "item_slug": "inscription-get-all",
+   "room_number": 9,
+   "hidden": false
+  },
+  {
+   "item_slug": "inscription-case-sensitive",
+   "room_number": 11,
+   "hidden": false
+  },
+  {
+   "item_slug": "inscription-abbreviations",
+   "room_number": 11,
+   "hidden": false
+  },
+  {
+   "item_slug": "writing-command-history",
+   "room_number": 21,
+   "hidden": false
+  },
+  {
+   "item_slug": "inscription-hidden-items",
+   "room_number": 24,
+   "hidden": false
+  },
+  {
+   "item_slug": "writing-ready-wear",
+   "room_number": 7,
+   "hidden": false
+  },
+  {
+   "item_slug": "mimic-chest",
+   "room_number": 14,
+   "hidden": false
+  },
+  {
+   "item_slug": "gold-ring",
+   "after_defeating": "mimic"
+  }
+ ]
 }

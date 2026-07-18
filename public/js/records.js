@@ -151,6 +151,31 @@ export function openRecords(records) {
     counter.append(h, p, btn);
     ledger.after(counter);
   }
+  // The Authors' Roll: every realm currently kept by the Guild, with its maker.
+  let roll = document.getElementById('records-authors');
+  if (!roll) {
+    roll = document.createElement('section');
+    roll.className = 'rec-section';
+    roll.id = 'records-authors';
+    const h = document.createElement('h3'); h.className = 'rec-h';
+    h.innerHTML = '<span class="rec-icon">✍</span> The Authors\u2019 Roll';
+    const blurb = document.createElement('p'); blurb.className = 'rec-blurb';
+    blurb.textContent = 'The realms beyond the Gate were first dreamed by these adventurers, in the early days of the Apple II. The Guild keeps their names with their worlds.';
+    const list = document.createElement('dl'); list.className = 'rec-entries'; list.id = 'records-authors-list';
+    roll.append(h, blurb, list);
+    document.getElementById('records-body')?.appendChild(roll);
+  }
+  const list = document.getElementById('records-authors-list');
+  if (list && Array.isArray(records.authors)) {
+    list.replaceChildren();
+    for (const entry of records.authors) {
+      const dt = document.createElement('dt'); dt.textContent = entry.name;
+      const dd = document.createElement('dd'); dd.textContent = `by ${entry.author}${entry.year ? ` (${entry.year})` : ''}`;
+      list.append(dt, dd);
+    }
+  }
+  roll.hidden = !records.authors?.length;
+
   const q = records.quill;
   counter.hidden = !q;
   if (q) {

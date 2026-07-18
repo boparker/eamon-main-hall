@@ -44,6 +44,14 @@ function card(adventure) {
   name.textContent = String(adventure.name ?? 'Unknown Realm');
   body.appendChild(name);
 
+  // Every realm names its maker — these are real authors' works, 1979 onward.
+  if (adventure.author) {
+    const byline = document.createElement('div');
+    byline.className = 'gate-byline';
+    byline.textContent = `by ${adventure.author}${adventure.year ? `, ${adventure.year}` : ''}`;
+    body.appendChild(byline);
+  }
+
   const difficulty = Number(adventure.difficulty);
   if (Number.isFinite(difficulty) && difficulty > 0) {
     const diff = document.createElement('div');
