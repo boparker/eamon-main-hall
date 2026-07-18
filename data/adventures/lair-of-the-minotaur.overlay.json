@@ -42,7 +42,8 @@
     "near_item": "huge-stone",
     "reveals": "emerald",
     "text": "As you say the word, there is a small eruption from the center of the stone and an emerald pops out of it.",
-    "once": true
+    "once": true,
+    "already_text": "The stone is silent. It has already given up its emerald \u2014 the mirror's word holds no more power here."
    }
   ],
   "dig_sites": [

@@ -2253,6 +2253,9 @@ export function createGameRouter(rawDeps = {}) {
           roomNumber: getCurrentRoom(run, adventure).room_number,
           visibleItemSlugs: (roomEntitiesForSay.placements ?? []).map((pl) => pl.item_slug),
         });
+        if (trigger?.spent) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'say', command }, text: trigger.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
         if (trigger) {
           run = revealItem(run, trigger.reveals);
           if (trigger.once) run = markTriggerFired(run, trigger.word);
