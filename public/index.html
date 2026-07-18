@@ -252,6 +252,11 @@
     .pack-tag { margin-left: 8px; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 4px; padding: 1px 5px; }
     .pack-detail { font-size: 0.74rem; color: rgba(200,168,75,0.65); margin-top: 1px; }
     .pack-empty { color: rgba(230,220,198,0.5); font-style: italic; padding: 10px 4px; }
+    .pack-group { font-family: var(--font-head); font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(200,168,75,0.55); margin: 12px 0 2px; }
+    .pack-row.actionable { cursor: pointer; }
+    .pack-row.armed { background: rgba(200,168,75,0.07); border-radius: 6px; }
+    .pack-act { margin-left: auto; flex: none; padding: 6px 14px; font-family: var(--font-head); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); background: rgba(200,168,75,0.12); border: 1px solid var(--gold); border-radius: 5px; cursor: pointer; }
+    .pack-act:hover { background: rgba(200,168,75,0.25); }
 
     /* ── Prologue (story setup screen) ── */
     #prologue { position: fixed; inset: 0; z-index: 70; background: rgba(4,3,2,0.9); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }

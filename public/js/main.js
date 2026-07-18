@@ -22,7 +22,7 @@ import { createCreationCard } from './creation-card.js';
 import { renderCombat, hideCombat, dismissCombatWithOutcome, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
 import { updateJournalMap, initJournalMap } from './journal-map.js';
 import { showPrologue, initPrologue } from './prologue.js';
-import { updatePack, initPack } from './pack.js';
+import { updatePack, initPack, registerPackHandler } from './pack.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
@@ -334,6 +334,10 @@ initAudioControls();
 initJournalMap();
 initPrologue();
 initPack();
+registerPackHandler((text) => {
+  inputEl.value = text;
+  sendMessage();
+});
 const helpMenu = initHelpMenu();
 
 // ── Boot / Title gateway ──
