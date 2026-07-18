@@ -197,9 +197,14 @@ export function updateAudioForResponse(response) {
   if (phase === 'adventure') {
     // Cave: retire music, breathe with the room.
     if (bgMusic && bgMusic.volume > 0) fadeTo(bgMusic, 0);
-    const amb = response?.state?.room?.ambience;
-    const fallback = /cell|chamber/i.test(response?.state?.room?.name ?? '') ? 'cell' : 'tunnel';
-    setAmbience(amb?.track ?? fallback, amb?.volume ?? 0.3);
+    // Roomless responses (take, inventory, equip...) carry phase but no room —
+    // touching ambience here guessed 'tunnel' and silenced the beach mid-take.
+    const room = response?.state?.room;
+    if (room) {
+      const amb = room.ambience;
+      const fallback = /cell|chamber/i.test(room.name ?? '') ? 'cell' : 'tunnel';
+      setAmbience(amb?.track ?? fallback, amb?.volume ?? 0.3);
+    }
   } else if (phase) {
     // Hall & shops: Tabletop Audio's "Medieval Banquet" — feast, fire and
     // crowd professionally mixed. Revive it explicitly: entering the cave
