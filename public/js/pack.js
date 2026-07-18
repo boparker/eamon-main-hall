@@ -4,8 +4,23 @@
 // button or the I key; refreshes from every response's state.character.
 
 let _character = null;
+let _send = null; // registered by main.js: pipes a command through the input
+
+export function registerPackHandler(fn) { _send = fn; }
 
 const TYPE_GLYPH = { weapon: '⚔', armor: '🛡', potion: '🧪', scroll: '📜', treasure: '💎', tool: '🪶', container: '🧰', misc: '◆' };
+const GROUP_ORDER = ['weapon', 'armor', 'potion', 'scroll', 'tool', 'treasure', 'misc', 'container'];
+const GROUP_LABEL = { weapon: 'Arms', armor: 'Armour', potion: 'Potions', scroll: 'Scrolls & Writings', tool: 'Tools', treasure: 'Treasure', misc: 'Sundries', container: 'Sundries' };
+
+// What clicking an item can DO. The confirmation is the second tap: the row
+// reveals its action button, the button does the deed. No dialogs.
+function actionFor(item, equippedTag) {
+  if (equippedTag) return null; // already wielded/worn
+  if (item.type === 'weapon') return { label: 'Wield', command: `wield ${item.name}` };
+  if (item.type === 'armor') return { label: 'Wear', command: `wear ${item.name}` };
+  if (item.type === 'potion') return { label: 'Drink', command: `drink ${item.name}` };
+  return null;
+}
 
 export function updatePack(state) {
   if (state && Object.prototype.hasOwnProperty.call(state, 'character')) {
@@ -64,6 +79,29 @@ function itemRow(item, equippedTag) {
   body.append(name, detail);
 
   row.append(art, body);
+
+  const action = actionFor(item, equippedTag);
+  if (action && _send) {
+    row.classList.add('actionable');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pack-act';
+    btn.textContent = action.label;
+    btn.hidden = true;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      close();
+      _send(action.command);
+    });
+    row.appendChild(btn);
+    row.addEventListener('click', () => {
+      // First tap arms the row (and disarms siblings); the button is the confirm.
+      const wasArmed = !btn.hidden;
+      document.querySelectorAll('.pack-act').forEach((b) => { b.hidden = true; });
+      document.querySelectorAll('.pack-row.armed').forEach((r) => r.classList.remove('armed'));
+      if (!wasArmed) { btn.hidden = false; row.classList.add('armed'); }
+    });
+  }
   return row;
 }
 
@@ -78,15 +116,29 @@ function render() {
   if (eq.weapon?.slug) equippedSlugs.set(eq.weapon.slug, 'wielded');
   if (eq.armor?.slug) equippedSlugs.set(eq.armor.slug, 'worn');
 
-  // Equipped first (even if not duplicated in inventory), then the pack.
-  for (const [slot, tag] of [['weapon', 'wielded'], ['armor', 'worn']]) {
-    if (eq[slot]?.slug) list.appendChild(itemRow(eq[slot], tag));
-  }
+  // Grouped by type: equipped gear leads its group; groups in fixed order.
   const inventory = Array.isArray(_character.inventory) ? _character.inventory : [];
   const shown = new Set([eq.weapon?.slug, eq.armor?.slug].filter(Boolean));
+  const groups = new Map();
+  const put = (groupKey, item, tag) => {
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey)[tag ? 'unshift' : 'push']([item, tag]);
+  };
+  if (eq.weapon?.slug) put('weapon', eq.weapon, 'wielded');
+  if (eq.armor?.slug) put('armor', eq.armor, 'worn');
   for (const item of inventory) {
-    if (shown.has(item?.slug)) continue;
-    list.appendChild(itemRow(item, equippedSlugs.get(item?.slug)));
+    if (!item || shown.has(item.slug)) continue;
+    const key = GROUP_ORDER.includes(item.type) ? item.type : 'misc';
+    put(key, item, equippedSlugs.get(item.slug));
+  }
+  for (const key of GROUP_ORDER) {
+    const entries = groups.get(key);
+    if (!entries?.length) continue;
+    const header = document.createElement('div');
+    header.className = 'pack-group';
+    header.textContent = GROUP_LABEL[key] ?? key;
+    list.appendChild(header);
+    for (const [item, tag] of entries) list.appendChild(itemRow(item, tag));
   }
   if (!list.children.length) {
     const empty = document.createElement('div');
