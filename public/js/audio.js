@@ -174,6 +174,8 @@ export function playAudioForEvents(response) {
   if (has('character_defeated')) { playSfx('death', 0.55); return; }
   if (has('return_to_hall') || has('escort_reward') || has('abandon')) { playSfx('fanfare', 0.45); return; } // walking out alive is a homecoming too
   if (has('enemy_spared')) { playSfx('spare', 0.5); return; }
+  // A solved riddle or unearthed secret resolves warmly — the discovery chime.
+  if (has('riddle_solved') || has('secret_found')) { playSfx('spare', 0.45); return; }
   // The kill: blow + body-fall + silence, in one sample. Heavy and hollow on
   // purpose — the spare harp's dark twin. Replaces the round's hit sound.
   if (has('enemy_defeated')) { playSfx('kill', 0.5); return; }

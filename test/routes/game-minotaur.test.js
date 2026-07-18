@@ -84,7 +84,22 @@ function makeDeps() {
       runs.set(id, updated);
       return updated;
     },
+    _runs: runs,
+    _characters: characters,
   };
+}
+
+// Teleport the run and grant gear — the audit tests target each gimmick
+// directly instead of walking 92 rooms to reach it.
+function seed(deps, session, { room, items = [], flags = {} }) {
+  const run = deps._runs.get(session.adventureRunId);
+  if (room) run.current_room = room;
+  run.room_state = { ...(run.room_state ?? {}), visitedRooms: [...new Set([...(run.room_state?.visitedRooms ?? []), run.current_room])] };
+  run.flags = { ...(run.flags ?? {}), ...flags };
+  if (items.length) {
+    const ch = deps._characters.get(session.characterId);
+    ch.inventory = [...(ch.inventory ?? []), ...items];
+  }
 }
 
 async function request(app, method, path, body) {
@@ -237,4 +252,96 @@ test('a spent riddle answers gracefully instead of "nobody is here"', async () =
   await command(app, session, 'say magic');
   const again = await command(app, session, 'say magic');
   assert.match(again.body.text, /already given up its emerald/i, `got: ${again.body.text.slice(0, 160)}`);
+});
+
+// ── The gimmick audit: every unique trick, proven end to end ────────────────
+
+test('AUDIT dig: shovel + south grotto unearths the coins, with the secret banner', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 27, items: [{ slug: 'shovel', name: 'shovel', type: 'misc' }] });
+  const dug = await command(app, session, 'dig');
+  assert.match(dug.body.text, /SECRET UNEARTHED/i, `got: ${dug.body.text.slice(0, 160)}`);
+  assert.ok(dug.body.events.some((e) => e.type === 'secret_found'));
+  const look = await command(app, session, 'look');
+  assert.ok(look.body.state.items.some((i) => i.slug === 'gold-coins'), 'coins revealed');
+  const again = await command(app, session, 'dig');
+  assert.doesNotMatch(again.body.text, /UNEARTHED/i, 'pays out once');
+});
+
+test('AUDIT riddle banner: say magic carries the riddle_solved event and deed', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 5 });
+  const said = await command(app, session, 'say magic');
+  assert.match(said.body.text, /RIDDLE SOLVED/i);
+  assert.ok(said.body.events.some((e) => e.type === 'riddle_solved'));
+  const deeds = said.body.state.character.chronicle.deeds;
+  assert.ok(deeds.some((d) => d.kind === 'riddle' && d.room === 5), 'riddle deed recorded with room');
+});
+
+test('AUDIT cursed jewel: taking it bites', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 43 });
+  const before = (await command(app, session, 'look')).body.state.character.hd;
+  const took = await command(app, session, 'take jewel of molinar');
+  assert.match(took.body.text, /electric shock|told you not to touch/i, `got: ${took.body.text.slice(0, 160)}`);
+  assert.ok(took.body.state.character.hd < before, 'damage applied');
+});
+
+test('AUDIT guarded books: the High Priest objects while he lives', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 49 });
+  await command(app, session, 'look'); // encounter fires
+  const took = await command(app, session, 'take books');
+  assert.match(took.body.text, /hands off my books/i, `got: ${took.body.text.slice(0, 160)}`);
+});
+
+test('AUDIT locked grate: blocked bare-handed, opens with the skeleton key', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 54 });
+  const blocked = await command(app, session, 'west');
+  assert.match(blocked.body.text, /iron grate|key hole/i, `got: ${blocked.body.text.slice(0, 160)}`);
+  seed(deps, session, { items: [{ slug: 'skeleton-key', name: 'skeleton key', type: 'misc' }] });
+  const opened = await command(app, session, 'west');
+  assert.match(opened.body.text, /unlock the iron grate/i, `got: ${opened.body.text.slice(0, 160)}`);
+});
+
+test('AUDIT the grate on the river: sailing south of the south beach kills', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  const r15 = minotaur.locations.find((l) => l.room_number === 15);
+  const toGrate = Object.entries(r15.exits).find(([, d]) => d === 16)?.[0];
+  assert.ok(toGrate, 'room 15 flows into the grate');
+  seed(deps, session, { room: 15, flags: { inVehicle: true, vehicleRoom: 15 } });
+  const dead = await command(app, session, toGrate);
+  assert.ok(dead.body.events.some((e) => e.type === 'character_defeated'), `got: ${dead.body.text.slice(0, 200)}`);
+  assert.match(dead.body.text, /splinters|water takes you/i);
+});
+
+test('AUDIT the rescue: defeating the Priest frees Larcenous Lil', async () => {
+  const deps = makeDeps();
+  deps.rng = () => 0.99; // BEFORE makeApp — the router captures rng at creation
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  seed(deps, session, { room: 52 });
+  await command(app, session, 'look');
+  let freed = null;
+  for (let i = 0; i < 20 && !freed; i++) {
+    const hit = await command(app, session, 'attack priest');
+    if (hit.body.events?.some((e) => e.type === 'enemy_defeated')) freed = hit;
+  }
+  assert.ok(freed, 'priest eventually falls');
+  assert.match(freed.body.text, /free|joins you/i, `got: ${freed.body.text.slice(0, 250)}`);
+  const look = await command(app, session, 'look');
+  assert.ok(look.body.state.entities.characters.some((c) => c.slug === 'larcenous-lil' && (c.companion || c.disposition === 'friendly')), 'Lil present and friendly');
 });

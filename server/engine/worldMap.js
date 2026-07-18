@@ -81,6 +81,8 @@ export function computeLayout(adventure) {
 
 // kind -> the short marginalia phrase the quill inks next to a room.
 const SCRIBBLES = {
+  riddle: 'a riddle answered',
+  secret: 'something buried, found',
   slay: 'a killing here',
   death: 'fell here once',
   spare: 'mercy shown',
