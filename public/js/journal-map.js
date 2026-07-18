@@ -35,7 +35,7 @@ export function toggleJournalMap() {
   if (!mapData) return;
   const el = document.getElementById('journal-map');
   if (!el) return;
-  if (el.hidden) { render(); el.hidden = false; } else { el.hidden = true; }
+  if (el.hidden) { el.hidden = false; render(); } else { el.hidden = true; } // unhide BEFORE render: scroll-to-center needs layout
 }
 
 function close() {
@@ -83,8 +83,12 @@ function render() {
     : 'Rooms appear as you walk them';
   if (levels.size > 1) legend.textContent += ` · depth ${currentZ}`;
 
+  // Fixed scale: rooms stay readable no matter how large the map grows; the
+  // panel scrolls both axes and centers on the current room instead of
+  // shrinking 92 rooms into confetti.
   const svg = svgEl('svg', {
     viewBox: `${-PAD} ${-PAD} ${width + PAD * 2} ${height + PAD * 2}`,
+    width: width + PAD * 2, height: height + PAD * 2,
     class: 'jm-svg', role: 'img', 'aria-label': 'Journal map of explored rooms',
   });
 
@@ -138,6 +142,15 @@ function render() {
   }
 
   host.replaceChildren(svg);
+
+  // Scroll the current room to the center of the visible panel.
+  const current = nodes.find((n) => n.current);
+  if (current) {
+    const { cx, cy } = center(current, minX, minY);
+    const pane = host.closest('.jm-panel') ?? host;
+    pane.scrollLeft = cx + PAD - pane.clientWidth / 2;
+    pane.scrollTop = cy + PAD - pane.clientHeight / 2 + 70; // header offset
+  }
 }
 
 export function initJournalMap() {
