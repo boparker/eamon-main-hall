@@ -3121,6 +3121,11 @@
    "room_number": 52,
    "hidden": true,
    "after_defeating": "priest"
+  },
+  {
+   "item_slug": "gold-coins",
+   "room_number": 27,
+   "hidden": true
   }
  ]
 }

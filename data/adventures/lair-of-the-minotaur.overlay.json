@@ -239,5 +239,12 @@
    "room_number": 87,
    "name": "The Lair of the Minotaur"
   }
+ ],
+ "placements": [
+  {
+   "item_slug": "gold-coins",
+   "room_number": 27,
+   "hidden": true
+  }
  ]
 }

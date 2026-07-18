@@ -1721,9 +1721,14 @@ export function createGameRouter(rawDeps = {}) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'search', command }, text: dig.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
         }
         run = revealItem(run, dig.site.reveals);
-        const savedDig = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+        character = recordDeed(character, `Unearthed something long buried in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'secret', room: getCurrentRoom(run, adventure).room_number });
+        const [digChar, savedDig] = await Promise.all([
+          deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+          deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+        ]);
+        character = rowCharacter(digChar) ?? character;
         run = rowRun(savedDig) ?? run;
-        return res.json(roomResponse({ adventure, run, character, prefix: dig.site.found_text, event: { type: 'open', command }, intent: command }));
+        return res.json(roomResponse({ adventure, run, character, prefix: `✦ SECRET UNEARTHED ✦\n${dig.site.found_text}`, event: { type: 'secret_found', command }, events: [{ type: 'secret_found' }], intent: command }));
       }
 
       if (command.type === 'take') {
@@ -2259,9 +2264,16 @@ export function createGameRouter(rawDeps = {}) {
         if (trigger) {
           run = revealItem(run, trigger.reveals);
           if (trigger.once) run = markTriggerFired(run, trigger.word);
-          const savedTrig = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+          // A solved riddle must LAND: banner, chime (client maps the event),
+          // and a chronicle deed the Quill inks onto the map.
+          character = recordDeed(character, `Solved the riddle of the spoken word in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'riddle', room: getCurrentRoom(run, adventure).room_number });
+          const [trigChar, savedTrig] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          character = rowCharacter(trigChar) ?? character;
           run = rowRun(savedTrig) ?? run;
-          return res.json(roomResponse({ adventure, run, character, prefix: trigger.text, event: { type: 'magic_word', word: trigger.word }, intent: command }));
+          return res.json(roomResponse({ adventure, run, character, prefix: `✦ RIDDLE SOLVED ✦\n${trigger.text}`, event: { type: 'riddle_solved', word: trigger.word }, events: [{ type: 'riddle_solved', word: trigger.word }], intent: command }));
         }
         const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
         // A disguised mimic: speaking to the chest (or into an "empty" room
