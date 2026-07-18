@@ -68,7 +68,8 @@ test('say trigger needs the word, the nearby item, and fires once', () => {
   assert.equal(hit.reveals, 'emerald');
   assert.equal(sayTrigger({ adventure, run: { flags: {} }, words: 'magic', roomNumber: 5, visibleItemSlugs: [] }), null);
   const fired = markTriggerFired({ flags: {} }, 'magic');
-  assert.equal(sayTrigger({ adventure, run: fired, words: 'magic', roomNumber: 5, visibleItemSlugs: ['huge-stone'] }), null);
+  const spent = sayTrigger({ adventure, run: fired, words: 'magic', roomNumber: 5, visibleItemSlugs: ['huge-stone'] });
+  assert.equal(spent.spent, true, 'a spent riddle acknowledges itself instead of vanishing');
 });
 
 test('dig needs the shovel, the site, and only pays out once', () => {

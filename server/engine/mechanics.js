@@ -88,7 +88,10 @@ export function sayTrigger({ adventure, run, words, roomNumber, visibleItemSlugs
   for (const trigger of m.say_triggers ?? []) {
     if (!new RegExp(`\\b${trigger.word}\\b`, 'i').test(spoken)) continue;
     if (trigger.near_item && !visibleItemSlugs.includes(trigger.near_item)) continue;
-    if (trigger.once && (run.flags?.firedTriggers ?? []).includes(trigger.word)) continue;
+    if (trigger.once && (run.flags?.firedTriggers ?? []).includes(trigger.word)) {
+      // A solved riddle should say so, not fall through to "nobody's here".
+      return { spent: true, text: trigger.already_text ?? 'The word has already done its work here.' };
+    }
     return trigger;
   }
   return null;

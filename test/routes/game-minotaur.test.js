@@ -211,3 +211,30 @@ test('starting the adventure carries the story prologue', async () => {
   assert.match(intro.text, /Larcenous Lil/);
   assert.match(intro.cover, /cover\.png/);
 });
+
+test('the mirror riddle: SAY MAGIC in the Stone Room births the emerald', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  await command(app, session, 'south');  // 2
+  await command(app, session, 'west');   // 3
+  await command(app, session, 'south');  // 5 Stone Room
+  const said = await command(app, session, 'say magic');
+  assert.match(said.body.text, /eruption.*emerald/i, `got: ${said.body.text.slice(0, 200)}`);
+  const look = await command(app, session, 'look');
+  assert.ok(look.body.state.items.some((i) => i.slug === 'emerald'), 'emerald is now visible');
+  const again = await command(app, session, 'say magic');
+  assert.doesNotMatch(again.body.text, /eruption/i, 'fires only once');
+});
+
+test('a spent riddle answers gracefully instead of "nobody is here"', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  await command(app, session, 'south');
+  await command(app, session, 'west');
+  await command(app, session, 'south');
+  await command(app, session, 'say magic');
+  const again = await command(app, session, 'say magic');
+  assert.match(again.body.text, /already given up its emerald/i, `got: ${again.body.text.slice(0, 160)}`);
+});
