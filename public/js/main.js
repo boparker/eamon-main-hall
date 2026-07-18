@@ -22,6 +22,7 @@ import { createCreationCard } from './creation-card.js';
 import { renderCombat, hideCombat, dismissCombatWithOutcome, registerCombatAction, registerCombatReturnToHall } from './combat-scene.js';
 import { updateJournalMap, initJournalMap } from './journal-map.js';
 import { showPrologue, initPrologue } from './prologue.js';
+import { updatePack, initPack } from './pack.js';
 
 const creationCard = createCreationCard({
   submit: (text) => { inputEl.value = text; sendMessage(); },
@@ -40,6 +41,7 @@ function renderGameResponse(response = {}) {
   if (response.state?.records) openRecords(response.state.records);
   else closeRecords();
   updateJournalMap(response.state);
+  updatePack(response.state);
   if (response.state?.intro) showPrologue(response.state.intro);
   updateHUD(true);
 
@@ -331,6 +333,7 @@ registerCombatReturnToHall(async () => {
 initAudioControls();
 initJournalMap();
 initPrologue();
+initPack();
 const helpMenu = initHelpMenu();
 
 // ── Boot / Title gateway ──

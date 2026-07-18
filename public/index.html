@@ -237,6 +237,22 @@
     #game-screen.reading #readied-bar,
     #game-screen.reading #location-title,
     #game-screen.reading #thinking { display: none; }
+    /* ── The pack (visual inventory) ── */
+    #pack-panel { position: fixed; inset: 0; z-index: 65; background: rgba(6,4,2,0.7); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
+    #pack-panel[hidden] { display: none; }
+    #hud-pack-btn[hidden] { display: none; }
+    .pack-inner { position: relative; width: min(420px, 92vw); max-height: 80vh; overflow: auto; background: linear-gradient(160deg, #17110a, #0d0906); border: 1px solid var(--gold-dim); border-radius: 10px; padding: 18px 20px; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
+    #pack-close { position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border: 1px solid var(--gold-dim); border-radius: 50%; background: rgba(12,9,6,0.7); color: var(--gold); font-size: 1.1rem; line-height: 1; cursor: pointer; }
+    .pack-title { font-family: var(--font-head); font-size: 1.1rem; color: var(--gold); letter-spacing: 0.1em; }
+    .pack-gold { font-size: 0.74rem; color: rgba(200,168,75,0.7); margin: 2px 0 12px; }
+    .pack-row { display: flex; align-items: center; gap: 12px; padding: 7px 4px; border-bottom: 1px solid rgba(200,168,75,0.12); }
+    .pack-art { width: 40px; height: 40px; flex: none; display: grid; place-items: center; font-size: 1.2rem; background: rgba(24,18,10,0.9); border: 1px solid rgba(200,168,75,0.25); border-radius: 6px; overflow: hidden; }
+    .pack-art img { width: 100%; height: 100%; object-fit: cover; }
+    .pack-name { color: #e6dcc6; font-size: 0.94rem; }
+    .pack-tag { margin-left: 8px; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-dim); border-radius: 4px; padding: 1px 5px; }
+    .pack-detail { font-size: 0.74rem; color: rgba(200,168,75,0.65); margin-top: 1px; }
+    .pack-empty { color: rgba(230,220,198,0.5); font-style: italic; padding: 10px 4px; }
+
     /* ── Prologue (story setup screen) ── */
     #prologue { position: fixed; inset: 0; z-index: 70; background: rgba(4,3,2,0.9); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
     #prologue[hidden] { display: none; }
@@ -917,6 +933,9 @@
       <button class="hud-btn" id="hud-account-btn" title="Account" aria-label="Account">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
       </button>
+      <button class="hud-btn" id="hud-pack-btn" title="Your pack (I)" aria-label="Open your pack" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/><path d="M5 13h14"/></svg>
+      </button>
       <button class="hud-btn" id="hud-map-btn" title="Journal map (M)" aria-label="Open journal map" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15.2 8.8l-2 4.4-4.4 2 2-4.4z"/></svg>
       </button>
@@ -1047,6 +1066,15 @@
   </div>
 
   <!-- ═ HALL OF RECORDS (the Archivist's codex + tribute) ═ -->
+  <div id="pack-panel" hidden>
+    <div class="pack-inner">
+      <button id="pack-close" aria-label="Close pack">&#215;</button>
+      <div class="pack-title">Your Pack</div>
+      <div id="pack-gold" class="pack-gold"></div>
+      <div id="pack-list"></div>
+    </div>
+  </div>
+
   <div id="prologue" hidden>
     <div class="prologue-panel">
       <div id="prologue-cover" aria-hidden="true"></div>
