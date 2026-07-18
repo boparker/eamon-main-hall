@@ -12,13 +12,28 @@ const TYPE_GLYPH = { weapon: '⚔', armor: '🛡', potion: '🧪', scroll: '📜
 const GROUP_ORDER = ['weapon', 'armor', 'potion', 'scroll', 'tool', 'treasure', 'misc', 'container'];
 const GROUP_LABEL = { weapon: 'Arms', armor: 'Armour', potion: 'Potions', scroll: 'Scrolls & Writings', tool: 'Tools', treasure: 'Treasure', misc: 'Sundries', container: 'Sundries' };
 
+// Items come in two dialects: adventure loot ({type, damage_dice}) and shop
+// gear ({category, equipmentSlot, stats.damage}). Normalize before judging.
+function kindOf(item) {
+  const t = item.type ?? item.category;
+  if (GROUP_ORDER.includes(t)) return t;
+  if (item.equipmentSlot === 'weapon') return 'weapon';
+  if (item.equipmentSlot === 'armor' || item.equipmentSlot === 'shield') return 'armor';
+  return 'misc';
+}
+
+function diceOf(item) {
+  return item.damage_dice ?? item.stats?.damage ?? null;
+}
+
 // What clicking an item can DO. The confirmation is the second tap: the row
 // reveals its action button, the button does the deed. No dialogs.
 function actionFor(item, equippedTag) {
   if (equippedTag) return null; // already wielded/worn
-  if (item.type === 'weapon') return { label: 'Wield', command: `wield ${item.name}` };
-  if (item.type === 'armor') return { label: 'Wear', command: `wear ${item.name}` };
-  if (item.type === 'potion') return { label: 'Drink', command: `drink ${item.name}` };
+  const kind = kindOf(item);
+  if (kind === 'weapon') return { label: 'Wield', command: `wield ${item.name}` };
+  if (kind === 'armor') return { label: item.equipmentSlot === 'shield' ? 'Ready' : 'Wear', command: `wear ${item.name}` };
+  if (kind === 'potion') return { label: 'Drink', command: `drink ${item.name}` };
   return null;
 }
 
@@ -72,9 +87,11 @@ function itemRow(item, equippedTag) {
   const detail = document.createElement('div');
   detail.className = 'pack-detail';
   const bits = [];
-  if (item.damage_dice) bits.push(item.damage_dice + (item.magic ? ' ✦magic' : ''));
+  const dice = diceOf(item);
+  if (dice) bits.push(dice + (item.magic ? ' ✦magic' : ''));
+  if (item.stats?.defense) bits.push(`defense ${item.stats.defense}`);
   if (Number.isFinite(item.value) && item.value > 0) bits.push(`${item.value} gold`);
-  if (item.type && !item.damage_dice) bits.push(item.type);
+  if (!dice && !item.stats?.defense) bits.push(kindOf(item));
   detail.textContent = bits.join(' · ');
   body.append(name, detail);
 
@@ -128,8 +145,7 @@ function render() {
   if (eq.armor?.slug) put('armor', eq.armor, 'worn');
   for (const item of inventory) {
     if (!item || shown.has(item.slug)) continue;
-    const key = GROUP_ORDER.includes(item.type) ? item.type : 'misc';
-    put(key, item, equippedSlugs.get(item.slug));
+    put(kindOf(item), item, equippedSlugs.get(item.slug));
   }
   for (const key of GROUP_ORDER) {
     const entries = groups.get(key);
@@ -153,7 +169,12 @@ export function initPack() {
   document.getElementById('hud-pack-btn')?.addEventListener('click', togglePack);
   document.getElementById('pack-close')?.addEventListener('click', close);
   document.getElementById('pack-panel')?.addEventListener('click', (e) => {
-    if (e.target.id === 'pack-panel') close();
+    if (e.target.id === 'pack-panel') { close(); return; }
+    // A click on anything that is not an actionable row disarms armed rows.
+    if (!e.target.closest?.('.pack-row.actionable')) {
+      document.querySelectorAll('.pack-act').forEach((b) => { b.hidden = true; });
+      document.querySelectorAll('.pack-row.armed').forEach((r) => r.classList.remove('armed'));
+    }
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen()) { close(); return; }
