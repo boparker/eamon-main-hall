@@ -67,7 +67,7 @@ const NO_FIGURES = 'An empty environment — no people, no figures, no person, n
 // temple and forest to be painted as caves (40 rooms flagged in one run).
 const BIOMES = {
   cave: 'Fully enclosed underground: no sky, no horizon, no outside vista, no buildings. Raw rough-hewn cave rock, cracked and damp with age — NEVER dressed masonry, polished stone or palace architecture; any door is battered aged rough timber with rusted iron, set directly into the rock.',
-  river: 'A vast enclosed cavern holding a dark underground river: black slow water, wet sand or shingle beaches, raw rough-hewn rock walls and ceiling lost in shadow. No sky, no daylight, no outside world — the only light is dim and artificial or phosphorescent.',
+  river: 'An open-air river gorge: a broad swift river under open sky, pale sand and shingle shores, high rocky cliff walls rising in the distance with tunnel mouths at their base, natural hazy daylight, atmospheric depth. Somber and vast, not tropical, not cheerful.',
   temple: 'An ancient subterranean temple cut and built by hands long dead: crude old worked-stone masonry, squat pillars, cracked flagstones, soot-stained carvings — ancient and oppressive, NEVER polished palace grandeur; timber and iron are old and battered.',
   outdoor: 'An outdoor scene: open air, natural daylight or dusk, trees, undergrowth or open ground as the text describes. Grounded and slightly somber — a real place after a long darkness, not a fantasy vista.',
 };
