@@ -165,30 +165,68 @@ export function computeLayout(adventure) {
     if (!moved) break;
   }
 
-  // Cell assignment, provably order-safe: scale x by K (the worst same-cell
-  // multiplicity) so spreading colliders within a band can never cross into
-  // the next x-class, then remap used x values to consecutive columns —
-  // both steps preserve every solved x-order relation, so the compass holds.
-  const cellCount = new Map();
-  for (const n of nodes) {
-    const ck = `${xs.get(n)},${ys.get(n)},${zs.get(n)}`;
-    cellCount.set(ck, (cellCount.get(ck) ?? 0) + 1);
+  // Cell assignment: rooms take their solved cells; the rare colliders (no
+  // ordering constraint separates them, or they'd differ) move to the
+  // NEAREST free cell that still satisfies every directional constraint they
+  // participate in — the map stays compact AND the compass stays law.
+  const occupied = new Map();
+  const key = (x, y, z) => `${x},${y},${z}`;
+  const ideal = new Map(nodes.map((n) => [n, { x: xs.get(n), y: ys.get(n), z: zs.get(n) }]));
+  const constraintsOf = new Map(nodes.map((n) => [n, []]));
+  for (const [num, loc] of rooms) {
+    for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+      if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
+      constraintsOf.get(num).push([dir, dest]);
+    }
   }
-  const K = Math.max(1, ...cellCount.values());
-  const cellIndex = new Map();
-  const scaledX = new Map();
+  const satisfies = (n, cand) => {
+    for (const [dir, other] of constraintsOf.get(n) ?? []) {
+      const o = positions.get(other) ?? ideal.get(other);
+      if (!o) continue;
+      if (dir === 'north' && !(o.y < cand.y)) return false; // dest must sit above
+      if (dir === 'south' && !(o.y > cand.y)) return false; // below
+      if (dir === 'east' && !(o.x > cand.x)) return false;  // right
+      if (dir === 'west' && !(o.x < cand.x)) return false;  // left
+    }
+    return true;
+  };
   for (const n of [...nodes].sort((a, b) => a - b)) {
-    const ck = `${xs.get(n)},${ys.get(n)},${zs.get(n)}`;
-    const i = cellIndex.get(ck) ?? 0;
-    cellIndex.set(ck, i + 1);
-    if (i > 0) conflicts.push({ room: n, direction: null, from: null });
-    scaledX.set(n, xs.get(n) * K + i);
+    const want = ideal.get(n);
+    if (!occupied.has(key(want.x, want.y, want.z))) {
+      positions.set(n, { ...want });
+      occupied.set(key(want.x, want.y, want.z), n);
+      continue;
+    }
+    conflicts.push({ room: n, direction: null, from: occupied.get(key(want.x, want.y, want.z)) });
+    // Spiral out for the nearest free, constraint-satisfying cell.
+    let placedAt = null;
+    outer: for (let r = 1; r <= 10 && !placedAt; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const cand = { x: want.x + dx, y: want.y + dy, z: want.z };
+          if (occupied.has(key(cand.x, cand.y, cand.z))) continue;
+          if (satisfies(n, cand)) { placedAt = cand; break outer; }
+        }
+      }
+    }
+    if (!placedAt) {
+      let d = 1;
+      let cand = { ...want };
+      while (occupied.has(key(cand.x, cand.y, cand.z))) { cand = { x: want.x + d, y: want.y, z: want.z }; d++; }
+      placedAt = cand;
+    }
+    positions.set(n, placedAt);
+    occupied.set(key(placedAt.x, placedAt.y, placedAt.z), n);
   }
-  // Close the gaps: remap used scaled-x values to consecutive integers.
-  const usedX = [...new Set(scaledX.values())].sort((a, b) => a - b);
-  const remap = new Map(usedX.map((v, i) => [v, i]));
-  for (const n of nodes) {
-    positions.set(n, { x: remap.get(scaledX.get(n)), y: ys.get(n), z: zs.get(n) });
+
+  // Collapse entirely-empty columns and rows (per level): a strictly
+  // monotone remap — order, and therefore the compass, is untouched, but
+  // dead voids between clusters vanish and the chart reads as one map.
+  for (const axis of ['x', 'y']) {
+    const used = [...new Set([...positions.values()].map((p) => p[axis]))].sort((a, b) => a - b);
+    const remap = new Map(used.map((v, i) => [v, i]));
+    for (const p of positions.values()) p[axis] = remap.get(p[axis]);
   }
 
   // Report true directional cycles (unmappable warps) for port-time review.
@@ -278,12 +316,27 @@ export function mapRead(adventure, run, character, layout = null) {
         stubs.push({ room: number, direction, out: true });
       } else if (visited.has(dest)) {
         if (!edges.some((e) => (e.from === dest && e.to === number))) {
-          edges.push({ from: number, to: dest });
+          const a = positions.get(number); const b = positions.get(dest);
+          let warp = false;
+          if (a && b) {
+            if (direction === 'north' && !(b.y < a.y)) warp = true;
+            if (direction === 'south' && !(b.y > a.y)) warp = true;
+            if (direction === 'east' && !(b.x > a.x)) warp = true;
+            if (direction === 'west' && !(b.x < a.x)) warp = true;
+          }
+          edges.push({ from: number, to: dest, ...(warp ? { warp: true } : {}) });
         }
       } else {
         stubs.push({ room: number, direction });
       }
     }
   }
-  return { title: adventure?.adventure?.name ?? 'Adventure', quill, nodes, edges, stubs };
+  // The full canonical extent — the fixed frame of THE map, so the client
+  // canvas never resizes as fog lifts.
+  const all = [...positions.values()];
+  const extent = {
+    w: Math.max(...all.map((p) => p.x)) + 1,
+    h: Math.max(...all.map((p) => p.y)) + 1,
+  };
+  return { title: adventure?.adventure?.name ?? 'Adventure', quill, nodes, edges, stubs, extent };
 }

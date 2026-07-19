@@ -69,12 +69,12 @@ function render() {
   const levels = new Set(mapData.nodes.map((n) => n.z));
   const byRoom = new Map(nodes.map((n) => [n.room, n]));
 
-  const minX = Math.min(...nodes.map((n) => n.x));
-  const minY = Math.min(...nodes.map((n) => n.y));
-  const maxX = Math.max(...nodes.map((n) => n.x));
-  const maxY = Math.max(...nodes.map((n) => n.y));
-  const width = (maxX - minX + 1) * CELL_W;
-  const height = (maxY - minY + 1) * CELL_H;
+  // The frame is the FULL canonical map — constant from the first room to
+  // the last. Unexplored space is parchment, not void.
+  const minX = 0;
+  const minY = 0;
+  const width = (mapData.extent?.w ?? Math.max(...nodes.map((n) => n.x)) + 1) * CELL_W;
+  const height = (mapData.extent?.h ?? Math.max(...nodes.map((n) => n.y)) + 1) * CELL_H;
   const PAD = 46;
 
   title.textContent = mapData.title;
@@ -91,23 +91,35 @@ function render() {
     width: width + PAD * 2, height: height + PAD * 2,
     class: 'jm-svg', role: 'img', 'aria-label': 'Journal map of explored rooms',
   });
+  // Parchment ground + faint survey grid: unexplored space reads as paper
+  // waiting for ink, not as emptiness.
+  svg.appendChild(svgEl('rect', { x: -PAD, y: -PAD, width: width + PAD * 2, height: height + PAD * 2, class: 'jm-parchment' }));
+  for (let gx = 0; gx <= width; gx += CELL_W) {
+    svg.appendChild(svgEl('line', { x1: gx, y1: -PAD, x2: gx, y2: height + PAD, class: 'jm-grid' }));
+  }
+  for (let gy = 0; gy <= height; gy += CELL_H) {
+    svg.appendChild(svgEl('line', { x1: -PAD, y1: gy, x2: width + PAD, y2: gy, class: 'jm-grid' }));
+  }
 
-  // Corridors first (under the rooms). A connection between rooms that are
-  // NOT grid-neighbors is non-Euclidean (classic Eamon warps): draw it as a
-  // dashed curve so the map is honest about the strangeness.
+  // Corridors first (under the rooms). Every normal passage draws as a solid
+  // elbow-routed corridor (vertical then horizontal), like a hand-drawn
+  // dungeon chart. ONLY server-flagged warp edges (true directional cycles in
+  // the 1980 data) draw as dashed curves.
   for (const edge of mapData.edges) {
     const a = byRoom.get(edge.from);
     const b = byRoom.get(edge.to);
     if (!a || !b) continue; // spans levels — drawn as stairs glyph via stubs
     const ca = center(a, minX, minY);
     const cb = center(b, minX, minY);
-    const adjacent = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
-    if (adjacent) {
+    if (edge.warp) {
+      const mx = (ca.cx + cb.cx) / 2 + 30;
+      const my = (ca.cy + cb.cy) / 2 - 30;
+      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} Q ${mx} ${my} ${cb.cx} ${cb.cy}`, class: 'jm-warp', fill: 'none' }));
+    } else if (ca.cx === cb.cx || ca.cy === cb.cy) {
       svg.appendChild(svgEl('line', { x1: ca.cx, y1: ca.cy, x2: cb.cx, y2: cb.cy, class: 'jm-corridor' }));
     } else {
-      const mx = (ca.cx + cb.cx) / 2 + (ca.cy === cb.cy ? 0 : 26);
-      const my = (ca.cy + cb.cy) / 2 + (ca.cx === cb.cx ? 0 : 26);
-      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} Q ${mx} ${my} ${cb.cx} ${cb.cy}`, class: 'jm-warp', fill: 'none' }));
+      // Elbow: leave vertically, turn once, arrive horizontally.
+      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} L ${ca.cx} ${cb.cy} L ${cb.cx} ${cb.cy}`, class: 'jm-corridor', fill: 'none' }));
     }
   }
 
