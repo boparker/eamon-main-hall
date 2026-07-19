@@ -30,6 +30,12 @@ app.use(express.static(join(__dirname, 'public'), {
     }
   },
 }));
+// A 404 for a not-yet-shipped asset must NEVER be cached: browsers held
+// "that image is broken" in tab memory long after the real file deployed.
+app.use(/^\/(scenes|audio)\//, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.status(404).end();
+});
 
 // ── Database Setup ────────────────────────────────────────────────────────────
 // Local Postgres (localhost) speaks plaintext; hosted (Railway) requires SSL.
