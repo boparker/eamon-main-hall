@@ -345,3 +345,22 @@ test('AUDIT the rescue: defeating the Priest frees Larcenous Lil', async () => {
   const look = await command(app, session, 'look');
   assert.ok(look.body.state.entities.characters.some((c) => c.slug === 'larcenous-lil' && (c.companion || c.disposition === 'friendly')), 'Lil present and friendly');
 });
+
+test('NOTE pins your own words to the room and the map carries them', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const session = await startMinotaur(app);
+  const noted = await command(app, session, 'note boat is here, do not sail past south grotto');
+  assert.match(noted.body.text, /✎ Noted, in your own hand/);
+  assert.deepEqual(noted.body.state.map.nodes.find((n) => n.room === 1).playerNotes, ['boat is here, do not sail past south grotto']);
+  // Cap: three per room, newest kept.
+  await command(app, session, 'note two');
+  await command(app, session, 'note three');
+  const four = await command(app, session, 'note four');
+  const notes = four.body.state.map.nodes.find((n) => n.room === 1).playerNotes;
+  assert.equal(notes.length, 3);
+  assert.equal(notes[2], 'four');
+  // Notes are per-room: moving south, room 1's notes stay put.
+  const moved = await command(app, session, 'south');
+  assert.equal(moved.body.state.map.nodes.find((n) => n.room === 2).playerNotes, undefined);
+});

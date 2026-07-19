@@ -84,6 +84,12 @@ export function parseCommand(input) {
     return { type: 'give', target: giveMatch[1].trim(), recipient: giveMatch[2].trim(), source: 'rules' };
   }
 
+  // NOTE <text> — the player's own hand on the map (jot also works).
+  const noteMatch = /^(?:note|jot)[:,]?\s+(.+)$/.exec(command);
+  if (noteMatch) {
+    return { type: 'note', words: noteMatch[1].trim(), source: 'rules' };
+  }
+
   if (command === 'hide' || /^hide\b/.test(command)) {
     return { type: 'hide', target: command.replace(/^hide\s*(under|beneath|behind|in)?\s*/, '').trim() || null, source: 'rules' };
   }
