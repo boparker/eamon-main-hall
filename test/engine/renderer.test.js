@@ -205,3 +205,20 @@ test('renderReturnToHall supports economy conversion result shape and malformed 
   assert.doesNotThrow(() => renderReturnToHall({ treasures: { name: 'Ruby' } }));
   assertPlainText(renderReturnToHall({ treasures: { name: 'Ruby' } }));
 });
+
+test('stripCanonicalEcho removes verbatim echoes and falls back when only echo', async () => {
+  const { stripCanonicalEcho } = await import('../../server/ai/narrator.js');
+  const assert = (await import('node:assert/strict')).default;
+  const canon = 'You are in a twisty corridor going from north to south.';
+  // Echo followed by flourish → flourish only.
+  const echoed = `You are in a twisty corridor going from north to south. The torchlight gutters along walls that all look alike, and your own footprints startle you.`;
+  const cleaned = stripCanonicalEcho(echoed, canon);
+  assert.doesNotMatch(cleaned, /twisty corridor going from north/);
+  assert.match(cleaned, /footprints startle you/);
+  // Pure echo → null (caller falls back to authored text).
+  assert.equal(stripCanonicalEcho(canon, canon), null);
+  // No echo → untouched.
+  assert.equal(stripCanonicalEcho('Fresh prose entirely.', canon), 'Fresh prose entirely.');
+  // Short canonical lines are left alone (too easy to false-positive).
+  assert.equal(stripCanonicalEcho('The maze. The maze again.', 'The maze.'), 'The maze. The maze again.');
+});
