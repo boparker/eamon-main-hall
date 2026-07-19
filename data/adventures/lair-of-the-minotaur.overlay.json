@@ -246,5 +246,15 @@
    "room_number": 27,
    "hidden": true
   }
+ ],
+ "items": [
+  {
+   "slug": "boat",
+   "type": "misc"
+  },
+  {
+   "slug": "huge-stone",
+   "type": "feature"
+  }
  ]
 }
