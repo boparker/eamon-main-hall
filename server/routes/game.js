@@ -986,7 +986,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run, character),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=4`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=5`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
   });
 }
 
