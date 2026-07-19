@@ -114,3 +114,17 @@ test('parseCommand recognizes drink/quaff as a drink command', () => {
   assert.deepEqual(parseCommand('drink healing potion'), { type: 'drink', target: 'healing potion', source: 'rules' });
   assert.deepEqual(parseCommand('quaff potion'), { type: 'drink', target: 'potion', source: 'rules' });
 });
+
+test('NOTE accepts natural phrasings', async (t) => {
+  const { parseCommand } = await import('../../server/engine/commands.js');
+  const assert = (await import('node:assert/strict')).default;
+  assert.deepEqual(parseCommand('note: boat here').words, 'boat here');
+  assert.deepEqual(parseCommand('make a note on map using quill: minstrel eye').words, 'minstrel eye');
+  assert.deepEqual(parseCommand('make a note: salute the knight').words, 'salute the knight');
+  assert.deepEqual(parseCommand('write shovel in supply room on the map').words, 'shovel in supply room');
+  assert.deepEqual(parseCommand('add a note beware the jewel').words, 'beware the jewel');
+  assert.equal(parseCommand('note').type, 'note');
+  assert.equal(parseCommand('note').words, '');
+  // 'write' alone without map suffix is NOT a note (stays unknown/speech)
+  assert.notEqual(parseCommand('write a poem').type, 'note');
+});

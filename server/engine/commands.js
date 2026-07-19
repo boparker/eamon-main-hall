@@ -84,10 +84,23 @@ export function parseCommand(input) {
     return { type: 'give', target: giveMatch[1].trim(), recipient: giveMatch[2].trim(), source: 'rules' };
   }
 
-  // NOTE <text> — the player's own hand on the map (jot also works).
+  // NOTE <text> — the player's own hand on the map. Accepts natural phrasings:
+  //   note: boat here | jot boat here | make a note on the map using the quill: X
+  //   write X on the map | add a note: X | leave a note X
   const noteMatch = /^(?:note|jot)[:,]?\s+(.+)$/.exec(command);
   if (noteMatch) {
     return { type: 'note', words: noteMatch[1].trim(), source: 'rules' };
+  }
+  const noteish = /^(?:make|add|leave|put|write|jot(?:\s+down)?)\s+(?:a\s+|the\s+)?note(?:\s+(?:on|to|in|for)\s+(?:the\s+)?map)?(?:\s+(?:using|with)\s+(?:the\s+)?quill)?[:,;-]?\s*(.*)$/.exec(command);
+  if (noteish) {
+    return { type: 'note', words: noteish[1].trim(), source: 'rules' };
+  }
+  const writeOnMap = /^write\s+(.+?)\s+(?:on|to|in)\s+(?:the\s+|my\s+)?map$/.exec(command);
+  if (writeOnMap) {
+    return { type: 'note', words: writeOnMap[1].replace(/^[:,;-]\s*/, '').trim(), source: 'rules' };
+  }
+  if (command === 'note' || command === 'jot') {
+    return { type: 'note', words: '', source: 'rules' };
   }
 
   if (command === 'hide' || /^hide\b/.test(command)) {
