@@ -122,6 +122,24 @@ function render() {
     }
   }
 
+  // Long names wrap to two measured lines inside the box (SVG text does not
+  // wrap on its own); anything longer ellipsizes.
+  const LINE_CHARS = 17; // ~6.2px/char at 11.5px in a 116px box with padding
+  function wrapName(name) {
+    const words = String(name).split(/\s+/);
+    const lines = [''];
+    for (const word of words) {
+      const line = lines[lines.length - 1];
+      if (line && (line + ' ' + word).length > LINE_CHARS) lines.push(word);
+      else lines[lines.length - 1] = line ? line + ' ' + word : word;
+    }
+    if (lines.length > 2) {
+      lines.length = 2;
+      lines[1] = lines[1].slice(0, LINE_CHARS - 1).replace(/\s+\S*$/, '') + '…';
+    }
+    return lines.map((l) => (l.length > LINE_CHARS ? l.slice(0, LINE_CHARS - 1) + '…' : l));
+  }
+
   // Rooms.
   for (const node of nodes) {
     const { cx, cy } = center(node, minX, minY);
@@ -130,12 +148,19 @@ function render() {
       x: cx - ROOM_W / 2, y: cy - ROOM_H / 2, width: ROOM_W, height: ROOM_H, rx: 3,
     }));
     const hasNote = mapData.quill && node.notes?.length;
-    g.appendChild(svgEl('text', {
-      x: cx, y: hasNote ? cy - 1 : cy + 4, class: 'jm-name', 'text-anchor': 'middle',
-    }, node.name));
+    const lines = wrapName(node.name);
+    const nameEl = svgEl('text', { x: cx, class: 'jm-name', 'text-anchor': 'middle' });
+    // Vertical layout: center the block — 1 line sits mid-box; 2 lines split it;
+    // a quill note pushes the name up a notch.
+    const two = lines.length === 2;
+    const baseY = hasNote ? (two ? cy - 10 : cy - 4) : (two ? cy - 4 : cy + 4);
+    lines.forEach((line, i) => {
+      nameEl.appendChild(svgEl('tspan', { x: cx, y: baseY + i * 12 }, line));
+    });
+    g.appendChild(nameEl);
     if (hasNote) {
       g.appendChild(svgEl('text', {
-        x: cx, y: cy + 14, class: 'jm-note', 'text-anchor': 'middle',
+        x: cx, y: cy + (two ? 17 : 14), class: 'jm-note', 'text-anchor': 'middle',
       }, node.notes.join(' · ')));
     }
     svg.appendChild(g);
