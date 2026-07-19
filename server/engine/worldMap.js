@@ -130,9 +130,58 @@ export function annotationsFor(adventure, run, character) {
 
 // The client-facing read. Visited rooms only; unexplored exits become
 // nameless direction stubs; the way out is marked as such.
+// Incremental, discovery-ordered layout: rooms are placed in the order the
+// player found them, each anchored to an already-placed neighbor, and NEVER
+// move once inked — the hand-drawn-map contract. Deterministic from the
+// run's visitedRooms order, so no reshuffling between reads.
+const DIR_VECTORS = { north: [0, -1, 0], south: [0, 1, 0], east: [1, 0, 0], west: [-1, 0, 0], up: [0, 0, 1], down: [0, 0, -1] };
+export function walkLayout(adventure, visitedOrder) {
+  const rooms = new Map((adventure?.locations ?? []).map((loc) => [loc.room_number, loc]));
+  const positions = new Map();
+  const occupied = new Map();
+  const key = (x, y, z) => `${x},${y},${z}`;
+  let shelfX = 0;
+  for (const number of visitedOrder) {
+    if (positions.has(number) || !rooms.has(number)) continue;
+    if (positions.size === 0) {
+      positions.set(number, { x: 0, y: 0, z: 0 });
+      occupied.set(key(0, 0, 0), number);
+      continue;
+    }
+    // Anchor to a placed neighbor that connects to this room (prefer the most
+    // recently placed — almost always the room the player just came from).
+    let placed = false;
+    const candidates = [...positions.keys()].reverse();
+    for (const from of candidates) {
+      const exits = rooms.get(from)?.exits ?? {};
+      for (const [dir, dest] of Object.entries(exits)) {
+        if (dest !== number) continue;
+        const vec = DIR_VECTORS[dir];
+        if (!vec) continue;
+        const at = positions.get(from);
+        let [x, y, z] = [at.x + vec[0], at.y + vec[1], at.z + vec[2]];
+        while (occupied.has(key(x, y, z))) { x += vec[0]; y += vec[1]; z += vec[2]; if (!vec[0] && !vec[1] && !vec[2]) break; }
+        positions.set(number, { x, y, z });
+        occupied.set(key(x, y, z), number);
+        placed = true;
+        break;
+      }
+      if (placed) break;
+    }
+    if (!placed) {
+      // No placed neighbor connects (teleport/secret): park on the shelf row.
+      const maxY = Math.max(0, ...[...positions.values()].map((p) => p.y));
+      while (occupied.has(key(shelfX, maxY + 2, 0))) shelfX += 1;
+      positions.set(number, { x: shelfX, y: maxY + 2, z: 0 });
+      occupied.set(key(shelfX, maxY + 2, 0), number);
+    }
+  }
+  return { positions };
+}
+
 export function mapRead(adventure, run, character, layout = null) {
   const visited = new Set(run?.visitedRooms ?? []);
-  const { positions } = layout ?? computeLayout(adventure, visited);
+  const { positions } = layout ?? walkLayout(adventure, run?.visitedRooms ?? []);
   const rooms = new Map((adventure?.locations ?? []).map((loc) => [loc.room_number, loc]));
   const quill = hasQuill(character);
   const notes = quill ? annotationsFor(adventure, run, character) : new Map();
