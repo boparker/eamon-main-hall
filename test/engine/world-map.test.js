@@ -97,3 +97,107 @@ test('annotationsFor caps a room at three distinct scribbles', () => {
   assert.equal(notes.get(2).length, 3);
   assert.deepEqual([...new Set(notes.get(2))].length, 3);
 });
+
+test('conflicting east+west to the same room is always a warp', () => {
+  const weird = {
+    adventure: { id: 'warp-camp', name: 'Warp Camp', start_room: 1 },
+    locations: [
+      { room_number: 1, name: 'Camp', exits: { north: null, south: null, east: 2, west: 2, up: null, down: null } },
+      { room_number: 2, name: 'Forest', exits: { north: 2, south: 2, east: 1, west: 1, up: null, down: null } },
+    ],
+  };
+  const run = { currentRoom: 1, visitedRooms: [1, 2] };
+  const map = mapRead(weird, run, { inventory: [] });
+  assert.ok(map.edges.length >= 1);
+  assert.ok(map.edges.every((e) => e.warp), 'Gypsy-style dual directions cannot be Euclidean');
+});
+
+test('Minotaur layout: compass law, one chart, no phantom ocean', async () => {
+  const { readFileSync } = await import('node:fs');
+  const adventure = JSON.parse(readFileSync(new URL('../../data/adventures/lair-of-the-minotaur.json', import.meta.url), 'utf8'));
+  const layout = computeLayout(adventure);
+  const { positions } = layout;
+  const rooms = new Map(adventure.locations.map((l) => [l.room_number, l]));
+
+  // Every finite cardinal exit either obeys the compass or is a true cycle/self-loop warp.
+  let mapped = 0;
+  let obeyed = 0;
+  for (const [num, loc] of rooms) {
+    const a = positions.get(num);
+    for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+      if (!Number.isFinite(dest) || dir === 'up' || dir === 'down') continue;
+      if (dest === num) continue; // self-loop
+      mapped++;
+      const b = positions.get(dest);
+      let ok = true;
+      if (dir === 'north' && !(b.y < a.y)) ok = false;
+      if (dir === 'south' && !(b.y > a.y)) ok = false;
+      if (dir === 'east' && !(b.x > a.x)) ok = false;
+      if (dir === 'west' && !(b.x < a.x)) ok = false;
+      if (ok) obeyed++;
+    }
+  }
+  // Most exits map cleanly; the remainder are directional cycles (Insanity, maze loops).
+  assert.ok(obeyed / mapped >= 0.85, `compass obedience ${obeyed}/${mapped}`);
+
+  const all = [...positions.values()];
+  const w = Math.max(...all.map((p) => p.x)) + 1;
+  const h = Math.max(...all.map((p) => p.y)) + 1;
+  const occupancy = positions.size / (w * h);
+  assert.ok(w <= 20 && h <= 20, `extent ${w}x${h} should not sprawl into a 28-wide phantom corridor`);
+  assert.ok(occupancy >= 0.34, `occupancy ${(occupancy * 100).toFixed(1)}% — chart should be one compact parchment`);
+
+  // One 8-connected spatial cluster: no two continents with an empty ocean.
+  const byCell = new Map([...positions.entries()].map(([n, p]) => [`${p.x},${p.y},${p.z}`, { n, ...p }]));
+  const seen = new Set();
+  let clusters = 0;
+  for (const [k, start] of byCell) {
+    if (seen.has(k)) continue;
+    clusters++;
+    const q = [start];
+    seen.add(k);
+    while (q.length) {
+      const cur = q.pop();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const nk = `${cur.x + dx},${cur.y + dy},${cur.z}`;
+        if (byCell.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(byCell.get(nk)); }
+      }
+    }
+  }
+  assert.equal(clusters, 1, 'all rooms form one contiguous chart');
+
+  const run = { currentRoom: 1, visitedRooms: adventure.locations.map((l) => l.room_number) };
+  const map = mapRead(adventure, run, { inventory: [] }, layout);
+  const normal = map.edges.filter((e) => !e.warp);
+  const lengths = normal.map((e) => {
+    const a = positions.get(e.from); const b = positions.get(e.to);
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  }).sort((a, b) => a - b);
+  const short = lengths.filter((md) => md <= 2).length;
+  assert.ok(short / lengths.length >= 0.8, `short corridors ${short}/${lengths.length}`);
+  // Gypsy Camp sits next to the Forest warp, not twenty cells across the parchment.
+  const gypsy = positions.get(90); const forest = positions.get(92);
+  assert.ok(Math.abs(gypsy.x - forest.x) + Math.abs(gypsy.y - forest.y) <= 2, 'Forest packs beside Gypsy Camp');
+});
+
+test('chooseCorridorPath bows around rooms and long spans', async () => {
+  const { chooseCorridorPath } = await import('../../public/js/journal-map.js');
+  const a = { room: 1, x: 0, y: 0, z: 0 };
+  const b = { room: 2, x: 2, y: 0, z: 0 };
+  assert.deepEqual(chooseCorridorPath(a, b, []), { kind: 'line' });
+
+  const c = { room: 3, x: 1, y: 1, z: 0 };
+  // Clear short diagonal → elbow.
+  assert.equal(chooseCorridorPath(a, c, []).kind, 'elbow');
+
+  // Both elbow orientations blocked → bow.
+  const blockers = [
+    { room: 9, x: 0, y: 1, z: 0 },
+    { room: 8, x: 1, y: 0, z: 0 },
+  ];
+  assert.deepEqual(chooseCorridorPath(a, c, blockers), { kind: 'bow' });
+
+  // Long non-aligned span → bow even with a clear elbow.
+  const far = { room: 4, x: 3, y: 1, z: 0 };
+  assert.deepEqual(chooseCorridorPath(a, far, []), { kind: 'bow' });
+});

@@ -165,50 +165,113 @@ export function computeLayout(adventure) {
     if (!moved) break;
   }
 
-  // Cell assignment: rooms take their solved cells; the rare colliders (no
-  // ordering constraint separates them, or they'd differ) move to the
-  // NEAREST free cell that still satisfies every directional constraint they
-  // participate in — the map stays compact AND the compass stays law.
+  // Multi-room SCCs are the data's true warps: their internal exits cannot
+  // all obey the compass at once. Skip those constraints during placement so
+  // cycle members pack as a tight cluster instead of dripping into a long
+  // fake corridor (Minotaur's north/south maze was the worst offender).
+  const ySccSize = new Map();
+  const xSccSize = new Map();
+  for (const n of nodes) {
+    const yc = yComp.get(n); const xc = xComp.get(n);
+    ySccSize.set(yc, (ySccSize.get(yc) ?? 0) + 1);
+    xSccSize.set(xc, (xSccSize.get(xc) ?? 0) + 1);
+  }
+  const yWarpPair = (a, b) => yComp.get(a) === yComp.get(b) && (ySccSize.get(yComp.get(a)) ?? 0) > 1;
+  const xWarpPair = (a, b) => xComp.get(a) === xComp.get(b) && (xSccSize.get(xComp.get(a)) ?? 0) > 1;
+
+  // Cell assignment: rooms take their solved cells; colliders move to the
+  // nearest free cell that still satisfies every *mappable* directional
+  // constraint. Prefer cells near already-placed exit-neighbors so the chart
+  // stays one compact parchment, not two continents with an ocean between.
   const occupied = new Map();
   const key = (x, y, z) => `${x},${y},${z}`;
   const ideal = new Map(nodes.map((n) => [n, { x: xs.get(n), y: ys.get(n), z: zs.get(n) }]));
   const constraintsOf = new Map(nodes.map((n) => [n, []]));
+  const incomingOf = new Map(nodes.map((n) => [n, []]));
+  const neighborsOf = new Map(nodes.map((n) => [n, new Set()]));
   for (const [num, loc] of rooms) {
     for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
       if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
       constraintsOf.get(num).push([dir, dest]);
+      if (dir === 'up' || dir === 'down') continue;
+      incomingOf.get(dest).push([dir, num]);
+      neighborsOf.get(num).add(dest);
+      neighborsOf.get(dest).add(num);
     }
   }
-  const satisfies = (n, cand) => {
+  const mappable = (n, dir, other) => {
+    if (n === other) return false; // self-loop: unmappable warp, never a placement constraint
+    if (dir === 'north' || dir === 'south') return !yWarpPair(n, other);
+    if (dir === 'east' || dir === 'west') return !xWarpPair(n, other);
+    return true;
+  };
+  const compassOk = (n, cand, resolve = false) => {
     for (const [dir, other] of constraintsOf.get(n) ?? []) {
-      const o = positions.get(other) ?? ideal.get(other);
+      if (dir === 'up' || dir === 'down') continue;
+      if (!mappable(n, dir, other)) continue;
+      const o = positions.get(other) ?? (resolve ? null : ideal.get(other));
       if (!o) continue;
-      if (dir === 'north' && !(o.y < cand.y)) return false; // dest must sit above
-      if (dir === 'south' && !(o.y > cand.y)) return false; // below
-      if (dir === 'east' && !(o.x > cand.x)) return false;  // right
-      if (dir === 'west' && !(o.x < cand.x)) return false;  // left
+      if (dir === 'north' && !(o.y < cand.y)) return false;
+      if (dir === 'south' && !(o.y > cand.y)) return false;
+      if (dir === 'east' && !(o.x > cand.x)) return false;
+      if (dir === 'west' && !(o.x < cand.x)) return false;
+    }
+    for (const [dir, from] of incomingOf.get(n) ?? []) {
+      if (!mappable(from, dir, n)) continue;
+      const o = positions.get(from) ?? (resolve ? null : ideal.get(from));
+      if (!o) continue;
+      if (dir === 'north' && !(cand.y < o.y)) return false;
+      if (dir === 'south' && !(cand.y > o.y)) return false;
+      if (dir === 'east' && !(cand.x > o.x)) return false;
+      if (dir === 'west' && !(cand.x < o.x)) return false;
     }
     return true;
   };
+  const neighborGravity = (n) => {
+    let sx = 0; let sy = 0; let c = 0;
+    for (const other of neighborsOf.get(n) ?? []) {
+      const o = positions.get(other);
+      if (!o) continue;
+      sx += o.x; sy += o.y; c++;
+    }
+    if (!c) return null;
+    return { x: Math.round(sx / c), y: Math.round(sy / c) };
+  };
   for (const n of [...nodes].sort((a, b) => a - b)) {
     const want = ideal.get(n);
-    if (!occupied.has(key(want.x, want.y, want.z))) {
+    if (!occupied.has(key(want.x, want.y, want.z)) && compassOk(n, want)) {
       positions.set(n, { ...want });
       occupied.set(key(want.x, want.y, want.z), n);
       continue;
     }
-    conflicts.push({ room: n, direction: null, from: occupied.get(key(want.x, want.y, want.z)) });
-    // Spiral out for the nearest free, constraint-satisfying cell.
+    conflicts.push({ room: n, direction: null, from: occupied.get(key(want.x, want.y, want.z)) ?? null });
+    // Spiral from neighbor centroid when the ideal cell is taken or unmappable —
+    // keeps maze-cycle leftovers packed against the rooms that actually connect
+    // out of the warp instead of marching them east in a phantom corridor.
+    const grav = neighborGravity(n);
+    const seed = grav ? { x: grav.x, y: grav.y, z: want.z } : { ...want };
     let placedAt = null;
-    outer: for (let r = 1; r <= 10 && !placedAt; r++) {
+    let best = null;
+    let bestScore = Infinity;
+    for (let r = 0; r <= 14; r++) {
       for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
-          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-          const cand = { x: want.x + dx, y: want.y + dy, z: want.z };
+          if (r > 0 && Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const cand = { x: seed.x + dx, y: seed.y + dy, z: want.z };
           if (occupied.has(key(cand.x, cand.y, cand.z))) continue;
-          if (satisfies(n, cand)) { placedAt = cand; break outer; }
+          if (!compassOk(n, cand)) continue;
+          let pull = 0; let pc = 0;
+          for (const other of neighborsOf.get(n) ?? []) {
+            const o = positions.get(other);
+            if (!o) continue;
+            pull += Math.abs(o.x - cand.x) + Math.abs(o.y - cand.y);
+            pc++;
+          }
+          const score = (Math.abs(dx) + Math.abs(dy)) * 10 + (pc ? pull / pc : 0);
+          if (score < bestScore) { bestScore = score; best = cand; }
         }
       }
+      if (best) { placedAt = best; break; }
     }
     if (!placedAt) {
       let d = 1;
@@ -220,9 +283,54 @@ export function computeLayout(adventure) {
     occupied.set(key(placedAt.x, placedAt.y, placedAt.z), n);
   }
 
-  // Collapse entirely-empty columns and rows (per level): a strictly
-  // monotone remap — order, and therefore the compass, is untouched, but
-  // dead voids between clusters vanish and the chart reads as one map.
+  // Neighbor compaction: slide rooms toward exit-neighbors when a free cell
+  // still obeys every mappable cardinal constraint (one-way inbound included).
+  const neighborScore = (n, cand) => {
+    let dist = 0;
+    let adjacent = 0;
+    for (const other of neighborsOf.get(n) ?? []) {
+      const o = positions.get(other);
+      if (!o || o.z !== cand.z) continue;
+      const md = Math.abs(o.x - cand.x) + Math.abs(o.y - cand.y);
+      dist += md;
+      if (md === 1) adjacent++;
+    }
+    return { dist, adjacent };
+  };
+  const better = (a, b) => a.adjacent > b.adjacent || (a.adjacent === b.adjacent && a.dist < b.dist);
+  for (let pass = 0; pass < 16; pass++) {
+    let moved = false;
+    for (const n of [...nodes].sort((a, b) => a - b)) {
+      const cur = positions.get(n);
+      if (!cur) continue;
+      const bestScore = neighborScore(n, cur);
+      if (bestScore.dist === 0) continue;
+      let best = null;
+      let bestS = bestScore;
+      for (let r = 1; r <= 12; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+            const cand = { x: cur.x + dx, y: cur.y + dy, z: cur.z };
+            if (occupied.has(key(cand.x, cand.y, cand.z))) continue;
+            if (!compassOk(n, cand, true)) continue;
+            const s = neighborScore(n, cand);
+            if (better(s, bestS)) { bestS = s; best = cand; }
+          }
+        }
+      }
+      if (best) {
+        occupied.delete(key(cur.x, cur.y, cur.z));
+        positions.set(n, best);
+        occupied.set(key(best.x, best.y, best.z), n);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  // Collapse entirely-empty columns and rows: monotone remap keeps compass
+  // order, but dead voids between clusters vanish.
   for (const axis of ['x', 'y']) {
     const used = [...new Set([...positions.values()].map((p) => p[axis]))].sort((a, b) => a - b);
     const remap = new Map(used.map((v, i) => [v, i]));
@@ -323,6 +431,14 @@ export function mapRead(adventure, run, character, layout = null) {
             if (direction === 'south' && !(b.y > a.y)) warp = true;
             if (direction === 'east' && !(b.x > a.x)) warp = true;
             if (direction === 'west' && !(b.x < a.x)) warp = true;
+            // Conflicting directions to the same dest (Gypsy east+west → Forest)
+            // cannot be Euclidean — always a warp, even when one dir happens to
+            // point the right way on the chart.
+            const dirsToDest = Object.entries(loc.exits ?? [])
+              .filter(([, d]) => d === dest)
+              .map(([d]) => d);
+            if (dirsToDest.includes('east') && dirsToDest.includes('west')) warp = true;
+            if (dirsToDest.includes('north') && dirsToDest.includes('south')) warp = true;
           }
           edges.push({ from: number, to: dest, ...(warp ? { warp: true } : {}) });
         }

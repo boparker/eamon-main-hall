@@ -14,6 +14,62 @@ const STUB_LEN = 26;
 
 const DIR_VEC = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] };
 
+// Pure corridor chooser — exported for unit tests. Returns a draw descriptor:
+//   { kind: 'line' } | { kind: 'elbow', corner: 'vh'|'hv' } | { kind: 'bow' }
+// Elbows that would slash through another room's cell, and spans of 3+ cells,
+// become bowed solid curves so the ink never pretends to run through a chamber.
+export function chooseCorridorPath(a, b, others = []) {
+  const md = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  if (a.x === b.x || a.y === b.y) {
+    if (md >= 3 && segmentHitsRoom(a.x, a.y, b.x, b.y, a, b, others)) return { kind: 'bow' };
+    return { kind: 'line' };
+  }
+  if (md >= 3) return { kind: 'bow' };
+  const vhClear = !elbowHitsRooms(a, b, 'vh', others);
+  const hvClear = !elbowHitsRooms(a, b, 'hv', others);
+  if (vhClear) return { kind: 'elbow', corner: 'vh' };
+  if (hvClear) return { kind: 'elbow', corner: 'hv' };
+  return { kind: 'bow' };
+}
+
+function cellOnSegment(x, y, x1, y1, x2, y2) {
+  if (x1 === x2) {
+    return x === x1 && y > Math.min(y1, y2) && y < Math.max(y1, y2);
+  }
+  if (y1 === y2) {
+    return y === y1 && x > Math.min(x1, x2) && x < Math.max(x1, x2);
+  }
+  return false;
+}
+
+function segmentHitsRoom(x1, y1, x2, y2, a, b, others) {
+  for (const o of others) {
+    if (o.room === a.room || o.room === b.room) continue;
+    if (o.z !== a.z) continue;
+    if (cellOnSegment(o.x, o.y, x1, y1, x2, y2)) return true;
+  }
+  return false;
+}
+
+function elbowHitsRooms(a, b, corner, others) {
+  // vh: vertical then horizontal through (a.x, b.y); hv: horizontal then vertical through (b.x, a.y)
+  const cx = corner === 'vh' ? a.x : b.x;
+  const cy = corner === 'vh' ? b.y : a.y;
+  for (const o of others) {
+    if (o.room === a.room || o.room === b.room) continue;
+    if (o.z !== a.z) continue;
+    if (o.x === cx && o.y === cy) return true;
+    if (corner === 'vh') {
+      if (cellOnSegment(o.x, o.y, a.x, a.y, a.x, b.y)) return true;
+      if (cellOnSegment(o.x, o.y, a.x, b.y, b.x, b.y)) return true;
+    } else {
+      if (cellOnSegment(o.x, o.y, a.x, a.y, b.x, a.y)) return true;
+      if (cellOnSegment(o.x, o.y, b.x, a.y, b.x, b.y)) return true;
+    }
+  }
+  return false;
+}
+
 export function updateJournalMap(state) {
   const btn = document.getElementById('hud-map-btn');
   if (state?.phase === 'adventure' && state?.map) {
@@ -101,10 +157,9 @@ function render() {
     svg.appendChild(svgEl('line', { x1: -PAD, y1: gy, x2: width + PAD, y2: gy, class: 'jm-grid' }));
   }
 
-  // Corridors first (under the rooms). Every normal passage draws as a solid
-  // elbow-routed corridor (vertical then horizontal), like a hand-drawn
-  // dungeon chart. ONLY server-flagged warp edges (true directional cycles in
-  // the 1980 data) draw as dashed curves.
+  // Corridors first (under the rooms). Short clear passages draw as straight
+  // or elbow ink; spans that would slash through a chamber (or stretch across
+  // 3+ cells) bow around. ONLY server-flagged warp edges use dashed violet.
   for (const edge of mapData.edges) {
     const a = byRoom.get(edge.from);
     const b = byRoom.get(edge.to);
@@ -115,11 +170,21 @@ function render() {
       const mx = (ca.cx + cb.cx) / 2 + 30;
       const my = (ca.cy + cb.cy) / 2 - 30;
       svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} Q ${mx} ${my} ${cb.cx} ${cb.cy}`, class: 'jm-warp', fill: 'none' }));
-    } else if (ca.cx === cb.cx || ca.cy === cb.cy) {
+      continue;
+    }
+    const path = chooseCorridorPath(a, b, nodes);
+    if (path.kind === 'line') {
       svg.appendChild(svgEl('line', { x1: ca.cx, y1: ca.cy, x2: cb.cx, y2: cb.cy, class: 'jm-corridor' }));
-    } else {
-      // Elbow: leave vertically, turn once, arrive horizontally.
+    } else if (path.kind === 'elbow' && path.corner === 'vh') {
       svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} L ${ca.cx} ${cb.cy} L ${cb.cx} ${cb.cy}`, class: 'jm-corridor', fill: 'none' }));
+    } else if (path.kind === 'elbow' && path.corner === 'hv') {
+      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} L ${cb.cx} ${ca.cy} L ${cb.cx} ${cb.cy}`, class: 'jm-corridor', fill: 'none' }));
+    } else {
+      // Bow away from the axis-aligned midpoint so stretched passages read as
+      // intentional ink, not as a hallway through someone else's room.
+      const mx = (ca.cx + cb.cx) / 2 + Math.sign(cb.cy - ca.cy || 1) * 36;
+      const my = (ca.cy + cb.cy) / 2 - Math.sign(cb.cx - ca.cx || 1) * 36;
+      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} Q ${mx} ${my} ${cb.cx} ${cb.cy}`, class: 'jm-corridor', fill: 'none' }));
     }
   }
 
