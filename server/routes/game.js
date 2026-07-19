@@ -964,10 +964,12 @@ function recordsResponse({ player, character, characters, adventures, prefix = '
   });
 }
 
-// Layout follows the player's own visited subgraph (cheap BFS per read) so
-// rooms land where the walk put them, not where unseen corridors would.
+// One canonical layout per adventure — the world's fixed geography, cached.
+const mapLayoutCache = new Map();
 function mapFor(adventure, run, character) {
-  return mapRead(adventure, run, character);
+  const id = adventure?.adventure?.id;
+  if (!mapLayoutCache.has(id)) mapLayoutCache.set(id, computeLayout(adventure));
+  return mapRead(adventure, run, character, mapLayoutCache.get(id));
 }
 
 // A staged NPC wears its current stage's face (the drunk giant, the blinded
