@@ -1,0 +1,559 @@
+{
+ "adventure": {
+  "id": "odyssey-cyclops",
+  "name": "The Cyclops's Cave",
+  "description": "The first voyage of the Odyssey series: a strange green island, a cave that smells of cheese and sheep, and a host who does not observe the customs of guests. Adapted from Homer. Wits will carry you further than steel.",
+  "author": "Homer, adapted for the Second Age",
+  "year": null,
+  "premium": true,
+  "difficulty": 3,
+  "artist_style": "earle",
+  "start_room": 1,
+  "intro": "Sing in me, Muse, of the man of many turns \u2014 but tonight, sing of his worst landfall.\n\nNine days the storm drove your black ship across wine-dark water. On the tenth you raised an island green as spring, loud with goats, and put in to fill your water-skins. Your crew \u2014 good men, hungry men \u2014 smelled smoke on the heights and cheese on the wind, and begged to see who lived so richly there.\n\nYou should have sailed on. The whole world knows that now.\n\nBut you were curious \u2014 you have always been curious \u2014 and so you chose six of your best and climbed toward the cave in the cliffs, carrying gifts, expecting guest-right, bread and salt, and news of home.\n\nWhat lived there did not know the customs of guests. What lived there did not know the gods. What lived there was hunger, twelve feet at the shoulder, with one vast eye.\n\nRemember, whatever happens in the dark ahead: no man ever fought his way out of that cave. Think. Watch. Listen. And guard your name like your life \u2014 for a name, spoken proudly at the wrong moment, can follow a man across every sea for the rest of his days.",
+  "text_source": "Original adaptation of Homer's Odyssey, Book IX (public domain)."
+ },
+ "mechanics": {
+  "npc_stages": {
+   "polyphemus": {
+    "initial": "awake",
+    "stages": {
+     "awake": {
+      "description": "Polyphemus fills the cave like weather. Twelve feet of him, shag-haired and mountain-shouldered, the one eye rolling slow across his flock, his cheese, his fire \u2014 and his guests. When he moves, the floor sounds like a quarry. He is not angry. He is hungry, which is worse.",
+      "invulnerable": true,
+      "futile_text": "Your blade turns on his hide like a reed on river stone. He does not even look down. No man alive kills this thing with steel \u2014 THINK. What does he want? What does he trust?"
+     },
+     "drunk": {
+      "description": "The giant sways above his fire, the emptied wineskin dangling from two fingers like a grape stem. His eye has gone soft and swimming. \"More,\" he rumbles, to no one, to the fire, to the sweet dark taste still on his tongue. His knees are beginning to disagree with him.",
+      "invulnerable": true,
+      "futile_text": "Drunk, he is still a mountain. A swaying mountain. Patience \u2014 wine finishes what it starts."
+     },
+     "asleep": {
+      "description": "Polyphemus lies wrecked across the cave floor, one arm in the ashes, and his snoring is a weather of its own \u2014 long rolling thunder, then a catch, then thunder again. The great eye is shut. The firelight climbs his face and finds no watcher.",
+      "hostile": false,
+      "invulnerable": false
+     },
+     "blinded": {
+      "description": "The giant is a blind agony in the dark, both hands pressed to his ruined eye, feeling along the walls with his shoulder. Between roars he goes terribly quiet \u2014 listening. He has planted himself at the door stone, arms spread, and nothing leaves this cave on two legs while he guards it.",
+      "invulnerable": true,
+      "futile_text": "Blind, he is more dangerous to you, not less \u2014 sound is all he has, and steel rings. Stay quiet. Think about the flock."
+     }
+    },
+    "transitions": [
+     {
+      "from": "awake",
+      "to": "drunk",
+      "on": {
+       "give": "wine-of-maron"
+      },
+      "text": "He snatches the skin whole and drains it the way a man drains a cup \u2014 three vast swallows, undiluted, enough neat wine to lay out a village. His eye widens. \"What... WHAT is this? Sweet fire! Nectar and ambrosia \u2014 give me more, and tell me your name, that I may give you a guest-gift worth the giving!\" He sways. The mountain of him sways."
+     },
+     {
+      "from": "drunk",
+      "to": "asleep",
+      "on": {
+       "turns": 2
+      },
+      "text": "Mid-boast, the wine collects its debt. The giant's eye films over, his knees fold like cliffs calving, and Polyphemus comes down full length across the cave floor with a boom that shivers cheese from the racks. The snoring begins \u2014 long, rolling, regular as surf."
+     },
+     {
+      "from": "asleep",
+      "to": "blinded",
+      "on": {
+       "use": "olive-stake"
+      },
+      "deed": "Put out the eye of the Cyclops",
+      "deed_kind": "riddle",
+      "text": "You and your men lift the great stake, its point still hissing from the fire, and drive it down into the sleeping eye \u2014 leaning your whole weight, turning it like men boring a ship's timber. The scream that follows peels dust from the cave roof. Polyphemus surges up, tearing the stake free, bellowing into the dark: \"NOBODY! Nobody is killing me! Brothers \u2014 NOBODY IS KILLING ME BY TREACHERY!\" \u2014 and from the far crags, faint and unbothered, his brothers call back: then it is the will of the gods, and pray quieter about it. Blind, raging, he gropes to the door stone and plants himself there like a landslide."
+     }
+    ]
+   }
+  },
+  "attrition": {
+   "every": 7,
+   "room_number": 7,
+   "victims": [
+    "elpenor",
+    "perimedes",
+    "eurylochus"
+   ],
+   "text": "The giant's hand comes down out of nowhere \u2014 a grab, a scream cut short \u2014 and {name} is gone. The crew presses into the shadows, shaking. Time is eating you alive in here. HURRY."
+  },
+  "say_triggers": [
+   {
+    "word": "nobody",
+    "near_npc": "polyphemus",
+    "once": true,
+    "banner": "\u2726 THE NAME IS PLANTED \u2726",
+    "deed_kind": "riddle",
+    "deed_text": "Gave the Cyclops the name Nobody \u2014 and the name held.",
+    "text": "The giant's eye narrows, working through it. \"Nobody,\" he rumbles at last. \"Then here is my guest-gift, Nobody: I shall eat you LAST.\" He laughs at his own courtesy. The name is planted, deep where no wine will wash it out."
+   },
+   {
+    "word": "name",
+    "near_item": "black-ship",
+    "once": true,
+    "banner": "\u26a1 HUBRIS \u26a1",
+    "deed_kind": "hubris",
+    "deed_text": "Boasted a true name across the water to the blinded Cyclops \u2014 and the sea heard it.",
+    "text": "You cannot help it. No one who does what you have done could help it. You cup your hands and send your TRUE NAME skipping across the water like a flung stone \u2014 teller of the deed, sacker of cities! The blind giant goes still on his headland. Then he raises his ruined face and prays \u2014 to his father. To POSEIDON. And the sea under your keel goes cold, and every voyage you ever make after this one just got longer.\n(The glory is yours. So is the curse. Your chronicle will remember both.)"
+   }
+  ],
+  "use_triggers": [
+   {
+    "item": "tally-stones",
+    "match": "tally",
+    "room_number": 6,
+    "sets_flag": "movedTally",
+    "requires_stage": {
+     "npc": "polyphemus",
+     "stage": "asleep"
+    },
+    "not_yet_text": "The tally row sits in plain view of that one huge eye. Not while it is open.",
+    "already_text": "The tally already tells your lie for you. Leave it be.",
+    "banner": "\u2726 THE COUNT WILL LIE \u2726",
+    "deed_kind": "secret",
+    "deed_text": "Rearranged the Cyclops's tally stones so the morning count would lie.",
+    "text": "Kneeling at the door stone, you slide two pebbles out of the giant's tally row and bury them in the dirt. You watched him count. Tomorrow, blind, he will count by touch \u2014 and the row will tell him all rams are accounted for, no matter what rides beneath them."
+   }
+  ],
+  "hide_spots": [
+   {
+    "room_number": 7,
+    "target": "rams",
+    "requires_stage": {
+     "npc": "polyphemus",
+     "stage": "blinded"
+    },
+    "not_yet_text": "The rams shuffle and stamp. Hiding under them means nothing while the giant can still SEE you walk out.",
+    "success_text": "You choose the great ram \u2014 the master of the flock, broad as a table \u2014 and lash yourself beneath him, fingers deep in the belly-wool, face full of the smell of lanolin and dung. Your surviving men do the same beneath the others. Above you the ram stands patient, as if he has carried worse. Now: the door, at dawn, when the flock goes out."
+   }
+  ],
+  "stage_exits": [
+   {
+    "room_number": 6,
+    "direction": "west",
+    "npc": "polyphemus",
+    "stage": "blinded",
+    "hidden_at": "rams",
+    "blocked_text": "The door stone stands in its groove \u2014 a slab of cliff two carts could not shift. It moves for one set of hands only, and those hands are attached to your host.",
+    "unhidden_text": "The blind giant fills the doorway, hands spread wide, fingers combing the air at man-height. Walking out on two legs is walking into that grip. The flock will go out at dawn \u2014 think like a ram.",
+    "pass_note": "Dawn. The blind giant heaves the door stone aside for his flock and squats in the gap, spreading those terrible hands across every back that passes. Wool. Wool. Wool. His fingers walk across the great ram's spine \u2014 inches above your knuckles \u2014 and he pauses, and speaks to it, gently: \"Sweet ram, you were always first out, and today you are last. Do you grieve for your master's eye?\" The ram walks on. The light of morning breaks over you like a wave.",
+    "penalties": [
+     {
+      "unless_flag": "movedTally",
+      "lose_crew": true,
+      "text": "But the count \u2014 the COUNT. His lips move over the tally by touch, and the row comes up wrong. His hand flashes out into the flock, and there is one scream, one only, from a man who almost made it to the light."
+     },
+     {
+      "unless_trigger": "nobody",
+      "lose_crew": true,
+      "text": "And because he has a NAME to cry \u2014 your name, freely given like a fool's gift \u2014 the neighboring cyclopes came in the night to listen at the door. One of them is still turning over boulders on the hillside. He finds one of your men before the beach."
+     }
+    ]
+   }
+  ]
+ },
+ "locations": [
+  {
+   "id": "cyc-1",
+   "room_number": 1,
+   "name": "The Black Ship at Anchor",
+   "narration_text": "Your ship rides at anchor in a milk-quiet cove, mast bare, oars shipped. The crew left aboard watch the cliffs and say nothing loudly. East, a goat-path climbs away from the beach. South lies the open sea, and the long way home for anyone who has had enough of this island.",
+   "background_description": "A black-hulled ancient Greek galley at anchor in a quiet cove at dawn, cliffs behind",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": "main-hall",
+    "east": 2,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.3
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-2",
+   "room_number": 2,
+   "name": "The Landing Beach",
+   "narration_text": "Grey shingle, goat tracks, and driftwood bones of older, unluckier boats. The whole beach smells faintly of cheese, which should be comforting and somehow is not. The goat-path continues east toward high meadows; a stand of low green trees crowds a spring to the north; your ship waits to the west.",
+   "background_description": "A grey shingle beach with goat tracks and old driftwood, green island cliffs, hazy morning",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 3,
+    "south": null,
+    "east": 4,
+    "west": 1,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cove",
+    "volume": 0.25
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-3",
+   "room_number": 3,
+   "name": "Maron's Grove",
+   "narration_text": "A spring rises here under poplars, and beside it stands a small votive stone, carefully tended \u2014 an altar to Apollo raised by Maron the priest, whose life some passing captain once spared. Offerings sit in its niche: honey, white barley, and a full wineskin of dark, heavy wine whose smell alone could make a man sit down. The votive stone bears an inscription.",
+   "background_description": "A quiet grove with a spring under poplar trees, a small carved votive altar stone with offerings, dappled light",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": 2,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.25
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-4",
+   "room_number": 4,
+   "name": "The Cliff Path",
+   "narration_text": "The goat-path narrows and climbs hard against the cliff face, hoof-polished stone under a thin skin of dust. Far below, your ship has become a toy. Above, the path bends up toward a cave mouth the size of a temple gate, and the trodden dung and droppings of a very large flock \u2014 and, printed in the dust, one footprint as long as a man is tall.",
+   "background_description": "A narrow cliff path climbing toward a huge cave mouth, a giant humanoid footprint in the dust, sea far below",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": null,
+    "west": 2,
+    "up": 5,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "entrance",
+    "volume": 0.3
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-5",
+   "room_number": 5,
+   "name": "The Sheep Pens",
+   "narration_text": "A walled fold just inside the cave mouth, crowded with rams the size of ponies \u2014 and one, the master of the flock, the size of a cart horse, with a slow dark patient eye. The pen rails are olive-wood beams, and one loose beam, long as a ship's mast section, leans against the wall where someone very large snapped it off and forgot it. The cave proper opens east, breathing warmth and animal dark.",
+   "background_description": "A stone sheep fold inside a huge cave mouth crowded with massive rams, one enormous great ram, olive-wood beams",
+   "light_level": "dim",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 6,
+    "west": null,
+    "up": null,
+    "down": 4
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-6",
+   "room_number": 6,
+   "name": "The Door Stone",
+   "narration_text": "The cave's one throat: a passage tall enough for a mast, and beside it, in a worn groove, the door stone \u2014 a slab of living cliff that twenty ox-carts could not budge. On a flat shelf at hand-height (his hand's height) lies a neat row of counting pebbles, one for every ram of the flock, polished by enormous fingers. He counts. Every dawn, every dusk \u2014 you have seen him do it \u2014 he counts.",
+   "background_description": "A vast cave passage with an immense round door slab in a stone groove, a shelf with a row of large counting pebbles",
+   "light_level": "dark",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": null,
+    "east": 7,
+    "west": 5,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.35
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-7",
+   "room_number": 7,
+   "name": "The Cave of Polyphemus",
+   "narration_text": "The great chamber. A fire pit big enough to roast an ox whole; racks of cheeses in their hundreds sweating in the warmth; pails of milk you could swim in; and everywhere the mixed smell of woodsmoke, whey and beast. This is a tidy household. Its keeper is twelve feet tall. The door passage lies west; the milking alcove north; deep shadow gathers in the cave's far south end where your men can press out of the firelight.",
+   "background_description": "A colossal firelit cave interior with a huge fire pit, giant cheese racks, enormous milk pails, deep shadows",
+   "light_level": "dark",
+   "is_combat_zone": true,
+   "exits": {
+    "north": 8,
+    "south": 9,
+    "east": null,
+    "west": 6,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.35
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-8",
+   "room_number": 8,
+   "name": "The Milking Alcove",
+   "narration_text": "Whey-tubs, cheese presses, and woven baskets, all built to a scale that makes your crew look like children in a giant's pantry \u2014 which is exactly what you are. The cheeses are excellent. Your men have already confirmed this several times. From here you can hear everything that happens at the fire.",
+   "background_description": "A giant's dairy alcove: huge whey tubs, wicker cheese baskets, cheese presses, warm gloom",
+   "light_level": "dark",
+   "is_combat_zone": false,
+   "exits": {
+    "north": null,
+    "south": 7,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.3
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  },
+  {
+   "id": "cyc-9",
+   "room_number": 9,
+   "name": "The Deep Shadow",
+   "narration_text": "The cave's cold south end, past the firelight's reach, where the ceiling stoops and the dark is thick enough to lean on. Your men huddle here between the giant's mealtimes, whetting courage they do not feel. It is a good place to whisper, to plan, and to work on something long and sharp where a single eye cannot see.",
+   "background_description": "The deep shadowed rear of a colossal cave, faint distant firelight, huddled shapes, cold stone",
+   "light_level": "dark",
+   "is_combat_zone": false,
+   "exits": {
+    "north": 7,
+    "south": null,
+    "east": null,
+    "west": null,
+    "up": null,
+    "down": null
+   },
+   "treasure": [],
+   "requires": null,
+   "ambience": {
+    "track": "cell",
+    "volume": 0.35
+   },
+   "text_source": "Original adaptation of Homer, Odyssey IX."
+  }
+ ],
+ "characters": [
+  {
+   "id": "cyc-polyphemus",
+   "slug": "polyphemus",
+   "name": "Polyphemus",
+   "type": "enemy",
+   "friendliness": "hostile",
+   "description": "A cyclops, son of Poseidon: twelve feet of shepherd, cheesemaker, and eater of guests.",
+   "first_encounter_text": "The light dies. Something has filled the door. Polyphemus ducks under his own lintel with a mountain's unhurried patience, drives the flock in around his knees \u2014 and then, with one hand, swings the door stone into its groove behind him. The boom of it is the sound of the world closing. The one eye finds you by the fire, and the vast face arranges itself into something like a smile. \"Guests,\" he says.",
+   "hp": 99,
+   "current_hp_from": "hp",
+   "agility": 6,
+   "damage_dice": "3d8",
+   "gold": 0,
+   "location_room": 7,
+   "persona": "Polyphemus \u2014 a cyclops shepherd, son of Poseidon. Domestic, methodical, sincerely fond of his rams, contemptuous of gods and guest-law alike, and entirely willing to eat men as if they were bread. He is not stupid: he is arrogant, literal-minded, and drunk on his own strength. He respects nothing but power and cannot imagine being beaten by something small. Speaks slowly, heavily, with a farmer's practicality about monstrous things.",
+   "portrait_description": "A colossal one-eyed cyclops shepherd, shag-haired and mountain-shouldered, firelit in a vast cave, holding a whole sheep casually under one arm, painterly and grounded, menacing but weirdly domestic",
+   "canonical_name": "Polyphemus",
+   "text_source": "Homer, Odyssey IX (adapted)"
+  },
+  {
+   "id": "cyc-elpenor",
+   "slug": "elpenor",
+   "name": "Elpenor",
+   "type": "npc",
+   "friendliness": "friendly",
+   "description": "The youngest of your crew \u2014 quick up a rope, hopeless in a straight fight, loyal as a dog.",
+   "first_encounter_text": "Elpenor, youngest of the crew, keeps close to your elbow and keeps his voice steady, mostly.",
+   "hp": 6,
+   "current_hp_from": "hp",
+   "agility": 14,
+   "damage_dice": "1d4",
+   "gold": 0,
+   "location_room": 9,
+   "persona": "Elpenor \u2014 the youngest crewman, brave in the way of boys who don't yet believe in death. Asks the questions everyone else is ashamed to ask.",
+   "portrait_description": "A very young Greek sailor with curly dark hair and wide worried eyes, rope-calloused hands, firelit cave shadows",
+   "canonical_name": "Elpenor",
+   "text_source": "Homer, Odyssey (adapted)"
+  },
+  {
+   "id": "cyc-perimedes",
+   "slug": "perimedes",
+   "name": "Perimedes",
+   "type": "npc",
+   "friendliness": "friendly",
+   "description": "A broad, quiet oarsman who has rowed through worse and says so, unconvincingly.",
+   "first_encounter_text": "Perimedes tests the weight of the loose olive beam, thoughtful, saying nothing.",
+   "hp": 10,
+   "current_hp_from": "hp",
+   "agility": 10,
+   "damage_dice": "1d6",
+   "gold": 0,
+   "location_room": 9,
+   "persona": "Perimedes \u2014 a steady veteran oarsman, economical with words, good with his hands, privately certain none of them are getting out.",
+   "portrait_description": "A broad weathered Greek oarsman with cropped grey-flecked beard, quiet steady gaze, firelit bronze skin",
+   "canonical_name": "Perimedes",
+   "text_source": "Homer, Odyssey (adapted)"
+  },
+  {
+   "id": "cyc-eurylochus",
+   "slug": "eurylochus",
+   "name": "Eurylochus",
+   "type": "npc",
+   "friendliness": "friendly",
+   "description": "Your second-in-command: brave, contrary, and usually \u2014 infuriatingly \u2014 half right.",
+   "first_encounter_text": "Eurylochus watches the door stone settle into its groove and says, quietly, \"I said we should have stayed on the beach.\"",
+   "hp": 12,
+   "current_hp_from": "hp",
+   "agility": 11,
+   "damage_dice": "1d6",
+   "gold": 0,
+   "location_room": 9,
+   "persona": "Eurylochus \u2014 the second-in-command who argued against coming and will remind you of it. Contrary, courageous, loyal under the complaining. The voice of every reasonable fear.",
+   "portrait_description": "A hard-faced Greek lieutenant with a bronze-studded baldric, arms crossed, skeptical firelit expression",
+   "canonical_name": "Eurylochus",
+   "text_source": "Homer, Odyssey (adapted)"
+  }
+ ],
+ "items": [
+  {
+   "id": "cyc-wine",
+   "slug": "wine-of-maron",
+   "name": "wine of Maron",
+   "type": "misc",
+   "collectible": true,
+   "value": 0,
+   "weight": 3,
+   "description": "A wineskin of Maron's dark vintage \u2014 wine so strong the inscription warns even priests to cut it twenty to one. It smells like honey and thunder.",
+   "canonical_name": "Wine of Maron",
+   "text_source": "Homer, Odyssey IX (adapted)"
+  },
+  {
+   "id": "cyc-votive",
+   "slug": "votive-stone",
+   "name": "votive stone",
+   "type": "scroll",
+   "collectible": false,
+   "value": 0,
+   "weight": -999,
+   "description": "A small tended altar stone with a chiseled inscription.",
+   "text": "TO APOLLO OF ISMAROS, FROM MARON HIS PRIEST, FOR A LIFE SPARED.\nStranger, drink and be welcome \u2014 but honor the vine: ONE measure of this wine to TWENTY of water, as befits men.\nUnmixed, it is not a drink. It is a verdict.",
+   "canonical_name": "Votive of Maron",
+   "text_source": "Homer, Odyssey IX (adapted)"
+  },
+  {
+   "id": "cyc-stake",
+   "slug": "olive-stake",
+   "name": "olive stake",
+   "type": "misc",
+   "collectible": true,
+   "value": 0,
+   "weight": 8,
+   "description": "The loose olive beam, dragged into the shadows and worked to a point with sword and patience, its tip fire-hardened in the giant's own coals. It wants six hands and one sleeping target.",
+   "canonical_name": "The Olive Stake",
+   "text_source": "Homer, Odyssey IX (adapted)"
+  },
+  {
+   "id": "cyc-tally",
+   "slug": "tally-stones",
+   "name": "tally stones",
+   "type": "feature",
+   "collectible": false,
+   "value": 0,
+   "weight": -999,
+   "description": "A neat row of counting pebbles on the shelf by the door stone, one for each ram. You have watched him count them by touch, dawn and dusk, lips moving. USE them, when the eye is closed, and the count will lie for you.",
+   "canonical_name": "The Tally",
+   "text_source": "Original (in the spirit of Homer)"
+  },
+  {
+   "id": "cyc-cheese",
+   "slug": "wheel-of-cheese",
+   "name": "wheel of cheese",
+   "type": "treasure",
+   "collectible": true,
+   "value": 15,
+   "weight": 4,
+   "description": "A cartwheel of the giant's cheese, dense as timber and, your crew insists, genuinely excellent.",
+   "canonical_name": "Cyclopean Cheese",
+   "text_source": "Homer, Odyssey IX (adapted)"
+  },
+  {
+   "id": "cyc-ship",
+   "slug": "black-ship",
+   "name": "black ship",
+   "type": "feature",
+   "collectible": false,
+   "value": 0,
+   "weight": -999,
+   "description": "Your black-hulled ship, rocking gently at anchor \u2014 escape, home, and the only witness that will not judge what you shout across the water.",
+   "canonical_name": "The Black Ship",
+   "text_source": "Homer, Odyssey (adapted)"
+  }
+ ],
+ "placements": [
+  {
+   "item_slug": "wine-of-maron",
+   "room_number": 3,
+   "hidden": false
+  },
+  {
+   "item_slug": "votive-stone",
+   "room_number": 3,
+   "hidden": false
+  },
+  {
+   "item_slug": "olive-stake",
+   "room_number": 9,
+   "hidden": false
+  },
+  {
+   "item_slug": "tally-stones",
+   "room_number": 6,
+   "hidden": false
+  },
+  {
+   "item_slug": "wheel-of-cheese",
+   "room_number": 8,
+   "hidden": false
+  },
+  {
+   "item_slug": "black-ship",
+   "room_number": 1,
+   "hidden": false
+  }
+ ]
+}
