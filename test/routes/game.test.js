@@ -63,6 +63,7 @@ const advanced = {
 };
 
 function makeDeps(options = {}) {
+  const entitlements = [];
   const players = new Map();
   const characters = new Map();
   const runs = new Map();
@@ -246,9 +247,10 @@ function makeDeps(options = {}) {
     hashSessionToken: (token) => `sha256$${token}`,
     async getUserBySessionTokenHash(_db, tokenHash) {
       calls.push({ type: 'getUserBySessionTokenHash', tokenHash });
-      if (tokenHash === 'sha256$raw-session-token') return { id: 'user-1', username: 'bo', display_name: 'Bo' };
+      if (tokenHash === 'sha256$raw-session-token') return { id: 'user-1', username: 'bo', display_name: 'Bo', entitlements };
       return null;
     },
+    grantEntitlement(id) { entitlements.push(id); },
   };
 }
 
@@ -1529,4 +1531,31 @@ test('a successful portrait reports how many repaints remain today', async () =>
   assert.equal(res.status, 200);
   assert.equal(res.body.dailyLimit, 8);
   assert.equal(res.body.remaining, 5); // 8 - (2 prior + 1 just now)
+});
+
+// ── Premium entitlements ─────────────────────────────────────────────────────
+test('premium adventures stay locked without an entitlement and open with one', async () => {
+  const premium = { adventure: { id: 'odyssey-cyclops', name: "The Cyclops's Cave", premium: true, start_room: 1, intro: 'Sing in me, Muse.' }, locations: [{ id: 'o1', room_number: 1, name: 'The Shore', narration_text: 'A shore.', exits: { north: null, south: null, east: null, west: null, up: null, down: null }, treasure: [], requires: null }], characters: [], items: [], placements: [] };
+  const runDeps = makeDeps({ adventures: [beginner, premium] });
+  const { app } = makeApp(runDeps);
+  const created = await createAccountCharacter(app, { adventuresCompleted: ['beginners-cave'] });
+  const characterId = created.body.state.character.id;
+
+  // Without entitlement: gate lists it locked as premium; start refused.
+  const gate = await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId, input: 'Approach the Adventure Gate' }, accountHeaders);
+  const locked = gate.body.state.gate.adventures.find((c) => c.id === 'odyssey-cyclops');
+  assert.equal(locked.unlocked, false);
+  assert.match(locked.lockedReason ?? '', /premium/i);
+  const refused = await startAccountAdventure(app, characterId, { adventureId: 'odyssey-cyclops' });
+  assert.equal(refused.status, 403);
+  assert.equal(refused.body.error, 'premium-required');
+
+  // Grant the entitlement (what the payment webhook will do) → unlocked.
+  runDeps.grantEntitlement('odyssey-cyclops');
+  const gate2 = await request(app, 'POST', '/api/game/hall', { profileId: 'profile-1', characterId, input: 'Approach the Adventure Gate' }, accountHeaders);
+  const open = gate2.body.state.gate.adventures.find((c) => c.id === 'odyssey-cyclops');
+  assert.equal(open.unlocked, true);
+  const started = await startAccountAdventure(app, characterId, { adventureId: 'odyssey-cyclops' });
+  assert.equal(started.status, 201);
+  assert.equal(started.body.state.intro.title, "The Cyclops's Cave");
 });

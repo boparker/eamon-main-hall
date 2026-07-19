@@ -133,6 +133,7 @@ function adventureSummary(manifest) {
     description: manifest.adventure.description ?? '',
     difficulty: manifest.adventure.difficulty ?? null,
     author: manifest.adventure.author ?? null,
+    premium: manifest.adventure.premium === true,
     year: manifest.adventure.year ?? null,
     startRoom: manifest.adventure.start_room,
   };
@@ -639,18 +640,26 @@ function isBeginnerComplete(character) {
   return Array.isArray(character?.adventuresCompleted) && character.adventuresCompleted.includes(BEGINNERS_CAVE_ID);
 }
 
-function partitionAdventures(adventures, character) {
+function isEntitled(adventure, entitlements = []) {
+  return !adventure.premium || entitlements.includes(adventure.id) || entitlements.includes('premium-all');
+}
+
+function partitionAdventures(adventures, character, entitlements = []) {
   const summaries = adventures.map(adventureSummary);
   const beginner = summaries.find((adventure) => adventure.id === BEGINNERS_CAVE_ID);
   const later = summaries.filter((adventure) => adventure.id !== BEGINNERS_CAVE_ID);
   if (!character || !isBeginnerComplete(character)) {
     return {
       unlockedAdventures: beginner ? [beginner] : [],
-      lockedAdventures: later.map((adventure) => ({ ...adventure, lockedReason: "Complete The Beginner's Cave first." })),
+      lockedAdventures: later.map((adventure) => ({ ...adventure, lockedReason: adventure.premium && !isEntitled(adventure, entitlements) ? PREMIUM_LOCK_REASON : "Complete The Beginner's Cave first." })),
     };
   }
-  return { unlockedAdventures: summaries, lockedAdventures: [] };
+  const unlockedAdventures = summaries.filter((adventure) => isEntitled(adventure, entitlements));
+  const lockedAdventures = summaries.filter((adventure) => !isEntitled(adventure, entitlements))
+    .map((adventure) => ({ ...adventure, lockedReason: PREMIUM_LOCK_REASON }));
+  return { unlockedAdventures, lockedAdventures };
 }
+const PREMIUM_LOCK_REASON = 'A premium adventure of the Second Age.';
 
 function hallChoices(character) {
   if (!character) return ['Create Character', 'Sign the Guild Rolls'];
@@ -681,7 +690,7 @@ function hallText({ player, character, unlockedAdventures, lockedAdventures, pre
 function hallResponse({ player, characters = [], adventures = [], character = null, prefix = '' }) {
   const mappedCharacters = characters.map(rowCharacter);
   const activeCharacter = character ?? mappedCharacters.find((candidate) => candidate?.isAlive && candidate.hd > 0) ?? mappedCharacters[0] ?? null;
-  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, activeCharacter);
+  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, activeCharacter, player?.entitlements);
   const playerState = playerSummary(player);
   return canonicalResponse({
     intent: { type: 'hall' },
@@ -751,7 +760,7 @@ function hallState({ player, character, characters, adventures, extra = {} }) {
     character,
     characters: characters.map((row) => rowCharacter(row) ?? row),
     adventures: adventures.map(adventureSummary),
-    ...partitionAdventures(adventures, character),
+    ...partitionAdventures(adventures, character, player?.entitlements),
     ...extra,
   };
 }
@@ -812,7 +821,7 @@ function shopResponse({ player, character, characters, adventures, prefix = '' }
 }
 
 function gateResponse({ player, character, characters, adventures, prefix = '' }) {
-  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, character);
+  const { unlockedAdventures, lockedAdventures } = partitionAdventures(adventures, character, player?.entitlements);
   const cards = [
     ...unlockedAdventures.map((adventure) => ({ ...adventure, unlocked: true })),
     ...lockedAdventures.map((adventure) => ({ ...adventure, unlocked: false })),
@@ -1038,7 +1047,7 @@ function resolveGameContext(req) {
       owner: { playerId, userId: req.auth.user.id, profileId },
       userId: req.auth.user.id,
       profileId,
-      player: { id: playerId, display_name: req.auth.user.display_name ?? req.auth.user.displayName ?? req.auth.user.username ?? null },
+      player: { id: playerId, display_name: req.auth.user.display_name ?? req.auth.user.displayName ?? req.auth.user.username ?? null, entitlements: Array.isArray(req.auth.user.entitlements) ? req.auth.user.entitlements : [] },
       isAuthenticated: true,
     };
   }
@@ -1429,6 +1438,9 @@ export function createGameRouter(rawDeps = {}) {
       if (!adventure) return error(res, 404, `Adventure ${adventureId} is not available.`, 'adventure-not-found');
       if (!context.isAuthenticated) {
         return error(res, 403, 'Preserve this adventurer with an account before beginning an expedition.', 'account-required');
+      }
+      if (adventure.adventure.premium === true && !isEntitled({ premium: true, id: adventureId }, context.player?.entitlements ?? [])) {
+        return error(res, 403, 'This is a premium adventure of the Second Age.', 'premium-required');
       }
       const characterRow = await deps.getCharacter(deps.db, context.owner, characterId);
       if (!characterRow) return error(res, 404, 'Character not found for this player.', 'not-found');

@@ -73,7 +73,8 @@ export async function getUserBySessionTokenHash(db, tokenHash) {
             u.display_name,
             u.created_at,
             u.updated_at,
-            u.last_login_at
+            u.last_login_at,
+            u.entitlements
      FROM touched
      JOIN users u ON u.id = touched.user_id
      LIMIT 1`,
