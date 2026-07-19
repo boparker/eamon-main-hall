@@ -24,62 +24,179 @@ function startRoomOf(adventure) {
   return adventure?.adventure?.start_room ?? adventure?.locations?.[0]?.room_number;
 }
 
-// Assign grid coordinates to every room by BFS from the entrance, walking
-// compass exits. Classic Eamon graphs aren't always Euclidean (one-way doors,
-// loops that don't close), so when a step lands on an occupied cell we probe
-// further along the same direction until a free cell is found — the map stays
-// readable and honest about topology, if not about scale. Layout is static
-// per adventure; callers may cache.
-export function computeLayout(adventure, onlyRooms = null) {
-  const included = onlyRooms ? new Set(onlyRooms) : null;
-  const rooms = new Map((adventure?.locations ?? [])
-    .filter((loc) => !included || included.has(loc.room_number))
-    .map((loc) => [loc.room_number, loc]));
-  // Start from the adventure's entrance if visible, else any included room.
-  const start = (!included || included.has(startRoomOf(adventure))) ? startRoomOf(adventure) : [...rooms.keys()][0];
-  const positions = new Map();
-  const occupied = new Map(); // "x,y,z" -> room_number
-  const conflicts = [];
-  if (!rooms.has(start)) return { positions, conflicts };
+// Canonical layout by CONSTRAINT SOLVING, not BFS walking. The cardinal
+// directions are law: every north exit must draw upward, every east exit
+// rightward — stretched if necessary, never inverted. Each axis is solved
+// independently as a layering problem: directional exits become ordering
+// arcs, directional CYCLES (the data's true warps) are collapsed into one
+// layer (Tarjan SCC), and longest-path layering assigns coordinates that
+// satisfy every remaining constraint. Deterministic from the manifest alone.
 
-  const key = (x, y, z) => `${x},${y},${z}`;
-  positions.set(start, { x: 0, y: 0, z: 0 });
-  occupied.set(key(0, 0, 0), start);
-  const queue = [start];
+function sccCollapse(nodes, arcs) {
+  // Tarjan strongly-connected components over arcs: u -> v.
+  const adj = new Map(nodes.map((n) => [n, []]));
+  for (const [u, v] of arcs) adj.get(u)?.push(v);
+  let index = 0;
+  const idx = new Map(); const low = new Map(); const onStack = new Set();
+  const stack = []; const comp = new Map(); let compCount = 0;
+  const strong = (v) => {
+    idx.set(v, index); low.set(v, index); index++;
+    stack.push(v); onStack.add(v);
+    for (const w of adj.get(v) ?? []) {
+      if (!idx.has(w)) { strong(w); low.set(v, Math.min(low.get(v), low.get(w))); }
+      else if (onStack.has(w)) low.set(v, Math.min(low.get(v), idx.get(w)));
+    }
+    if (low.get(v) === idx.get(v)) {
+      let w;
+      do { w = stack.pop(); onStack.delete(w); comp.set(w, compCount); } while (w !== v);
+      compCount++;
+    }
+  };
+  for (const n of nodes) if (!idx.has(n)) strong(n);
+  return { comp, compCount };
+}
 
+// Layer nodes so that for every arc u -> v: layer(v) >= layer(u) + 1
+// (cycle members share a layer). Longest-path over the SCC condensation.
+function layerAxis(nodes, arcs) {
+  const { comp, compCount } = sccCollapse(nodes, arcs);
+  const cAdj = new Map(); const indeg = new Map();
+  for (let i = 0; i < compCount; i++) { cAdj.set(i, new Set()); indeg.set(i, 0); }
+  for (const [u, v] of arcs) {
+    const cu = comp.get(u); const cv = comp.get(v);
+    if (cu !== cv && !cAdj.get(cu).has(cv)) { cAdj.get(cu).add(cv); indeg.set(cv, indeg.get(cv) + 1); }
+  }
+  const layer = new Map(); const queue = [];
+  for (let i = 0; i < compCount; i++) if (indeg.get(i) === 0) { layer.set(i, 0); queue.push(i); }
   while (queue.length) {
-    const from = queue.shift();
-    const at = positions.get(from);
-    const exits = rooms.get(from)?.exits ?? {};
-    for (const [direction, dest] of Object.entries(exits)) {
-      if (!Number.isFinite(dest) || !rooms.has(dest) || positions.has(dest)) continue;
-      const vec = VECTORS[direction];
-      if (!vec) continue;
-      let [x, y, z] = [at.x + vec[0], at.y + vec[1], at.z + vec[2]];
-      // Linear probe past occupied cells (non-Euclidean loop landed here).
-      let probed = false;
-      while (occupied.has(key(x, y, z))) {
-        probed = true;
-        x += vec[0]; y += vec[1]; z += vec[2];
-        if (vec[0] === 0 && vec[1] === 0 && vec[2] === 0) break;
-      }
-      if (probed) conflicts.push({ room: dest, direction, from });
-      positions.set(dest, { x, y, z });
-      occupied.set(key(x, y, z), dest);
-      queue.push(dest);
+    const c = queue.shift();
+    for (const d of cAdj.get(c)) {
+      layer.set(d, Math.max(layer.get(d) ?? 0, layer.get(c) + 1));
+      indeg.set(d, indeg.get(d) - 1);
+      if (indeg.get(d) === 0) queue.push(d);
     }
   }
+  const out = new Map();
+  for (const n of nodes) out.set(n, layer.get(comp.get(n)) ?? 0);
+  return { layers: out, comp };
+}
 
-  // Rooms unreachable by compass walk (secret teleports etc.) get parked on a
-  // shelf below the mapped extent so they still render once visited.
-  let shelfX = 0;
-  const maxY = Math.max(0, ...[...positions.values()].map((p) => p.y));
-  for (const number of rooms.keys()) {
-    if (positions.has(number)) continue;
-    positions.set(number, { x: shelfX, y: maxY + 2, z: 0 });
-    conflicts.push({ room: number, direction: null, from: null });
-    shelfX += 1;
+export function computeLayout(adventure) {
+  const locs = (adventure?.locations ?? []);
+  const rooms = new Map(locs.map((loc) => [loc.room_number, loc]));
+  const nodes = [...rooms.keys()];
+  const positions = new Map();
+  const conflicts = [];
+  if (!nodes.length) return { positions, conflicts };
+
+  // Ordering arcs per axis: arc [u,v] means coord(v) >= coord(u) + 1.
+  const yArcs = []; const xArcs = []; const zArcs = [];
+  for (const [num, loc] of rooms) {
+    for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+      if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
+      if (dir === 'south') yArcs.push([num, dest]);
+      else if (dir === 'north') yArcs.push([dest, num]);
+      else if (dir === 'east') xArcs.push([num, dest]);
+      else if (dir === 'west') xArcs.push([dest, num]);
+      else if (dir === 'up') zArcs.push([num, dest]);
+      else if (dir === 'down') zArcs.push([dest, num]);
+    }
   }
+  const { layers: ys, comp: yComp } = layerAxis(nodes, yArcs);
+  // Floors: rooms connected by ANY horizontal exit share a z-level; only
+  // up/down arcs separate floors. Union horizontally, layer the groups.
+  const zParent = new Map(nodes.map((n) => [n, n]));
+  const zFind = (a) => { while (zParent.get(a) !== a) { zParent.set(a, zParent.get(zParent.get(a))); a = zParent.get(a); } return a; };
+  for (const [num, loc] of rooms) {
+    for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+      if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
+      if (dir === 'north' || dir === 'south' || dir === 'east' || dir === 'west') {
+        const ra = zFind(num); const rb = zFind(dest);
+        if (ra !== rb) zParent.set(ra, rb);
+      }
+    }
+  }
+  const zGroups = [...new Set(nodes.map(zFind))];
+  const zGroupArcs = zArcs.map(([u, v]) => [zFind(u), zFind(v)]).filter(([u, v]) => u !== v);
+  const { layers: zGroupLayers } = layerAxis(zGroups, zGroupArcs);
+  const zs = new Map(nodes.map((n) => [n, zGroupLayers.get(zFind(n)) ?? 0]));
+  const { layers: xsRaw, comp: xComp } = layerAxis(nodes, xArcs);
+
+  // X alignment: x-layering fixes order WITHIN each east/west-CONNECTED
+  // component (undirected — Tarjan SCCs are singletons in a DAG and moving
+  // those individually would break the solved order). Whole components float;
+  // nudge each one toward the x of rooms it touches via north/south/up/down
+  // exits (median pull), a few passes.
+  const xs = new Map(nodes.map((n) => [n, xsRaw.get(n)]));
+  const parent = new Map(nodes.map((n) => [n, n]));
+  const find = (a) => { while (parent.get(a) !== a) { parent.set(a, parent.get(parent.get(a))); a = parent.get(a); } return a; };
+  const union = (a, b) => { const ra = find(a); const rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+  for (const [u, v] of xArcs) union(u, v);
+  const compMembers = new Map();
+  for (const n of nodes) {
+    const c = find(n);
+    if (!compMembers.has(c)) compMembers.set(c, []);
+    compMembers.get(c).push(n);
+  }
+  const compOf = (n) => find(n);
+  const crossEdges = [];
+  for (const [num, loc] of rooms) {
+    for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+      if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
+      if (dir === 'north' || dir === 'south' || dir === 'up' || dir === 'down') crossEdges.push([num, dest]);
+    }
+  }
+  for (let pass = 0; pass < 8; pass++) {
+    let moved = false;
+    for (const [c, members] of compMembers) {
+      const pulls = [];
+      for (const [a, b] of crossEdges) {
+        if (compOf(a) === c && compOf(b) !== c) pulls.push(xs.get(b) - xs.get(a));
+        if (compOf(b) === c && compOf(a) !== c) pulls.push(xs.get(a) - xs.get(b));
+      }
+      if (!pulls.length) continue;
+      pulls.sort((p, q) => p - q);
+      const offset = pulls[Math.floor(pulls.length / 2)]; // median pull
+      if (offset !== 0) {
+        for (const m of members) xs.set(m, xs.get(m) + offset);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  // Cell assignment, provably order-safe: scale x by K (the worst same-cell
+  // multiplicity) so spreading colliders within a band can never cross into
+  // the next x-class, then remap used x values to consecutive columns —
+  // both steps preserve every solved x-order relation, so the compass holds.
+  const cellCount = new Map();
+  for (const n of nodes) {
+    const ck = `${xs.get(n)},${ys.get(n)},${zs.get(n)}`;
+    cellCount.set(ck, (cellCount.get(ck) ?? 0) + 1);
+  }
+  const K = Math.max(1, ...cellCount.values());
+  const cellIndex = new Map();
+  const scaledX = new Map();
+  for (const n of [...nodes].sort((a, b) => a - b)) {
+    const ck = `${xs.get(n)},${ys.get(n)},${zs.get(n)}`;
+    const i = cellIndex.get(ck) ?? 0;
+    cellIndex.set(ck, i + 1);
+    if (i > 0) conflicts.push({ room: n, direction: null, from: null });
+    scaledX.set(n, xs.get(n) * K + i);
+  }
+  // Close the gaps: remap used scaled-x values to consecutive integers.
+  const usedX = [...new Set(scaledX.values())].sort((a, b) => a - b);
+  const remap = new Map(usedX.map((v, i) => [v, i]));
+  for (const n of nodes) {
+    positions.set(n, { x: remap.get(scaledX.get(n)), y: ys.get(n), z: zs.get(n) });
+  }
+
+  // Report true directional cycles (unmappable warps) for port-time review.
+  const cycles = new Set();
+  for (const [u, v] of yArcs) if (yComp.get(u) === yComp.get(v)) { cycles.add(u); cycles.add(v); }
+  for (const [u, v] of xArcs) if (xComp.get(u) === xComp.get(v)) { cycles.add(u); cycles.add(v); }
+  for (const r of cycles) conflicts.push({ room: r, direction: 'cycle', from: null });
+
   return { positions, conflicts };
 }
 

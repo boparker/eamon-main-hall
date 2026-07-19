@@ -17,20 +17,25 @@ const fixture = {
   ],
 };
 
-test('computeLayout walks the compass grid from the entrance', () => {
+test('COMPASS LAW: every directional exit draws in its direction', () => {
   const { positions } = computeLayout(fixture);
-  assert.deepEqual(positions.get(1), { x: 0, y: 0, z: 0 });
-  assert.deepEqual(positions.get(2), { x: 0, y: 1, z: 0 }); // south
-  assert.deepEqual(positions.get(3), { x: 1, y: 1, z: 0 }); // east
-  assert.deepEqual(positions.get(4), { x: 1, y: 0, z: 0 }); // north
-  assert.deepEqual(positions.get(6), { x: 1, y: 0, z: 1 }); // up: same cell, next level
+  const p = (n) => positions.get(n);
+  // south draws downward, east rightward, north upward, west leftward, up a level.
+  assert.ok(p(2).y > p(1).y, 'south = down');
+  assert.ok(p(3).x > p(2).x, 'east = right');
+  assert.ok(p(4).y < p(3).y, 'north = up');
+  assert.ok(p(5).x < p(4).x, 'west = left');
+  assert.ok(p(6).z > p(4).z, 'up = next level');
+  // No two rooms share a cell.
+  const cells = new Set([...positions.values()].map((q) => `${q.x},${q.y},${q.z}`));
+  assert.equal(cells.size, positions.size);
 });
 
-test('a non-Euclidean collision probes past the occupied cell and is reported', () => {
+test('cell collisions are spread order-safely and reported', () => {
   const { positions, conflicts } = computeLayout(fixture);
-  // Room 5 is west of room 4 → (0,0) is taken by the entrance → probe to (-1,0).
-  assert.deepEqual(positions.get(5), { x: -1, y: 0, z: 0 });
-  assert.ok(conflicts.some((c) => c.room === 5));
+  // Rooms 1 and 5 both want the same solved cell; the spread keeps 5 west of 4.
+  assert.ok(positions.get(5).x < positions.get(4).x);
+  assert.ok(conflicts.length >= 1, 'the collision is reported for port review');
 });
 
 test('mapRead is fog-of-war: unvisited rooms never leave the server', () => {
