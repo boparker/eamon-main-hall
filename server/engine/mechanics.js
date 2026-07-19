@@ -142,3 +142,92 @@ export function applyFlagPatch(run, patch) {
   if (!patch || !Object.keys(patch).length) return run;
   return { ...run, flags: { ...(run.flags ?? {}), ...patch } };
 }
+
+// ── Staged NPCs ──────────────────────────────────────────────────────────────
+// The set-piece engine: an NPC moves through authored stages (awake → drunk →
+// asleep → blinded → ...), each with its own description, hostility, and
+// vulnerability. Transitions fire on GIVE, USE, or elapsed turns. Manifest:
+//   mechanics.npc_stages[slug] = {
+//     initial: 'awake',
+//     stages: { awake: { description, hostile?, invulnerable?, futile_text? }, ... },
+//     transitions: [{ from, to, on: { give?|use?|turns? }, text, once? }],
+//   }
+
+export function stagedNpc(adventure, slug) {
+  return mechanicsOf(adventure).npc_stages?.[slug] ?? null;
+}
+
+export function stageOf(adventure, run, slug) {
+  const spec = stagedNpc(adventure, slug);
+  if (!spec) return null;
+  return run.flags?.npcStage?.[slug] ?? spec.initial;
+}
+
+export function stageData(adventure, run, slug) {
+  const spec = stagedNpc(adventure, slug);
+  if (!spec) return null;
+  return spec.stages?.[stageOf(adventure, run, slug)] ?? null;
+}
+
+export function setStage(run, slug, stage) {
+  return {
+    ...run,
+    flags: {
+      ...(run.flags ?? {}),
+      npcStage: { ...(run.flags?.npcStage ?? {}), [slug]: stage },
+      npcStageTurns: { ...(run.flags?.npcStageTurns ?? {}), [slug]: 0 },
+    },
+  };
+}
+
+// A GIVE or USE aimed at a staged NPC: does it advance the stage?
+export function stageTransition({ adventure, run, slug, on }) {
+  const spec = stagedNpc(adventure, slug);
+  if (!spec) return null;
+  const current = stageOf(adventure, run, slug);
+  for (const t of spec.transitions ?? []) {
+    if (t.from !== current) continue;
+    if (on.give && t.on?.give === on.give) return t;
+    if (on.use && t.on?.use === on.use) return t;
+  }
+  return null;
+}
+
+// Called once per player turn: ages stage timers, fires turn-based
+// transitions (the drunk giant slumping into sleep), and advances any
+// attrition clock. Returns { run, notes: [] }.
+export function tickStages(adventure, run) {
+  const m = mechanicsOf(adventure);
+  const notes = [];
+  let next = run;
+  for (const [slug, spec] of Object.entries(m.npc_stages ?? {})) {
+    const current = stageOf(adventure, next, slug);
+    const turns = (next.flags?.npcStageTurns?.[slug] ?? 0) + 1;
+    next = { ...next, flags: { ...(next.flags ?? {}), npcStageTurns: { ...(next.flags?.npcStageTurns ?? {}), [slug]: turns } } };
+    const t = (spec.transitions ?? []).find((tr) => tr.from === current && Number.isFinite(tr.on?.turns) && turns >= tr.on.turns);
+    if (t) {
+      next = setStage(next, slug, t.to);
+      if (t.text) notes.push(t.text);
+    }
+  }
+  return { run: next, notes };
+}
+
+// ── The attrition clock (the crew and the giant's appetite) ──────────────────
+// mechanics.attrition = { every: N, victims: [slug...], room_number?, text }
+// Every N player turns while the clock's condition holds (player in
+// room_number if given), the next living victim is consumed.
+export function tickAttrition({ adventure, run, roomNumber }) {
+  const a = mechanicsOf(adventure).attrition;
+  if (!a) return null;
+  if (Number.isFinite(a.room_number) && roomNumber !== a.room_number) return null;
+  const eaten = new Set(run.flags?.attritionLost ?? []);
+  const remaining = (a.victims ?? []).filter((v) => !eaten.has(v) && !(run.defeatedEnemies ?? []).includes(v));
+  if (!remaining.length) return null;
+  const count = (run.flags?.attritionClock ?? 0) + 1;
+  let next = { ...run, flags: { ...(run.flags ?? {}), attritionClock: count } };
+  if (count % a.every !== 0) return { run: next, victim: null };
+  const victim = remaining[0];
+  next = { ...next, flags: { ...next.flags, attritionLost: [...eaten, victim] } };
+  return { run: next, victim };
+}

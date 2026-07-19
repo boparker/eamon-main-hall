@@ -78,6 +78,16 @@ export function parseCommand(input) {
     return { type: 'dig', source: 'rules' };
   }
 
+  // GIVE <item> TO <someone> — the wine and the giant.
+  const giveMatch = /^(?:give|offer|hand)\s+(?:the\s+)?(.+?)\s+to\s+(?:the\s+)?(.+)$/.exec(command);
+  if (giveMatch) {
+    return { type: 'give', target: giveMatch[1].trim(), recipient: giveMatch[2].trim(), source: 'rules' };
+  }
+
+  if (command === 'hide' || /^hide\b/.test(command)) {
+    return { type: 'hide', target: command.replace(/^hide\s*(under|beneath|behind|in)?\s*/, '').trim() || null, source: 'rules' };
+  }
+
   if (command === 'inventory' || command === 'inv' || command === 'i') {
     return { type: 'inventory', source: 'rules' };
   }
