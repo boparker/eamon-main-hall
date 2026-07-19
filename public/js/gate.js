@@ -48,7 +48,7 @@ function card(adventure) {
     const ribbon = document.createElement('div');
     ribbon.className = 'gate-premium';
     ribbon.textContent = '✦ Premium';
-    card.appendChild(ribbon);
+    el.appendChild(ribbon); // el, not card — card is this function
   }
 
   // Every realm names its maker — these are real authors' works, 1979 onward.
