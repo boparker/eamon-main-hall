@@ -2435,12 +2435,12 @@
   },
   {
    "id": "lair-of-the-minotaur-wandering-minstrel-eye",
-   "name": "Wandering Minstrel",
+   "name": "Wandering Minstrel Eye",
    "slug": "wandering-minstrel-eye",
    "type": "npc",
    "friendliness": "friendly",
    "description": "You see floating three feet off the ground a huge disembodied eye.  It has no limbs, but from somewhere it is humming a song:  A Wandering Minstrel Eye.",
-   "first_encounter_text": "You see floating three feet off the ground a huge disembodied eye.  It has no limbs, but from somewhere it is humming a song:  A Wandering Minstrel Eye.",
+   "first_encounter_text": "You see, floating three feet off the ground, a huge disembodied eye. It has no limbs, but from somewhere it is humming a song: 'A Wandering Minstrel Eye.'",
    "hp": 15,
    "current_hp_from": "hp",
    "agility": 7,
@@ -2449,8 +2449,8 @@
    "location_room": 24,
    "canonical_name": "Wandering Minstrel Eye",
    "text_source": "The Lair of the Minotaur (Donald Brown, c. 1980)",
-   "persona": "A wandering minstrel who took one wrong turn years ago and has been performing for skeletons and priests since. Starved for an audience that claps. Knows every corridor by song.",
-   "portrait_description": "A threadbare cheerful minstrel with a battered lute, patched bright clothes gone grey with cave dust, hopeful eyes"
+   "persona": "The Wandering Minstrel Eye — a huge disembodied eye that floats three feet off the ground and hums, from somewhere, 'A Wandering Minstrel Eye.' It has no limbs, no mouth, and no explanation. It is entirely cheerful about all of this. It has drifted these tunnels for years, sees everything (obviously), and answers questions in hummed phrases and meaningful... looks. Donald Brown made it in 1980 as a pun and it knows it is a pun, and it is at peace.",
+   "portrait_description": "A single huge disembodied eyeball the size of a beach ball, floating three feet above a torchlit cave floor, no body and no limbs, iris warm and oddly friendly, faint hummed music suggested by soft radiating rings of light around it, whimsical and strange but not horrifying"
   },
   {
    "id": "lair-of-the-minotaur-black-knight",
