@@ -140,12 +140,14 @@ export function mapRead(adventure, run, character, layout = null) {
     const loc = rooms.get(number);
     const pos = positions.get(number);
     if (!loc || !pos) continue;
+    const playerNotes = run.flags?.playerNotes?.[number] ?? null;
     nodes.push({
       room: number,
       name: loc.name,
       x: pos.x, y: pos.y, z: pos.z,
       current: number === run.currentRoom,
       ...(notes.has(number) ? { notes: notes.get(number) } : {}),
+      ...(playerNotes?.length ? { playerNotes } : {}),
     });
     for (const [direction, dest] of Object.entries(loc.exits ?? {})) {
       if (dest === null || dest === undefined) continue;

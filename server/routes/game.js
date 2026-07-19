@@ -1757,6 +1757,19 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, items: readItems } }));
       }
 
+      if (command.type === 'note') {
+        // The player's own marginalia: pinned to the current room, shown on
+        // the journal map in their own hand. Free — memory aids never gate.
+        const roomNo = getCurrentRoom(run, adventure).room_number;
+        const text = String(command.words ?? '').slice(0, 60);
+        const all = run.flags?.playerNotes ?? {};
+        const mine = [...(all[roomNo] ?? []), text].slice(-3); // 3 per room, newest kept
+        run = applyFlagPatch(run, { playerNotes: { ...all, [roomNo]: mine } });
+        const savedNote = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+        run = rowRun(savedNote) ?? run;
+        return res.json(canonicalResponse({ intent: command, event: { type: 'note', command }, text: `✎ Noted, in your own hand: "${text}"\n(It will show on your map for this room. Up to three notes per room.)`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, map: mapFor(adventure, run, character) } }));
+      }
+
       if (command.type === 'give') {
         const item = (character.inventory ?? []).find((i) => normalizeTarget(i?.name ?? '') === normalizeTarget(command.target) || slugify(i?.slug ?? '') === slugify(command.target));
         if (!item) {

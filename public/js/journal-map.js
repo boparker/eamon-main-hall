@@ -147,7 +147,10 @@ function render() {
     g.appendChild(svgEl('rect', {
       x: cx - ROOM_W / 2, y: cy - ROOM_H / 2, width: ROOM_W, height: ROOM_H, rx: 3,
     }));
-    const hasNote = mapData.quill && node.notes?.length;
+    const quillNotes = mapData.quill && node.notes?.length ? node.notes : [];
+    const own = node.playerNotes?.length ? node.playerNotes : [];
+    const noteLine = [...own.map((n) => `✎ ${n}`), ...quillNotes].join(' · ');
+    const hasNote = noteLine.length > 0;
     const lines = wrapName(node.name);
     const nameEl = svgEl('text', { x: cx, class: 'jm-name', 'text-anchor': 'middle' });
     // Vertical layout: center the block — 1 line sits mid-box; 2 lines split it;
@@ -159,9 +162,10 @@ function render() {
     });
     g.appendChild(nameEl);
     if (hasNote) {
+      const trimmed = noteLine.length > 19 ? noteLine.slice(0, 18) + '…' : noteLine;
       g.appendChild(svgEl('text', {
         x: cx, y: cy + (two ? 17 : 14), class: 'jm-note', 'text-anchor': 'middle',
-      }, node.notes.join(' · ')));
+      }, trimmed));
     }
     svg.appendChild(g);
   }
