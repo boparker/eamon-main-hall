@@ -238,6 +238,34 @@
   {
    "room_number": 87,
    "name": "The Lair of the Minotaur"
+  },
+  {
+   "room_number": 9,
+   "name": "On the River \u2014 North Beach"
+  },
+  {
+   "room_number": 10,
+   "name": "On the River \u2014 Middle Beach"
+  },
+  {
+   "room_number": 11,
+   "name": "On the River \u2014 South Beach"
+  },
+  {
+   "room_number": 12,
+   "name": "On the River \u2014 the Tunnel"
+  },
+  {
+   "room_number": 13,
+   "name": "On the River \u2014 North Grotto"
+  },
+  {
+   "room_number": 14,
+   "name": "On the River \u2014 Middle Grotto"
+  },
+  {
+   "room_number": 15,
+   "name": "On the River \u2014 South Grotto"
   }
  ],
  "placements": [

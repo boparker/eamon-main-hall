@@ -279,7 +279,7 @@
   {
    "id": "lair-of-the-minotaur-9",
    "room_number": 9,
-   "name": "The River, Near the North Beach",
+   "name": "On the River — North Beach",
    "narration_text": "You are sailing the river in your rickety old boat.  To the east is a cliff wall--Can't land there.  You may land on the north beach to the west or follow the river south.  The strong current prevents travel north.",
    "background_description": "You are sailing the river in your rickety old boat.  To the east is a cliff wall--Can't land there.  You may land on the north beach to the west or follow the river south.  The strong current prevents travel north.",
    "light_level": "dim",
@@ -304,7 +304,7 @@
   {
    "id": "lair-of-the-minotaur-10",
    "room_number": 10,
-   "name": "The River, Near the Middle Beach",
+   "name": "On the River — Middle Beach",
    "narration_text": "You are sailing the river in your rickety old boat.  To the west is the middle of the long beach.  The river continues south.",
    "background_description": "You are sailing the river in your rickety old boat.  To the west is the middle of the long beach.  The river continues south.",
    "light_level": "dim",
@@ -329,7 +329,7 @@
   {
    "id": "lair-of-the-minotaur-11",
    "room_number": 11,
-   "name": "The River, Near the South Beach",
+   "name": "On the River — South Beach",
    "narration_text": "You are sailing the river in your rickety old boat.  To the west is the south end of the long beach.  If you continue taking the boat south you will go into a tunnel where you cannot make out any details.",
    "background_description": "You are sailing the river in your rickety old boat.  To the west is the south end of the long beach.  If you continue taking the boat south you will go into a tunnel where you cannot make out any details.",
    "light_level": "dim",
@@ -354,7 +354,7 @@
   {
    "id": "lair-of-the-minotaur-12",
    "room_number": 12,
-   "name": "The Sailing the River, in a Tunnel",
+   "name": "On the River — the Tunnel",
    "narration_text": "You are drifting through a tunnel, with no beaches on either side of the river to land on.  You can only continue downstream to the south.",
    "background_description": "You are drifting through a tunnel, with no beaches on either side of the river to land on.  You can only continue downstream to the south.",
    "light_level": "dim",
@@ -379,7 +379,7 @@
   {
    "id": "lair-of-the-minotaur-13",
    "room_number": 13,
-   "name": "The Sailing the River, Near the North Grotto",
+   "name": "On the River — North Grotto",
    "narration_text": "Cliff walls keep you from landing to the east.  To the west is a small grotto, called 'North Grotto'.  The river continues south and appears to ride next to other grottos.",
    "background_description": "Cliff walls keep you from landing to the east.  To the west is a small grotto, called 'North Grotto'.  The river continues south and appears to ride next to other grottos.",
    "light_level": "dim",
@@ -404,7 +404,7 @@
   {
    "id": "lair-of-the-minotaur-14",
    "room_number": 14,
-   "name": "The Sailing the River, Near the Middle Grotto",
+   "name": "On the River — Middle Grotto",
    "narration_text": "To the west is a small grotto with a sign saying, 'Middle Grotto'.  The river continues south, going next to another grotto.",
    "background_description": "To the west is a small grotto with a sign saying, 'Middle Grotto'.  The river continues south, going next to another grotto.",
    "light_level": "dim",
@@ -429,7 +429,7 @@
   {
    "id": "lair-of-the-minotaur-15",
    "room_number": 15,
-   "name": "The Sailing the River, Near the South Grotto",
+   "name": "On the River — South Grotto",
    "narration_text": "To the west is a small grotto with a sign saying, 'South Grotto'.  The river continues south, turning into a tunnel where you cannot make out any details.",
    "background_description": "To the west is a small grotto with a sign saying, 'South Grotto'.  The river continues south, turning into a tunnel where you cannot make out any details.",
    "light_level": "dim",
