@@ -964,12 +964,10 @@ function recordsResponse({ player, character, characters, adventures, prefix = '
   });
 }
 
-// Grid layouts are static per adventure — compute once, serve forever.
-const mapLayoutCache = new Map();
+// Layout follows the player's own visited subgraph (cheap BFS per read) so
+// rooms land where the walk put them, not where unseen corridors would.
 function mapFor(adventure, run, character) {
-  const id = adventure?.adventure?.id;
-  if (!mapLayoutCache.has(id)) mapLayoutCache.set(id, computeLayout(adventure));
-  return mapRead(adventure, run, character, mapLayoutCache.get(id));
+  return mapRead(adventure, run, character);
 }
 
 // A staged NPC wears its current stage's face (the drunk giant, the blinded

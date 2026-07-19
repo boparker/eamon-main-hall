@@ -92,14 +92,23 @@ function render() {
     class: 'jm-svg', role: 'img', 'aria-label': 'Journal map of explored rooms',
   });
 
-  // Corridors first (under the rooms).
+  // Corridors first (under the rooms). A connection between rooms that are
+  // NOT grid-neighbors is non-Euclidean (classic Eamon warps): draw it as a
+  // dashed curve so the map is honest about the strangeness.
   for (const edge of mapData.edges) {
     const a = byRoom.get(edge.from);
     const b = byRoom.get(edge.to);
     if (!a || !b) continue; // spans levels — drawn as stairs glyph via stubs
     const ca = center(a, minX, minY);
     const cb = center(b, minX, minY);
-    svg.appendChild(svgEl('line', { x1: ca.cx, y1: ca.cy, x2: cb.cx, y2: cb.cy, class: 'jm-corridor' }));
+    const adjacent = Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+    if (adjacent) {
+      svg.appendChild(svgEl('line', { x1: ca.cx, y1: ca.cy, x2: cb.cx, y2: cb.cy, class: 'jm-corridor' }));
+    } else {
+      const mx = (ca.cx + cb.cx) / 2 + (ca.cy === cb.cy ? 0 : 26);
+      const my = (ca.cy + cb.cy) / 2 + (ca.cx === cb.cx ? 0 : 26);
+      svg.appendChild(svgEl('path', { d: `M ${ca.cx} ${ca.cy} Q ${mx} ${my} ${cb.cx} ${cb.cy}`, class: 'jm-warp', fill: 'none' }));
+    }
   }
 
   // Unexplored stubs: a short fading dash out of the room's edge.
