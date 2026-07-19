@@ -198,6 +198,7 @@ CREATE TABLE IF NOT EXISTS character_portraits (
 CREATE INDEX IF NOT EXISTS character_portraits_character_id_idx ON character_portraits(character_id);
 ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS portrait_url TEXT;
 ALTER TABLE player_characters ADD COLUMN IF NOT EXISTS chronicle JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS entitlements JSONB NOT NULL DEFAULT '[]'::jsonb;
   `);
 
     await client.query(`

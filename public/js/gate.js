@@ -44,6 +44,13 @@ function card(adventure) {
   name.textContent = String(adventure.name ?? 'Unknown Realm');
   body.appendChild(name);
 
+  if (adventure.premium) {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'gate-premium';
+    ribbon.textContent = '✦ Premium';
+    card.appendChild(ribbon);
+  }
+
   // Every realm names its maker — these are real authors' works, 1979 onward.
   if (adventure.author) {
     const byline = document.createElement('div');
