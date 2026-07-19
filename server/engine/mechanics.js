@@ -51,6 +51,34 @@ export function gateMove({ adventure, run, character, room, direction }) {
   }
 
   const m = mechanicsOf(adventure);
+
+  // Stage-guarded exits: the boulder door only opens when the world is in the
+  // authored state (the blinded giant lets his rams out; you had better be
+  // under one). fail_text varies by how close you are.
+  const stageExit = (m.stage_exits ?? []).find((e) => e.room_number === room.room_number && e.direction === direction);
+  if (stageExit) {
+    const current = run.flags?.npcStage?.[stageExit.npc] ?? m.npc_stages?.[stageExit.npc]?.initial;
+    if (stageExit.stage && current !== stageExit.stage) {
+      return { ok: false, text: stageExit.blocked_text ?? 'The way is barred.' };
+    }
+    if (stageExit.hidden_at && run.flags?.hiddenAt !== stageExit.hidden_at) {
+      return { ok: false, text: stageExit.unhidden_text ?? 'You would be seen. You need to hide.' };
+    }
+    if (stageExit.pass_note) notes.push(stageExit.pass_note);
+    // Consequence penalties: the escape still works, but sloppiness costs.
+    for (const p of stageExit.penalties ?? []) {
+      const flagOk = p.unless_flag ? run.flags?.[p.unless_flag] : false;
+      const trigOk = p.unless_trigger ? (run.flags?.firedTriggers ?? []).includes(p.unless_trigger) : false;
+      if (flagOk || trigOk) continue;
+      if (p.text) notes.push(p.text);
+      if (p.lose_crew) {
+        const eaten = new Set([...(run.flags?.attritionLost ?? []), ...(flagPatch.attritionLost ?? [])]);
+        const next = (m.attrition?.victims ?? []).find((v) => !eaten.has(v));
+        if (next) flagPatch.attritionLost = [...eaten, next];
+      }
+    }
+  }
+
   if (Number.isFinite(dest) && isWaterRoom(adventure, dest) && m.vehicle) {
     const inBoat = run.flags?.inVehicle === true;
     const boatHere = vehicleRoom(adventure, run) === room.room_number;
@@ -82,12 +110,13 @@ export function afterMove({ adventure, run, destination }) {
 }
 
 // SAY-word triggers: a word spoken near a visible trigger item reveals another.
-export function sayTrigger({ adventure, run, words, roomNumber, visibleItemSlugs }) {
+export function sayTrigger({ adventure, run, words, roomNumber, visibleItemSlugs, visibleNpcSlugs = [] }) {
   const m = mechanicsOf(adventure);
   const spoken = String(words ?? '').toLowerCase();
   for (const trigger of m.say_triggers ?? []) {
     if (!new RegExp(`\\b${trigger.word}\\b`, 'i').test(spoken)) continue;
     if (trigger.near_item && !visibleItemSlugs.includes(trigger.near_item)) continue;
+    if (trigger.near_npc && !visibleNpcSlugs.includes(trigger.near_npc)) continue;
     if (trigger.once && (run.flags?.firedTriggers ?? []).includes(trigger.word)) {
       // A solved riddle should say so, not fall through to "nobody's here".
       return { spent: true, text: trigger.already_text ?? 'The word has already done its work here.' };

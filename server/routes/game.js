@@ -992,7 +992,15 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
   // AI narration replaces only the description line; the mechanical truth
   // (who is here, items, exits) always comes from the engine.
   const renderedRoom = narration ? { ...room, narration_text: narration, description: undefined } : room;
-  const body = text ?? renderRoom(renderedRoom, entities, items, room.exits);
+  let body = text ?? renderRoom(renderedRoom, entities, items, room.exits);
+  // A staged NPC's condition is world state the player must SEE: the sleeping
+  // giant reads as sleeping on every look, not just at the transition.
+  if (!text) {
+    const stageLines = (entities.characters ?? [])
+      .map((c) => stageData(adventure, run, c.slug)?.description)
+      .filter(Boolean);
+    if (stageLines.length) body = `${body}\n\n${stageLines.join('\n')}`;
+  }
   return canonicalResponse({
     intent,
     event,
@@ -1789,6 +1797,54 @@ export function createGameRouter(rawDeps = {}) {
         return res.json(roomResponse({ adventure, run, character, prefix: spot.success_text, event: { type: 'hide', command }, intent: command }));
       }
 
+      if (command.type === 'use_item') {
+        // Feature-use triggers: using a visible room fixture (the tally
+        // stones) sets an authored flag — the quiet half of a Myst puzzle.
+        const useTriggers = mechanicsOf(adventure).use_triggers ?? [];
+        const visibleHere = visibleItems(adventure, getVisibleRoomEntities(run, adventure));
+        const ut = useTriggers.find((t) => t.room_number === getCurrentRoom(run, adventure).room_number
+          && visibleHere.some((i) => i.slug === t.item)
+          && (normalizeTarget(command.target).includes(normalizeTarget(t.match ?? t.item)) || slugify(command.target) === slugify(t.item)));
+        if (ut) {
+          if (ut.requires_stage && stageOf(adventure, run, ut.requires_stage.npc) !== ut.requires_stage.stage) {
+            return res.json(canonicalResponse({ intent: command, event: { type: 'blocked', command }, text: ut.not_yet_text ?? 'Not while those eyes are open.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+          }
+          if (run.flags?.[ut.sets_flag]) {
+            return res.json(canonicalResponse({ intent: command, event: { type: 'search', command }, text: ut.already_text ?? 'It is already done.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+          }
+          run = applyFlagPatch(run, { [ut.sets_flag]: true });
+          character = recordDeed(character, ut.deed_text ?? `Worked a quiet subversion in ${getCurrentRoom(run, adventure).name}.`, { kind: ut.deed_kind ?? 'secret', room: getCurrentRoom(run, adventure).room_number });
+          const [uc3, ur3] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          character = rowCharacter(uc3) ?? character;
+          run = rowRun(ur3) ?? run;
+          return res.json(roomResponse({ adventure, run, character, prefix: `${ut.banner ?? '✦ SECRET ✦'}\n${ut.text}`, event: { type: 'secret_found', command }, events: [{ type: 'secret_found' }], intent: command }));
+        }
+        // A carried item used on/near a staged NPC may advance the stage
+        // (the olive stake and the sleeping giant). Falls through to the
+        // regular use handler when no transition applies.
+        const usedItem = (character.inventory ?? []).find((i) => normalizeTarget(i?.name ?? '') === normalizeTarget(command.target) || slugify(i?.slug ?? '') === slugify(command.target));
+        if (usedItem) {
+          const present = (getVisibleRoomEntities(run, adventure).characters ?? []);
+          for (const npc of present) {
+            const t = stageTransition({ adventure, run, slug: npc.slug, on: { use: usedItem.slug } });
+            if (t) {
+              run = setStage(run, npc.slug, t.to);
+              character = recordDeed(character, `${t.deed ?? `Turned the tide against the ${npc.name}`} in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: t.deed_kind ?? 'riddle', room: getCurrentRoom(run, adventure).room_number });
+              const [uc2, ur2] = await Promise.all([
+                deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+                deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+              ]);
+              character = rowCharacter(uc2) ?? character;
+              run = rowRun(ur2) ?? run;
+              return res.json(roomResponse({ adventure, run, character, prefix: t.text, event: { type: 'stage_change', npc: npc.slug, stage: t.to }, events: [{ type: 'stage_change', npc: npc.slug, stage: t.to }], intent: command }));
+            }
+          }
+        }
+      }
+
       if (command.type === 'dig') {
         const dig = digResult({ adventure, run, character, roomNumber: getCurrentRoom(run, adventure).room_number });
         if (!dig) {
@@ -2342,23 +2398,24 @@ export function createGameRouter(rawDeps = {}) {
           adventure, run, words,
           roomNumber: getCurrentRoom(run, adventure).room_number,
           visibleItemSlugs: (roomEntitiesForSay.placements ?? []).map((pl) => pl.item_slug),
+          visibleNpcSlugs: (roomEntitiesForSay.characters ?? []).map((c) => c.slug),
         });
         if (trigger?.spent) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'say', command }, text: trigger.text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
         }
         if (trigger) {
-          run = revealItem(run, trigger.reveals);
+          if (trigger.reveals) run = revealItem(run, trigger.reveals);
           if (trigger.once) run = markTriggerFired(run, trigger.word);
           // A solved riddle must LAND: banner, chime (client maps the event),
           // and a chronicle deed the Quill inks onto the map.
-          character = recordDeed(character, `Solved the riddle of the spoken word in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'riddle', room: getCurrentRoom(run, adventure).room_number });
+          character = recordDeed(character, trigger.deed_text ?? `Solved the riddle of the spoken word in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: trigger.deed_kind ?? 'riddle', room: getCurrentRoom(run, adventure).room_number });
           const [trigChar, savedTrig] = await Promise.all([
             deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
             deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
           ]);
           character = rowCharacter(trigChar) ?? character;
           run = rowRun(savedTrig) ?? run;
-          return res.json(roomResponse({ adventure, run, character, prefix: `✦ RIDDLE SOLVED ✦\n${trigger.text}`, event: { type: 'riddle_solved', word: trigger.word }, events: [{ type: 'riddle_solved', word: trigger.word }], intent: command }));
+          return res.json(roomResponse({ adventure, run, character, prefix: `${trigger.banner ?? '✦ RIDDLE SOLVED ✦'}\n${trigger.text}`, event: { type: 'riddle_solved', word: trigger.word }, events: [{ type: 'riddle_solved', word: trigger.word }], intent: command }));
         }
         const visible = getVisibleRoomEntities(run, adventure).characters ?? [];
         // A disguised mimic: speaking to the chest (or into an "empty" room
