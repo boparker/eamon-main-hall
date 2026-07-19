@@ -51,7 +51,7 @@ import {
 import { castSpell, isSpell } from '../engine/spells.js';
 import { convertTreasuresOnReturn, takeTreasure, drinkPotion, buyItem } from '../engine/economy.js';
 import { mapRead, computeLayout, hasQuill, QUILL } from '../engine/worldMap.js';
-import { gateMove, afterMove, sayTrigger, digResult, cursedItem, guardedBy, markTriggerFired, revealItem, applyFlagPatch } from '../engine/mechanics.js';
+import { gateMove, afterMove, sayTrigger, digResult, cursedItem, guardedBy, markTriggerFired, revealItem, applyFlagPatch, stagedNpc, stageOf, stageData, setStage, stageTransition, tickStages, tickAttrition, mechanicsOf } from '../engine/mechanics.js';
 import { rollDice } from '../engine/dice.js';
 import {
   SHOP_CATALOG, findCatalogItem, buyFromShop, sellToShop,
@@ -972,9 +972,22 @@ function mapFor(adventure, run, character) {
   return mapRead(adventure, run, character, mapLayoutCache.get(id));
 }
 
+// A staged NPC wears its current stage's face (the drunk giant, the blinded
+// giant) wherever it is rendered.
+function withStageFaces(adventure, run, entities) {
+  return {
+    ...entities,
+    characters: (entities.characters ?? []).map((c) => {
+      const data = stageData(adventure, run, c.slug);
+      if (!data) return c;
+      return { ...c, ...(data.description ? { description: data.description, first_encounter_text: data.description } : {}), ...(data.hostile === false ? { disposition: 'neutral' } : {}) };
+    }),
+  };
+}
+
 function roomResponse({ adventure, run, character, text = null, prefix = null, event = { type: 'look' }, intent = null, events = null, narration = null }) {
   const room = getCurrentRoom(run, adventure);
-  const entities = getVisibleRoomEntities(run, adventure);
+  const entities = withStageFaces(adventure, run, getVisibleRoomEntities(run, adventure));
   const items = visibleItems(adventure, entities);
   // AI narration replaces only the description line; the mechanical truth
   // (who is here, items, exits) always comes from the engine.
@@ -1635,6 +1648,21 @@ export function createGameRouter(rawDeps = {}) {
           }));
         }
         const mechNotes = [...(gate.notes ?? []), ...(arrival.notes ?? [])];
+        // The world's clocks tick on movement: staged NPCs age (the drunk
+        // giant slides toward sleep), and the attrition clock feeds.
+        const ticked = tickStages(adventure, run);
+        run = ticked.run;
+        mechNotes.push(...ticked.notes);
+        const bite = tickAttrition({ adventure, run, roomNumber: getCurrentRoom(run, adventure).room_number });
+        if (bite) {
+          run = bite.run;
+          if (bite.victim) {
+            const victim = adventure.characters.find((c) => c.slug === bite.victim);
+            const aText = (mechanicsOf(adventure).attrition?.text ?? '{name} is taken.').replace('{name}', victim?.name ?? bite.victim);
+            mechNotes.push(aText);
+            character = recordDeed(character, `${victim?.name ?? bite.victim} was lost in ${getCurrentRoom(run, adventure).name} (${adventure.adventure.name}).`, { kind: 'companion_lost', room: getCurrentRoom(run, adventure).room_number });
+          }
+        }
         // Entering a room rolls friend-or-foe for any "random" NPCs there.
         const encounter = resolveRoomEncounters(run, adventure, character, deps.rng);
         run = encounter.run;
@@ -1719,6 +1747,46 @@ export function createGameRouter(rawDeps = {}) {
         }
         const readItems = withReadState(visibleItems(adventure, getVisibleRoomEntities(run, adventure)), run);
         return res.json(canonicalResponse({ intent: command, event: { type: 'read_item', command, item: matches[0], items: matches }, text, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run, items: readItems } }));
+      }
+
+      if (command.type === 'give') {
+        const item = (character.inventory ?? []).find((i) => normalizeTarget(i?.name ?? '') === normalizeTarget(command.target) || slugify(i?.slug ?? '') === slugify(command.target));
+        if (!item) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'give_failed', command, reason: 'missing-item' }, text: `You are not carrying ${command.target}.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        const recipient = findVisibleCharacter(adventure, run, command.recipient);
+        if (!recipient) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'give_failed', command, reason: 'missing-recipient' }, text: `There is no ${command.recipient} here.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        const transition = stageTransition({ adventure, run, slug: recipient.slug, on: { give: item.slug } });
+        if (transition) {
+          run = setStage(run, recipient.slug, transition.to);
+          character = { ...character, inventory: (character.inventory ?? []).filter((i) => i !== item) };
+          const [gc, gr] = await Promise.all([
+            deps.updateCharacter(deps.db, context.owner, character.id, characterPatch(character)),
+            deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run)),
+          ]);
+          character = rowCharacter(gc) ?? character;
+          run = rowRun(gr) ?? run;
+          return res.json(roomResponse({ adventure, run, character, prefix: transition.text, event: { type: 'give', command, stage: transition.to }, events: [{ type: 'give', item: item.slug, to: recipient.slug }, { type: 'stage_change', npc: recipient.slug, stage: transition.to }], intent: command }));
+        }
+        return res.json(canonicalResponse({ intent: command, event: { type: 'give_failed', command, reason: 'refused' }, text: `${recipient.name} has no use for ${item.name}.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+      }
+
+      if (command.type === 'hide') {
+        const spots = mechanicsOf(adventure).hide_spots ?? [];
+        const here = getCurrentRoom(run, adventure).room_number;
+        const spot = spots.find((sp) => sp.room_number === here && (!command.target || normalizeTarget(sp.target).includes(normalizeTarget(command.target))));
+        if (!spot) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'hide_failed', command }, text: 'There is nowhere here worth hiding.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        if (spot.requires_stage && stageOf(adventure, run, spot.requires_stage.npc) !== spot.requires_stage.stage) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'hide_failed', command, reason: 'not-yet' }, text: spot.not_yet_text ?? 'Not yet — the moment is wrong.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
+        run = applyFlagPatch(run, { hiddenAt: spot.target });
+        const savedHide = await deps.updateAdventureRun(deps.db, context.owner, run.id, dbRunPatch(run));
+        run = rowRun(savedHide) ?? run;
+        return res.json(roomResponse({ adventure, run, character, prefix: spot.success_text, event: { type: 'hide', command }, intent: command }));
       }
 
       if (command.type === 'dig') {
@@ -1882,6 +1950,11 @@ export function createGameRouter(rawDeps = {}) {
         const enemyTemplate = findVisibleEnemy(adventure, run, command.target);
         if (!enemyTemplate) {
           return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'missing-enemy' }, text: `There is no ${command.target} here to attack.`, choices: choicesForRun(adventure, run), state: { character, adventureRun: run } }));
+        }
+        // A staged colossus in an invulnerable stage cannot be fought — only outwitted.
+        const atkStage = stageData(adventure, run, enemyTemplate.slug);
+        if (atkStage?.invulnerable) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'attack_failed', command, reason: 'invulnerable' }, text: atkStage.futile_text ?? `Your blow means nothing to the ${enemyTemplate.name}. Steel is not the answer here.`, choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
         }
         // Scatter creatures (the rats): the first strike fells the leader and the
         // rest break and flee to another room — no stand-up fight here.
