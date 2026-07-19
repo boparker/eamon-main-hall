@@ -13,6 +13,7 @@ STRICT RULES:
 - Use ONLY the facts given. NEVER invent items, exits, creatures, dangers, or numbers that are not in the facts.
 - Mention EVERY person or creature listed in "present" — each by name, with their bearing toward the adventurer (a hostile one must read as a clear threat). Never leave someone in the room unaccounted for.
 - Text under "already_shown_to_player" is printed verbatim above your prose: do NOT restate or paraphrase it — write what comes next.
+- Your prose REPLACES "canonical_description" on the player's screen. Convey its facts in fresh words. NEVER quote, repeat, or lightly reword the canonical description — the player must never read the same sentence twice. One cohesive description, not the original plus an expansion.
 - Never speak for the adventurer or decide what they do or feel beyond what the facts say.
 - Never reveal hidden things, mechanics, or hints.
 - Keep it G-rated and classroom-safe; peril yes, gore no.
@@ -60,13 +61,31 @@ export async function narrateRoomEntry({ adventure, room, character, entities = 
   };
 
   const key = cacheKey('room-entry', adventure?.adventure?.id, room.room_number, character?.name, facts.adventurer.condition, visitCount > 1, present.map((p) => `${p.name}:${p.disposition}`), note);
-  return complete({
+  const out = await complete({
     system: NARRATOR_SYSTEM,
     prompt: `Retell this room's description for this adventurer, in your voice, honoring every fact:\n${JSON.stringify(facts, null, 2)}`,
     maxTokens: 160,
     temperature: 0.85,
     key,
   });
+  return stripCanonicalEcho(out, room.narration_text);
+}
+
+// Belt to the prompt's suspenders: if the model echoed the canonical
+// description verbatim (or near enough after whitespace normalization),
+// remove the echo; if nothing substantial remains, fall back to authored.
+export function stripCanonicalEcho(narration, canonical) {
+  if (!narration) return null;
+  const canon = String(canonical ?? '').trim();
+  if (canon.length < 20) return narration;
+  const squash = (t) => t.replace(/\s+/g, ' ').trim();
+  const squashedCanon = squash(canon);
+  const squashedOut = squash(narration);
+  const idx = squashedOut.indexOf(squashedCanon);
+  if (idx === -1) return narration;
+  const remainder = squash(squashedOut.slice(0, idx) + ' ' + squashedOut.slice(idx + squashedCanon.length));
+  // If the model was ONLY an echo (plus scraps), use the authored text instead.
+  return remainder.length >= 40 ? remainder : null;
 }
 
 // One sentence for a turning point — a kill, a mercy, a yield, a death.
