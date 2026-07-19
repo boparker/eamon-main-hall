@@ -119,7 +119,7 @@ function updateRoomRail(response) {
         name: c.name ?? c.slug,
         kind: kindOf(c),
         following: c.following === true,
-        image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png` : undefined,
+        image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png?p=2` : undefined, // bump ?p when a portrait is re-authored (week cache)
       }));
     renderRoomCharacters(people);
   } else if (response.state?.phase && response.state.phase !== 'adventure') {
