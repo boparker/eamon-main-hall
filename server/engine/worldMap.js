@@ -30,9 +30,13 @@ function startRoomOf(adventure) {
 // further along the same direction until a free cell is found — the map stays
 // readable and honest about topology, if not about scale. Layout is static
 // per adventure; callers may cache.
-export function computeLayout(adventure) {
-  const rooms = new Map((adventure?.locations ?? []).map((loc) => [loc.room_number, loc]));
-  const start = startRoomOf(adventure);
+export function computeLayout(adventure, onlyRooms = null) {
+  const included = onlyRooms ? new Set(onlyRooms) : null;
+  const rooms = new Map((adventure?.locations ?? [])
+    .filter((loc) => !included || included.has(loc.room_number))
+    .map((loc) => [loc.room_number, loc]));
+  // Start from the adventure's entrance if visible, else any included room.
+  const start = (!included || included.has(startRoomOf(adventure))) ? startRoomOf(adventure) : [...rooms.keys()][0];
   const positions = new Map();
   const occupied = new Map(); // "x,y,z" -> room_number
   const conflicts = [];
@@ -127,8 +131,8 @@ export function annotationsFor(adventure, run, character) {
 // The client-facing read. Visited rooms only; unexplored exits become
 // nameless direction stubs; the way out is marked as such.
 export function mapRead(adventure, run, character, layout = null) {
-  const { positions } = layout ?? computeLayout(adventure);
   const visited = new Set(run?.visitedRooms ?? []);
+  const { positions } = layout ?? computeLayout(adventure, visited);
   const rooms = new Map((adventure?.locations ?? []).map((loc) => [loc.room_number, loc]));
   const quill = hasQuill(character);
   const notes = quill ? annotationsFor(adventure, run, character) : new Map();
