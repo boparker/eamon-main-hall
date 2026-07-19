@@ -350,6 +350,12 @@ test('NOTE pins your own words to the room and the map carries them', async () =
   const deps = makeDeps();
   const app = makeApp(deps);
   const session = await startMinotaur(app);
+  // Without the quill: no ink, and a signpost to the Archivist.
+  const unarmed = await command(app, session, 'note this should not stick');
+  assert.match(unarmed.body.text, /nothing.*Archivist|sells a fine grey quill/is);
+  // With the quill, the hand writes.
+  const ch = deps._characters.get(session.characterId);
+  ch.inventory = [...(ch.inventory ?? []), { slug: 'chroniclers-quill', name: "Chronicler's Quill", type: 'tool' }];
   const noted = await command(app, session, 'note boat is here, do not sail past south grotto');
   assert.match(noted.body.text, /✎ Noted, in your own hand/);
   assert.deepEqual(noted.body.state.map.nodes.find((n) => n.room === 1).playerNotes, ['boat is here, do not sail past south grotto']);

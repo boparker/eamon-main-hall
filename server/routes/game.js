@@ -1758,8 +1758,12 @@ export function createGameRouter(rawDeps = {}) {
       }
 
       if (command.type === 'note') {
-        // The player's own marginalia: pinned to the current room, shown on
-        // the journal map in their own hand. Free — memory aids never gate.
+        // The player's own marginalia — a function of OWNING A QUILL. Diegetic
+        // gating: no quill, no ink. It's 50 in-game gold at the Archivist's,
+        // and the refusal doubles as the signpost there.
+        if (!hasQuill(character)) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'note_failed', command, reason: 'no-quill' }, text: 'You pat your pack for something to write with, and find nothing. The Archivist in the Hall of Records sells a fine grey quill — the kind that writes on journey-maps and remembers what it wrote.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
         const roomNo = getCurrentRoom(run, adventure).room_number;
         const text = String(command.words ?? '').slice(0, 60);
         const all = run.flags?.playerNotes ?? {};
