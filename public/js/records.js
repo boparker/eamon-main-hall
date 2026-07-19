@@ -184,7 +184,7 @@ export function openRecords(records) {
     noteEl.textContent = records.note
       ?? (q.owned
         ? 'Your grey quill rests in your pack, inking each deed onto your journal’s map as it happens.'
-        : `A long grey quill rests in a case of worn leather. "It remembers where you have been," says the Archivist. "Every deed already done, and every one to come, will ink itself into your journal's map." — ${q.price} gold.`);
+        : `A long grey quill rests in a case of worn leather. "It remembers where you have been," says the Archivist, "and it takes dictation — NOTE your own words onto any room of your map. Every deed already done, and every one to come, inks itself." He taps the case. "${q.price} gold — while the Guild still lets me price it in gold. The wise buy early." `);
     btn.hidden = !!q.owned;
     btn.textContent = `Buy the Chronicler's Quill — ${q.price} gold`;
     btn.dataset.command = `The Chronicler's Quill (${q.price} gold)`;
