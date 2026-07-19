@@ -1766,6 +1766,9 @@ export function createGameRouter(rawDeps = {}) {
         }
         const roomNo = getCurrentRoom(run, adventure).room_number;
         const text = String(command.words ?? '').slice(0, 60);
+        if (!text.trim()) {
+          return res.json(canonicalResponse({ intent: command, event: { type: 'note_failed', command, reason: 'empty' }, text: 'What should the note say? Try: NOTE boat is here — it pins your words to this room on the map.', choices: choicesForRun(adventure, run, character), state: { character, adventureRun: run } }));
+        }
         const all = run.flags?.playerNotes ?? {};
         const mine = [...(all[roomNo] ?? []), text].slice(-3); // 3 per room, newest kept
         run = applyFlagPatch(run, { playerNotes: { ...all, [roomNo]: mine } });
