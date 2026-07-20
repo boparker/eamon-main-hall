@@ -134,10 +134,20 @@ function render() {
   const PAD = 46;
 
   title.textContent = mapData.title;
+  const explored = mapData.nodes?.length ?? 0;
+  const frame = (mapData.extent?.w ?? 0) * (mapData.extent?.h ?? 0);
   legend.textContent = mapData.quill
     ? 'Inked by the Chronicler’s Quill'
     : 'Rooms appear as you walk them';
   if (levels.size > 1) legend.textContent += ` · depth ${currentZ}`;
+  if (frame > explored) legend.textContent += ` · ${explored} rooms charted`;
+
+  const help = document.getElementById('journal-map-help');
+  if (help) {
+    help.textContent = mapData.quill
+      ? 'Blank parchment is unexplored ground — walk rooms to ink them. Dashed stubs mark untaken exits; violet dashes are true warps in the old maps. Your Quill pins deeds beside the rooms. Drag or use the arrows to survey. M or Esc closes the chart.'
+      : 'Blank parchment is unexplored ground — walk rooms to ink them. Dashed stubs mark exits you have not taken. Drag or use the arrows to survey the chart. Press M or Esc to close.';
+  }
 
   // Fixed scale: rooms stay readable no matter how large the map grows; the
   // panel scrolls both axes and centers on the current room instead of
@@ -258,14 +268,41 @@ function render() {
 
   host.replaceChildren(svg);
 
-  // Scroll the current room to the center of the visible panel.
+  // Scroll the current room to the center of the visible survey pane.
+  const pane = document.getElementById('journal-map-scroll') ?? host.closest('.jm-scroll') ?? host;
   const current = nodes.find((n) => n.current);
   if (current) {
     const { cx, cy } = center(current, minX, minY);
-    const pane = host.closest('.jm-panel') ?? host;
     pane.scrollLeft = cx + PAD - pane.clientWidth / 2;
-    pane.scrollTop = cy + PAD - pane.clientHeight / 2 + 70; // header offset
+    pane.scrollTop = cy + PAD - pane.clientHeight / 2;
   }
+  updateScrollCues();
+}
+
+function updateScrollCues() {
+  const pane = document.getElementById('journal-map-scroll');
+  if (!pane) return;
+  const edge = 8;
+  const canL = pane.scrollLeft > edge;
+  const canR = pane.scrollLeft + pane.clientWidth < pane.scrollWidth - edge;
+  const canU = pane.scrollTop > edge;
+  const canD = pane.scrollTop + pane.clientHeight < pane.scrollHeight - edge;
+  const set = (dir, on) => {
+    const el = document.querySelector(`.jm-cue-${dir}`);
+    if (el) el.hidden = !on;
+  };
+  set('w', canL); set('e', canR); set('n', canU); set('s', canD);
+}
+
+function nudgeScroll(dir) {
+  const pane = document.getElementById('journal-map-scroll');
+  if (!pane) return;
+  const stepX = Math.max(120, Math.floor(pane.clientWidth * 0.45));
+  const stepY = Math.max(90, Math.floor(pane.clientHeight * 0.45));
+  if (dir === 'n') pane.scrollBy({ top: -stepY, behavior: 'smooth' });
+  if (dir === 's') pane.scrollBy({ top: stepY, behavior: 'smooth' });
+  if (dir === 'w') pane.scrollBy({ left: -stepX, behavior: 'smooth' });
+  if (dir === 'e') pane.scrollBy({ left: stepX, behavior: 'smooth' });
 }
 
 export function initJournalMap() {
@@ -274,6 +311,14 @@ export function initJournalMap() {
   document.getElementById('journal-map')?.addEventListener('click', (e) => {
     if (e.target.id === 'journal-map') close(); // click the vellum margin to put it away
   });
+  document.getElementById('journal-map-scroll')?.addEventListener('scroll', updateScrollCues, { passive: true });
+  document.querySelectorAll('.jm-cue').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nudgeScroll(btn.dataset.dir);
+    });
+  });
+  window.addEventListener('resize', () => { if (isOpen()) updateScrollCues(); });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen()) { close(); return; } // works even from the input
     const typing = /^(input|textarea)$/i.test(document.activeElement?.tagName ?? '');

@@ -274,12 +274,24 @@
     #hud-map-btn[hidden] { display: none; }
     #journal-map { position: fixed; inset: 0; z-index: 60; background: rgba(6,4,2,0.78); display: flex; align-items: center; justify-content: center; padding: 4vh 4vw; }
     #journal-map[hidden] { display: none; }
-    .jm-panel { position: relative; max-width: min(880px, 94vw); max-height: 88vh; overflow: auto; background: linear-gradient(160deg, #17110a, #0e0a06); border: 1px solid var(--gold-dim); border-radius: 10px; padding: 22px 26px 26px; box-shadow: 0 0 70px rgba(0,0,0,0.8); }
-    #journal-map-close { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px; border: 1px solid var(--gold-dim); border-radius: 50%; background: rgba(12,9,6,0.7); color: var(--gold); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+    .jm-panel { position: relative; display: flex; flex-direction: column; max-width: min(880px, 94vw); width: 100%; height: min(88vh, 920px); overflow: hidden; background: linear-gradient(160deg, #17110a, #0e0a06); border: 1px solid var(--gold-dim); border-radius: 10px; box-shadow: 0 0 70px rgba(0,0,0,0.8); }
+    #journal-map-close { position: absolute; top: 10px; right: 12px; z-index: 3; width: 34px; height: 34px; border: 1px solid var(--gold-dim); border-radius: 50%; background: rgba(12,9,6,0.7); color: var(--gold); font-size: 1.2rem; line-height: 1; cursor: pointer; }
     #journal-map-close:hover { border-color: var(--gold); }
-    .jm-head { text-align: center; margin-bottom: 12px; }
+    .jm-head { flex: 0 0 auto; text-align: center; padding: 18px 44px 12px 26px; background: linear-gradient(180deg, rgba(23,17,10,0.98), rgba(14,10,6,0.94)); border-bottom: 1px solid rgba(200,168,75,0.18); }
     .jm-title { font-family: var(--font-head); font-size: 1.25rem; color: var(--gold); letter-spacing: 0.08em; }
     .jm-legend { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,168,75,0.6); margin-top: 4px; }
+    .jm-help { margin: 8px auto 0; max-width: 36rem; font-size: 0.82rem; line-height: 1.45; color: rgba(232,214,168,0.72); }
+    .jm-body { position: relative; flex: 1 1 auto; min-height: 0; }
+    .jm-scroll { position: absolute; inset: 0; overflow: auto; padding: 12px 18px 22px; scrollbar-width: thin; scrollbar-color: var(--gold-dim) transparent; }
+    .jm-cue { position: absolute; z-index: 2; display: grid; place-items: center; border: 1px solid rgba(200,168,75,0.45); background: rgba(12,9,6,0.82); color: var(--gold); cursor: pointer; box-shadow: 0 0 18px rgba(0,0,0,0.45); transition: opacity 0.2s ease, border-color 0.15s ease; }
+    .jm-cue:hover { border-color: var(--gold); }
+    .jm-cue[hidden] { display: none !important; }
+    .jm-cue-n, .jm-cue-s { left: 50%; transform: translateX(-50%); width: 44px; height: 28px; border-radius: 999px; }
+    .jm-cue-e, .jm-cue-w { top: 50%; transform: translateY(-50%); width: 28px; height: 44px; border-radius: 999px; }
+    .jm-cue-n { top: 8px; }
+    .jm-cue-s { bottom: 8px; }
+    .jm-cue-e { right: 8px; }
+    .jm-cue-w { left: 8px; }
     .jm-svg { display: block; margin: 0 auto; }
     .jm-parchment { fill: rgba(216,196,150,0.05); }
     .jm-grid { stroke: rgba(200,168,75,0.05); stroke-width: 1; }
@@ -1103,8 +1115,17 @@
       <div class="jm-head">
         <div id="journal-map-title" class="jm-title"></div>
         <div id="journal-map-legend" class="jm-legend"></div>
+        <p id="journal-map-help" class="jm-help">Blank parchment is unexplored ground — rooms ink in as you walk them. Dashed stubs mark exits you have not taken. Drag or use the arrows to survey the chart. Press M or Esc to close.</p>
       </div>
-      <div id="journal-map-canvas"></div>
+      <div class="jm-body">
+        <button type="button" class="jm-cue jm-cue-n" data-dir="n" aria-label="Scroll map north" hidden>▴</button>
+        <button type="button" class="jm-cue jm-cue-e" data-dir="e" aria-label="Scroll map east" hidden>▸</button>
+        <button type="button" class="jm-cue jm-cue-s" data-dir="s" aria-label="Scroll map south" hidden>▾</button>
+        <button type="button" class="jm-cue jm-cue-w" data-dir="w" aria-label="Scroll map west" hidden>◂</button>
+        <div class="jm-scroll" id="journal-map-scroll">
+          <div id="journal-map-canvas"></div>
+        </div>
+      </div>
     </div>
   </div>
 
