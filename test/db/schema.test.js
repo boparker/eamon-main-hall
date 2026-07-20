@@ -42,7 +42,8 @@ test('ensureGameSchema creates account persistence tables and indexes without ad
   assert.match(sql, /ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS profile_id/);
   assert.match(sql, /players_auth_identity_idx/);
   assert.match(sql, /players_email_idx/);
-  assert.match(sql, /adventure_runs_one_active_per_character_idx/);
+  assert.match(sql, /DROP INDEX IF EXISTS adventure_runs_one_active_per_character_idx/);
+  assert.match(sql, /adventure_runs_one_active_per_character_adventure_idx/);
   assert.match(sql, /adventure_id TEXT NOT NULL/);
   assert.doesNotMatch(sql, /adventure_id\s+TEXT\s+NOT NULL\s+REFERENCES/i);
   assert.doesNotMatch(sql, /REFERENCES adventures/i);
