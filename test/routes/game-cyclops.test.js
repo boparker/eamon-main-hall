@@ -154,6 +154,31 @@ test('living art: room responses declare the breathing layer when loops exist on
   }
 });
 
+test('one expedition at a time: a second Gate card 409s instead of teleporting to the old run', async () => {
+  const beginners = JSON.parse(readFileSync('data/adventures/beginners-cave.json', 'utf8'));
+  const deps = makeDeps();
+  deps.loadAdventures = () => [beginners, cyclops];
+  // The harness mock never reports an active run; this test is ABOUT one.
+  const origCreate = deps.createAdventureRun;
+  let activeRow = null;
+  deps.createAdventureRun = async (...args) => { activeRow = await origCreate(...args); return activeRow; };
+  deps.getActiveAdventureRunForCharacter = async () => activeRow;
+  const app = makeApp(deps);
+  const created = await request(app, 'POST', '/api/game/characters', { ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 12, adventuresCompleted: ['beginners-cave'] });
+  const characterId = created.body.state.character.id;
+  const first = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'beginners-cave' });
+  assert.equal(first.status, 201);
+  // Clicking a DIFFERENT adventure while mid-run must refuse, naming the run.
+  const second = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'odyssey-cyclops' });
+  assert.equal(second.status, 409);
+  assert.equal(second.body.error, 'run-in-progress');
+  assert.match(second.body.text, /Beginner/);
+  // The SAME adventure resumes as before.
+  const resume = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'beginners-cave' });
+  assert.equal(resume.status, 200);
+  assert.equal(resume.body.state.adventureRun.adventureId, 'beginners-cave');
+});
+
 test('AUDIT the whole night: wine, sleep, stake, tally, name, rams, and out at dawn', async () => {
   const deps = makeDeps();
   const app = makeApp(deps);
