@@ -64,6 +64,12 @@ function makeDeps() {
     },
     async getAdventureRun(_db, _owner, id) { return runs.get(id) ?? null; },
     async getActiveAdventureRunForCharacter() { return null; },
+    async getActiveAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId && r.status === 'active').at(-1) ?? null;
+    },
+    async getLatestAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId).at(-1) ?? null;
+    },
     hashSessionToken: (token) => `sha256$${token}`,
     async getUserBySessionTokenHash(_db, tokenHash) {
       return tokenHash === 'sha256$raw-session-token' ? { id: 'user-1', username: 'tester', display_name: 'Tester' } : null;

@@ -113,6 +113,34 @@ export async function getActiveAdventureRunForCharacter(db, owner, characterId) 
   return result.rows[0] ?? null;
 }
 
+// Expeditions suspend per adventure: each adventure keeps its own active run,
+// so switching at the Gate never forfeits progress elsewhere.
+export async function getActiveAdventureRunForCharacterAdventure(db, owner, characterId, adventureId) {
+  const scope = runOwnerWhere(owner, 3);
+  const result = await db.query(
+    `SELECT * FROM adventure_runs
+     WHERE character_id = $1 AND adventure_id = $2 AND status = 'active' AND ${scope.clause}
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [characterId, adventureId, ...scope.params],
+  );
+  return result.rows[0] ?? null;
+}
+
+// The most recent run of an adventure regardless of status — the map is the
+// map: a fresh run inherits the rooms this character has already walked.
+export async function getLatestAdventureRunForCharacterAdventure(db, owner, characterId, adventureId) {
+  const scope = runOwnerWhere(owner, 3);
+  const result = await db.query(
+    `SELECT * FROM adventure_runs
+     WHERE character_id = $1 AND adventure_id = $2 AND ${scope.clause}
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [characterId, adventureId, ...scope.params],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function updateAdventureRun(db, owner, runId, patch = {}) {
   const assignments = [];
   const params = [];
