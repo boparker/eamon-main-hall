@@ -33,7 +33,7 @@ function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
   if (response.state?.phase) state.gamePhase = response.state.phase;
   if (response.state?.locationTitle) setLocation(response.state.locationTitle);
-  if (response.state?.background) setSceneBackground(response.state.background);
+  if (response.state?.background) setSceneBackground(response.state.background, response.state?.living?.background ?? null);
   if (response.state?.shop) openShop(response.state.shop);
   else closeShop();
   if (response.state?.gate) openGate(response.state.gate);
@@ -120,6 +120,7 @@ function updateRoomRail(response) {
         kind: kindOf(c),
         following: c.following === true,
         image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png?p=2` : undefined, // bump ?p when a portrait is re-authored (week cache)
+        video: c.slug ? response.state?.living?.portraits?.[c.slug] : undefined, // living portrait loop (premium)
       }));
     renderRoomCharacters(people);
   } else if (response.state?.phase && response.state.phase !== 'adventure') {

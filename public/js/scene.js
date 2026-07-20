@@ -111,11 +111,62 @@ function crossfadeBg(url) {
   img.src = url;
 }
 
+// Living paintings: a muted seamless-loop <video> floats over the still (the
+// still stays underneath as the loading/failure fallback and crossfade base).
+
+// Muted autoplay can still be vetoed before the first user gesture (strict
+// policies, embedded webviews). Retry every stalled loop on the next gesture.
+const pendingPlays = new Set();
+function ensurePlays(vid) {
+  vid.play?.().catch(() => {});
+  pendingPlays.add(vid);
+}
+for (const evt of ['pointerdown', 'keydown']) {
+  document.addEventListener(evt, () => {
+    for (const vid of pendingPlays) {
+      if (!vid.isConnected) { pendingPlays.delete(vid); continue; }
+      if (vid.paused) vid.play?.().catch(() => {});
+      else pendingPlays.delete(vid);
+    }
+  }, { capture: true, passive: true });
+}
+
+let currentBgVideoUrl = '';
+function setBackgroundVideo(videoUrl) {
+  const host = document.getElementById('scene-bg');
+  if (!host) return;
+  let vid = document.getElementById('scene-bg-video');
+  if (!videoUrl) {
+    currentBgVideoUrl = '';
+    if (vid) { vid.style.opacity = '0'; setTimeout(() => vid.remove(), 1600); }
+    return;
+  }
+  if (videoUrl === currentBgVideoUrl) return;
+  currentBgVideoUrl = videoUrl;
+  if (vid) vid.remove();
+  vid = document.createElement('video');
+  vid.id = 'scene-bg-video';
+  vid.muted = true;
+  vid.loop = true;
+  vid.autoplay = true;
+  vid.playsInline = true;
+  vid.setAttribute('playsinline', ''); // iOS needs the attribute, not just the property
+  vid.src = videoUrl;
+  vid.style.opacity = '0';
+  // Fade in only once frames are actually flowing; if the file is missing or
+  // stalls, the still beneath simply remains.
+  vid.addEventListener('playing', () => { vid.style.opacity = '1'; });
+  vid.addEventListener('error', () => vid.remove());
+  host.appendChild(vid);
+  ensurePlays(vid); // autoplay veto → still art now, retry on first gesture
+}
+
 // Set an explicit scene background by URL (e.g. an adventure room's painted art),
 // independent of the name→sceneMap lookup. No-ops if already showing it.
-export function setSceneBackground(url) {
-  if (!url || url === currentBgUrl) return;
-  crossfadeBg(url);
+// `videoUrl` (optional) layers a living-painting loop over the still.
+export function setSceneBackground(url, videoUrl = null) {
+  if (url && url !== currentBgUrl) crossfadeBg(url);
+  setBackgroundVideo(videoUrl);
 }
 
 // ── Portrait System ──
@@ -154,7 +205,7 @@ const DISPOSITION_LABEL = { monster: '⚔ Hostile', friendly: '✦ Friendly', ne
 
 // Build one character card. Prefers painted portrait art (by explicit `image`
 // path or cache); falls back to a monogram crest if none exists / fails to load.
-function characterCard({ name, kind, image, following }) {
+function characterCard({ name, kind, image, video, following }) {
   const card = document.createElement('div');
   card.className = 'room-char-card' + (following ? ' following' : '');
   card.dataset.kind = kind === 'monster' ? 'monster' : (kind === 'neutral' ? 'neutral' : 'friendly');
@@ -178,7 +229,32 @@ function characterCard({ name, kind, image, following }) {
   };
 
   const url = image || portraitCache[kind + ':' + name];
-  if (url) {
+  if (video) {
+    // A living portrait: muted seamless loop, the still as poster. Any
+    // failure degrades to the still image path below, then to a monogram.
+    const vid = document.createElement('video');
+    vid.muted = true;
+    vid.loop = true;
+    vid.autoplay = true;
+    vid.playsInline = true;
+    vid.setAttribute('playsinline', '');
+    if (url) vid.poster = url;
+    vid.src = video;
+    vid.onerror = () => {
+      vid.remove();
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = name;
+        img.onerror = () => { img.remove(); art.appendChild(crest()); };
+        art.appendChild(img);
+      } else {
+        art.appendChild(crest());
+      }
+    };
+    art.appendChild(vid);
+    ensurePlays(vid);
+  } else if (url) {
     const img = document.createElement('img');
     img.src = url;
     img.alt = name;
