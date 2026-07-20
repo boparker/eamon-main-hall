@@ -185,8 +185,12 @@ ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES user
 ALTER TABLE adventure_runs ADD COLUMN IF NOT EXISTS profile_id TEXT REFERENCES player_profiles(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS adventure_runs_user_id_idx ON adventure_runs(user_id);
 CREATE INDEX IF NOT EXISTS adventure_runs_profile_id_idx ON adventure_runs(profile_id);
-CREATE UNIQUE INDEX IF NOT EXISTS adventure_runs_one_active_per_character_idx
-  ON adventure_runs(character_id)
+-- Expeditions suspend per adventure (PR #147): a character may hold one
+-- active run PER ADVENTURE. The old one-per-character index predates that
+-- ruling and must go wherever it still exists.
+DROP INDEX IF EXISTS adventure_runs_one_active_per_character_idx;
+CREATE UNIQUE INDEX IF NOT EXISTS adventure_runs_one_active_per_character_adventure_idx
+  ON adventure_runs(character_id, adventure_id)
   WHERE status = 'active';
 CREATE TABLE IF NOT EXISTS character_portraits (
   id TEXT PRIMARY KEY,
