@@ -1520,6 +1520,14 @@ export function createGameRouter(rawDeps = {}) {
       if (existingRunRow) {
         const existingAdventure = findAdventure(adventures, existingRunRow.adventure_id);
         if (!existingAdventure) return error(res, 404, `Adventure ${existingRunRow.adventure_id} is not available.`, 'adventure-not-found');
+        // One expedition at a time: resume only when the request names the
+        // SAME adventure (or names none — the legacy resume path). Silently
+        // resuming a different adventure teleported players who clicked a
+        // second Gate card back into their old run.
+        if (req.body?.adventureId && existingRunRow.adventure_id !== adventureId) {
+          const existingName = existingAdventure.adventure?.name ?? existingRunRow.adventure_id;
+          return error(res, 409, `${character.name} is still mid-expedition in ${existingName}. Walk out alive to keep the haul — or type LEAVE inside it to abandon the run (treasures convert to gold) — before beginning another adventure.`, 'run-in-progress');
+        }
         return res.json(roomResponse({
           adventure: existingAdventure,
           run: rowRun(existingRunRow),
