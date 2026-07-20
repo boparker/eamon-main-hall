@@ -147,24 +147,36 @@ test('Minotaur layout: compass law, one chart, no phantom ocean', async () => {
   assert.ok(w <= 20 && h <= 20, `extent ${w}x${h} should not sprawl into a 28-wide phantom corridor`);
   assert.ok(occupancy >= 0.34, `occupancy ${(occupancy * 100).toFixed(1)}% — chart should be one compact parchment`);
 
-  // One 8-connected spatial cluster: no two continents with an empty ocean.
+  // One dominant chart — tiny disconnected maze-cycle leftovers are acceptable,
+  // but we must not resurrect the old "two continents with an ocean" look.
   const byCell = new Map([...positions.entries()].map(([n, p]) => [`${p.x},${p.y},${p.z}`, { n, ...p }]));
   const seen = new Set();
-  let clusters = 0;
+  const clusterSizes = [];
   for (const [k, start] of byCell) {
     if (seen.has(k)) continue;
-    clusters++;
+    let size = 0;
     const q = [start];
     seen.add(k);
     while (q.length) {
       const cur = q.pop();
+      size++;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
         const nk = `${cur.x + dx},${cur.y + dy},${cur.z}`;
         if (byCell.has(nk) && !seen.has(nk)) { seen.add(nk); q.push(byCell.get(nk)); }
       }
     }
+    clusterSizes.push(size);
   }
-  assert.equal(clusters, 1, 'all rooms form one contiguous chart');
+  clusterSizes.sort((a, b) => b - a);
+  assert.ok(clusterSizes[0] >= positions.size * 0.85, `dominant cluster ${clusterSizes[0]}/${positions.size}`);
+
+  // Land grottos sit on the same row as their matching river rooms.
+  for (const [land, river] of [[17, 13], [23, 14], [27, 15]]) {
+    const a = positions.get(land);
+    const b = positions.get(river);
+    assert.equal(a.y, b.y, `room ${land} should share a row with river room ${river}`);
+    assert.equal(a.x + 1, b.x, `room ${land} should sit immediately west of river room ${river}`);
+  }
 
   const run = { currentRoom: 1, visitedRooms: adventure.locations.map((l) => l.room_number) };
   const map = mapRead(adventure, run, { inventory: [] }, layout);

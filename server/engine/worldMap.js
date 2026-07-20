@@ -329,6 +329,41 @@ export function computeLayout(adventure) {
     if (!moved) break;
   }
 
+  // Rebuild occupancy after compaction.
+  occupied.clear();
+  for (const [n, p] of positions) occupied.set(key(p.x, p.y, p.z), n);
+
+  // Row-align east/west doors by sliding the western room onto the eastern
+  // room's row. River grottos stay put; land grottos and their west corridors
+  // walk south/north to meet them — fixes South Grotto parking beside the
+  // North river cell.
+  for (let pass = 0; pass < 12; pass++) {
+    let moved = false;
+    for (const [num, loc] of rooms) {
+      for (const [dir, dest] of Object.entries(loc.exits ?? {})) {
+        if (dir !== 'east' && dir !== 'west') continue;
+        if (!Number.isFinite(dest) || !rooms.has(dest)) continue;
+        if (!mappable(num, dir, dest)) continue;
+        const a = positions.get(num);
+        const b = positions.get(dest);
+        if (!a || !b || a.z !== b.z || a.y === b.y) continue;
+        const west = a.x <= b.x ? num : dest;
+        const east = a.x <= b.x ? dest : num;
+        const wPos = positions.get(west);
+        const ePos = positions.get(east);
+        if (wPos.y === ePos.y) continue;
+        const cand = { x: wPos.x, y: ePos.y, z: wPos.z };
+        if (occupied.has(key(cand.x, cand.y, cand.z))) continue;
+        if (!compassOk(west, cand, true)) continue;
+        occupied.delete(key(wPos.x, wPos.y, wPos.z));
+        positions.set(west, cand);
+        occupied.set(key(cand.x, cand.y, cand.z), west);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
   // Collapse entirely-empty columns and rows: monotone remap keeps compass
   // order, but dead voids between clusters vanish.
   for (const axis of ['x', 'y']) {
