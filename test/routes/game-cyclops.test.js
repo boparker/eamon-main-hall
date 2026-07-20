@@ -138,6 +138,22 @@ test('the prologue sings and the manifest is sound', async () => {
   }
 });
 
+test('living art: room responses declare the breathing layer when loops exist on disk', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const created = await request(app, 'POST', '/api/game/characters', { ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 12, adventuresCompleted: ['beginners-cave'] });
+  const started = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId: created.body.state.character.id, adventureId: 'odyssey-cyclops' });
+  const state = started.body.state;
+  const { existsSync } = await import('node:fs');
+  if (existsSync('public/scenes/odyssey-cyclops/room-1-living.mp4')) {
+    // Loops shipped: room 1 must declare its living background, versioned.
+    assert.match(state.living?.background ?? '', /room-1-living\.mp4\?l=\d/);
+  } else {
+    // No loops on disk (fresh checkout): the field must be absent/null, never a broken URL.
+    assert.equal(state.living?.background ?? null, null);
+  }
+});
+
 test('AUDIT the whole night: wine, sleep, stake, tally, name, rams, and out at dawn', async () => {
   const deps = makeDeps();
   const app = makeApp(deps);

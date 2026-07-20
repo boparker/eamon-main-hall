@@ -109,6 +109,50 @@ const DEFAULT_CLASS_STATS = {
 
 const BEGINNERS_CAVE_ID = 'beginners-cave';
 
+// Living paintings: premium adventures ship seamless-loop mp4s beside their
+// stills (room-N-living.mp4, portraits/<slug>-living.mp4). Scan each
+// adventure's scenes dir once and remember what exists, so every room
+// response can say which art breathes without touching the disk again.
+const SCENES_DIR = join(__dirname, '../../public/scenes');
+const livingArtCache = new Map();
+function livingArtFor(advId) {
+  if (!advId) return { rooms: new Set(), portraits: new Set() };
+  if (!livingArtCache.has(advId)) {
+    const rooms = new Set();
+    const portraits = new Set();
+    try {
+      for (const f of readdirSync(join(SCENES_DIR, advId))) {
+        const m = /^room-(\d+)-living\.mp4$/.exec(f);
+        if (m) rooms.add(Number(m[1]));
+      }
+      for (const f of readdirSync(join(SCENES_DIR, advId, 'portraits'))) {
+        const m = /^(.+)-living\.mp4$/.exec(f);
+        if (m) portraits.add(m[1]);
+      }
+    } catch { /* no scenes dir (or no portraits) — nothing lives */ }
+    livingArtCache.set(advId, { rooms, portraits });
+  }
+  return livingArtCache.get(advId);
+}
+
+// The state.living payload for a room: the background loop (if this room has
+// one) plus a slug→url map for every character portrait that breathes.
+// ?l=1 versions the media cache — bump when a loop is re-authored.
+function livingFor(adventure, room, entities) {
+  const advId = adventure?.adventure?.id;
+  const art = livingArtFor(advId);
+  const background = room && art.rooms.has(room.room_number)
+    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=1`
+    : null;
+  const portraits = {};
+  for (const c of entities?.characters ?? []) {
+    if (c.slug && art.portraits.has(c.slug)) {
+      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=1`;
+    }
+  }
+  return background || Object.keys(portraits).length ? { background, portraits } : null;
+}
+
 const HALL_SHOP_ITEMS = SHOP_CATALOG;
 
 const GREAT_HALL_TITLE = 'The Great Hall';
@@ -1007,7 +1051,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run, character),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=5`, character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=5`, living: livingFor(adventure, room, entities), character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
   });
 }
 
