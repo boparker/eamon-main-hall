@@ -137,17 +137,17 @@ function livingArtFor(advId) {
 
 // The state.living payload for a room: the background loop (if this room has
 // one) plus a slug→url map for every character portrait that breathes.
-// ?l=1 versions the media cache — bump when a loop is re-authored.
+// ?l=2 versions the media cache — bump when a loop is re-authored.
 function livingFor(adventure, room, entities) {
   const advId = adventure?.adventure?.id;
   const art = livingArtFor(advId);
   const background = room && art.rooms.has(room.room_number)
-    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=1`
+    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=2`
     : null;
   const portraits = {};
   for (const c of entities?.characters ?? []) {
     if (c.slug && art.portraits.has(c.slug)) {
-      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=1`;
+      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=2`;
     }
   }
   return background || Object.keys(portraits).length ? { background, portraits } : null;
@@ -453,7 +453,7 @@ function combatStateFor({ adventure, run, character, enemyTemplate = null, resul
   return {
     enemy: {
       slug: enemy.slug, name: enemy.name ?? enemy.slug, hp, maxHp,
-      image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png`,
+      image: `scenes/${adventure?.adventure?.id}/portraits/${enemy.slug}.png?p=3`,
       state: behaviorState(enemy, { hp, maxHp, regard: getRegard(run, enemy), yielded }),
       yielded,
       canParley: !!enemy.persona && !isMerciless(run, enemy.slug),

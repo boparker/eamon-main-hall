@@ -119,7 +119,7 @@ function updateRoomRail(response) {
         name: c.name ?? c.slug,
         kind: kindOf(c),
         following: c.following === true,
-        image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png?p=2` : undefined, // bump ?p when a portrait is re-authored (week cache)
+        image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png?p=3` : undefined, // bump ?p when a portrait is re-authored (week cache)
         video: c.slug ? response.state?.living?.portraits?.[c.slug] : undefined, // living portrait loop (premium)
       }));
     renderRoomCharacters(people);
