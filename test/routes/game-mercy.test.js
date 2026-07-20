@@ -149,6 +149,12 @@ function makeDeps(options = {}) {
     },
     async getAdventureRun(_db, _owner, runId) { return runs.get(runId) ?? null; },
     async getActiveAdventureRunForCharacter() { return null; },
+    async getActiveAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId && r.status === 'active').at(-1) ?? null;
+    },
+    async getLatestAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId).at(-1) ?? null;
+    },
     async updateAdventureRun(_db, _owner, runId, patch) {
       const row = runs.get(runId);
       if (!row) return null;

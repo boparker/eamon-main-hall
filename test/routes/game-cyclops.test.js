@@ -64,6 +64,19 @@ function makeDeps() {
     },
     async getAdventureRun(_db, _owner, id) { return runs.get(id) ?? null; },
     async getActiveAdventureRunForCharacter() { return null; },
+    async abandonAdventureRun(_db, _owner, runId) {
+      const row = runs.get(runId);
+      if (!row) return null;
+      const updated = { ...row, status: 'abandoned' };
+      runs.set(runId, updated);
+      return updated;
+    },
+    async getActiveAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId && r.status === 'active').at(-1) ?? null;
+    },
+    async getLatestAdventureRunForCharacterAdventure(_db, _owner, characterId, adventureId) {
+      return [...runs.values()].filter((r) => r.character_id === characterId && r.adventure_id === adventureId).at(-1) ?? null;
+    },
     hashSessionToken: (token) => `sha256$${token}`,
     async getUserBySessionTokenHash(_db, tokenHash) {
       return tokenHash === 'sha256$raw-session-token' ? { id: 'user-1', username: 'tester', display_name: 'Tester', entitlements } : null;
@@ -154,29 +167,48 @@ test('living art: room responses declare the breathing layer when loops exist on
   }
 });
 
-test('one expedition at a time: a second Gate card 409s instead of teleporting to the old run', async () => {
+test('expeditions suspend per adventure: switching Gate cards never forfeits the other run', async () => {
   const beginners = JSON.parse(readFileSync('data/adventures/beginners-cave.json', 'utf8'));
   const deps = makeDeps();
   deps.loadAdventures = () => [beginners, cyclops];
-  // The harness mock never reports an active run; this test is ABOUT one.
-  const origCreate = deps.createAdventureRun;
-  let activeRow = null;
-  deps.createAdventureRun = async (...args) => { activeRow = await origCreate(...args); return activeRow; };
-  deps.getActiveAdventureRunForCharacter = async () => activeRow;
   const app = makeApp(deps);
   const created = await request(app, 'POST', '/api/game/characters', { ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 12, adventuresCompleted: ['beginners-cave'] });
   const characterId = created.body.state.character.id;
   const first = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'beginners-cave' });
   assert.equal(first.status, 201);
-  // Clicking a DIFFERENT adventure while mid-run must refuse, naming the run.
+  const beginnersRunId = first.body.state.adventureRun.id;
+  // Clicking a DIFFERENT adventure starts (or resumes) THAT one — a new run.
   const second = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'odyssey-cyclops' });
-  assert.equal(second.status, 409);
-  assert.equal(second.body.error, 'run-in-progress');
-  assert.match(second.body.text, /Beginner/);
-  // The SAME adventure resumes as before.
-  const resume = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'beginners-cave' });
-  assert.equal(resume.status, 200);
-  assert.equal(resume.body.state.adventureRun.adventureId, 'beginners-cave');
+  assert.equal(second.status, 201);
+  assert.equal(second.body.state.adventureRun.adventureId, 'odyssey-cyclops');
+  assert.notEqual(second.body.state.adventureRun.id, beginnersRunId);
+  // Clicking back resumes the ORIGINAL suspended run, progress intact.
+  const back = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'beginners-cave' });
+  assert.equal(back.status, 200);
+  assert.equal(back.body.state.adventureRun.id, beginnersRunId);
+  // And the cyclops run is likewise resumable, not recreated.
+  const cyc = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'odyssey-cyclops' });
+  assert.equal(cyc.status, 200);
+  assert.equal(cyc.body.state.adventureRun.id, second.body.state.adventureRun.id);
+});
+
+test('the map is the map: a fresh run inherits visited rooms and player notes', async () => {
+  const deps = makeDeps();
+  const app = makeApp(deps);
+  const created = await request(app, 'POST', '/api/game/characters', { ...base, name: 'Tester', className: 'adventurer', hardiness: 30, agility: 12, charisma: 12, adventuresCompleted: ['beginners-cave'] });
+  const characterId = created.body.state.character.id;
+  const started = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'odyssey-cyclops' });
+  const runId = started.body.state.adventureRun.id;
+  // Walk east to the Landing Beach, then leave the island entirely.
+  await request(app, 'POST', '/api/game/command', { ...base, characterId, adventureRunId: runId, input: 'east' });
+  const left = await request(app, 'POST', '/api/game/command', { ...base, characterId, adventureRunId: runId, input: 'leave' });
+  assert.equal(left.status, 200);
+  // A brand-new run keeps the chart: rooms 1 AND 2 already visited.
+  const again = await request(app, 'POST', '/api/game/start-adventure', { ...base, characterId, adventureId: 'odyssey-cyclops' });
+  assert.equal(again.status, 201);
+  assert.notEqual(again.body.state.adventureRun.id, runId);
+  const visited = again.body.state.adventureRun.roomState?.visitedRooms ?? again.body.state.adventureRun.room_state?.visitedRooms;
+  assert.ok(visited.includes(1) && visited.includes(2), `expected rooms 1+2 in ${JSON.stringify(visited)}`);
 });
 
 test('AUDIT the whole night: wine, sleep, stake, tally, name, rams, and out at dawn', async () => {

@@ -82,6 +82,8 @@ import {
   completeAdventureRun as defaultCompleteAdventureRun,
   createAdventureRun as defaultCreateAdventureRun,
   getActiveAdventureRunForCharacter as defaultGetActiveAdventureRunForCharacter,
+  getActiveAdventureRunForCharacterAdventure as defaultGetActiveAdventureRunForCharacterAdventure,
+  getLatestAdventureRunForCharacterAdventure as defaultGetLatestAdventureRunForCharacterAdventure,
   getAdventureRun as defaultGetAdventureRun,
   updateAdventureRun as defaultUpdateAdventureRun,
 } from '../db/adventureRuns.js';
@@ -1135,6 +1137,8 @@ function normalizeDeps(deps = {}) {
     updateCharacter: deps.updateCharacter ?? defaultUpdateCharacter,
     createAdventureRun: deps.createAdventureRun ?? defaultCreateAdventureRun,
     getActiveAdventureRunForCharacter: deps.getActiveAdventureRunForCharacter ?? defaultGetActiveAdventureRunForCharacter,
+    getActiveAdventureRunForCharacterAdventure: deps.getActiveAdventureRunForCharacterAdventure ?? defaultGetActiveAdventureRunForCharacterAdventure,
+    getLatestAdventureRunForCharacterAdventure: deps.getLatestAdventureRunForCharacterAdventure ?? defaultGetLatestAdventureRunForCharacterAdventure,
     getAdventureRun: deps.getAdventureRun ?? defaultGetAdventureRun,
     updateAdventureRun: deps.updateAdventureRun ?? defaultUpdateAdventureRun,
     completeAdventureRun: deps.completeAdventureRun ?? defaultCompleteAdventureRun,
@@ -1516,18 +1520,16 @@ export function createGameRouter(rawDeps = {}) {
       if (adventureId !== BEGINNERS_CAVE_ID && !isBeginnerComplete(character)) {
         return error(res, 423, "Complete The Beginner's Cave before starting later adventures.", 'adventure-locked');
       }
-      const existingRunRow = await deps.getActiveAdventureRunForCharacter(deps.db, context.owner, characterId);
+      // Expeditions suspend per adventure: the Gate resumes THIS adventure's
+      // active run if one exists, and leaves any other adventure's run
+      // untouched — switching islands never forfeits progress elsewhere.
+      // (Legacy clients that name no adventure resume whatever is active.)
+      const existingRunRow = req.body?.adventureId
+        ? await deps.getActiveAdventureRunForCharacterAdventure(deps.db, context.owner, characterId, adventureId)
+        : await deps.getActiveAdventureRunForCharacter(deps.db, context.owner, characterId);
       if (existingRunRow) {
         const existingAdventure = findAdventure(adventures, existingRunRow.adventure_id);
         if (!existingAdventure) return error(res, 404, `Adventure ${existingRunRow.adventure_id} is not available.`, 'adventure-not-found');
-        // One expedition at a time: resume only when the request names the
-        // SAME adventure (or names none — the legacy resume path). Silently
-        // resuming a different adventure teleported players who clicked a
-        // second Gate card back into their old run.
-        if (req.body?.adventureId && existingRunRow.adventure_id !== adventureId) {
-          const existingName = existingAdventure.adventure?.name ?? existingRunRow.adventure_id;
-          return error(res, 409, `${character.name} is still mid-expedition in ${existingName}. Walk out alive to keep the haul — or type LEAVE inside it to abandon the run (treasures convert to gold) — before beginning another adventure.`, 'run-in-progress');
-        }
         return res.json(roomResponse({
           adventure: existingAdventure,
           run: rowRun(existingRunRow),
@@ -1536,6 +1538,12 @@ export function createGameRouter(rawDeps = {}) {
           intent: { type: 'start_adventure', source: 'rules', resumed: true },
         }));
       }
+      // The map is the map: a fresh run inherits every room this character
+      // has ever walked in this adventure, plus their own quill notes.
+      // Loot, foes and puzzle state stay fresh — only the CHART persists.
+      const priorRow = await deps.getLatestAdventureRunForCharacterAdventure(deps.db, context.owner, characterId, adventureId);
+      const priorVisited = Array.isArray(priorRow?.room_state?.visitedRooms) ? priorRow.room_state.visitedRooms : [];
+      const priorNotes = priorRow?.flags?.playerNotes ?? null;
       const startRoom = adventure.adventure.start_room;
       const runRow = await deps.createAdventureRun(deps.db, {
         playerId: context.playerId,
@@ -1544,11 +1552,11 @@ export function createGameRouter(rawDeps = {}) {
         characterId,
         adventureId,
         currentRoom: startRoom,
-        roomState: { visitedRooms: [startRoom] },
+        roomState: { visitedRooms: [...new Set([...priorVisited, startRoom])] },
         enemyState: { defeatedEnemies: [], enemyHp: {} },
         collectedItems: [],
         discoveredItems: [],
-        flags: {},
+        flags: priorNotes ? { playerNotes: priorNotes } : {},
         knownAdventureIds: new Set(adventures.map((manifest) => manifest.adventure.id)),
       });
       if (!runRow) return error(res, 404, 'Could not start adventure for this character.', 'not-found');

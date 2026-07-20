@@ -201,6 +201,18 @@ function makeDeps(options = {}) {
       if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
       return row?.player_id === owner ? row : null;
     },
+    async getActiveAdventureRunForCharacterAdventure(_db, owner, characterId, adventureId) {
+      const rows = [...runs.values()].filter((row) => row.character_id === characterId && row.adventure_id === adventureId && row.status === 'active');
+      const row = rows.at(-1);
+      if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
+      return row?.player_id === owner ? row : null;
+    },
+    async getLatestAdventureRunForCharacterAdventure(_db, owner, characterId, adventureId) {
+      const rows = [...runs.values()].filter((row) => row.character_id === characterId && row.adventure_id === adventureId);
+      const row = rows.at(-1);
+      if (typeof owner === 'object') return row?.player_id === owner.playerId && row?.user_id === owner.userId && row?.profile_id === owner.profileId ? row : null;
+      return row?.player_id === owner ? row : null;
+    },
     async updateAdventureRun(_db, owner, runId, patch) {
       calls.push({ type: 'updateRun', owner, runId, patch });
       const row = runs.get(runId);
