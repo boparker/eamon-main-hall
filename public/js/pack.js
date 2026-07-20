@@ -68,7 +68,7 @@ function itemRow(item, equippedTag) {
   const art = document.createElement('div');
   art.className = 'pack-art';
   const img = document.createElement('img');
-  img.src = `scenes/items/${item.slug}.png`;
+  img.src = `scenes/items/${item.slug}.png?v=3`; // keep in step with input.js ICON_V
   img.alt = '';
   img.onerror = () => { img.remove(); art.textContent = TYPE_GLYPH[item.type] ?? '◆'; };
   art.appendChild(img);

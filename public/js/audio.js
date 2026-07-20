@@ -10,9 +10,6 @@ export const hallMusic = new Audio('audio/music/medieval-banquet.mp3');
 hallMusic.loop = true;
 hallMusic.volume = 0;
 
-export const adventureMusic = new Audio('lead-drip-psalm.mp3'); // retired in caves; ambience replaces it
-adventureMusic.loop = true;
-adventureMusic.volume = 0;
 
 let bgMusic = hallMusic;
 
@@ -311,7 +308,6 @@ export function initAudioControls() {
       else { bgMusic.play().catch(() => {}); bgMusic.volume = 0.3; }
     } else {
       hallMusic.pause();
-      adventureMusic.pause();
       stopPlaying(0.2);
     }
   });

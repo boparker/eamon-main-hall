@@ -100,7 +100,7 @@ function applyObjectArt(iconEl, object) {
   img.onload = () => { iconEl.textContent = ''; iconEl.appendChild(img); };
   // ?v busts every cache layer (incl. tab memory) when icons are added — bump
   // alongside the room-art version when shipping new item art.
-  const ICON_V = 'v=2';
+  const ICON_V = 'v=3'; // bumped: icons resized to 160px (deploy-size diet)
   img.onerror = () => { if (candidates.length) img.src = `scenes/items/${candidates.shift()}.png?${ICON_V}`; };
   img.src = `scenes/items/${candidates.shift()}.png?${ICON_V}`;
 }
