@@ -221,6 +221,30 @@ if (mode === 'cover') {
   console.log('✓ cover →', `${OUT}/cover.png`);
 }
 
+// Premium loops: Luma Ray-2 with loop:true generates the clip AS a loop —
+// last frame conditioned to meet the first. No dissolve, no reversal, no
+// seam to hide. (~2-3x seedance cost; the room set earns it.)
+if (mode === 'animate-loop') {
+  for (const room of rooms) {
+    const still = `${OUT}/room-${room.room_number}.png`;
+    if (!existsSync(still)) { console.log(`skip room ${room.room_number}: no still`); continue; }
+    try {
+      const dataUri = `data:image/png;base64,${readFileSync(still).toString('base64')}`;
+      const r = await fetch('https://fal.run/fal-ai/luma-dream-machine/ray-2/image-to-video', {
+        method: 'POST', headers: { Authorization: `Key ${FAL_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: ROOM_MOTION[room.room_number], image_url: dataUri, loop: true, resolution: '720p', duration: '5s' }),
+      });
+      if (!r.ok) throw new Error(`ray2 ${r.status}: ${(await r.text()).slice(0, 120)}`);
+      const d = await r.json();
+      const raw = `${OUT}/room-${room.room_number}-living-raw.mp4`;
+      writeFileSync(raw, Buffer.from(await (await fetch(d.video.url)).arrayBuffer()));
+      // Re-encode only (faststart, yuv420p) — the loop itself is already seamless.
+      execSync(`ffmpeg -y -i "${raw}" -an -c:v libx264 -crf 23 -pix_fmt yuv420p -movflags +faststart "${OUT}/room-${room.room_number}-living.mp4" 2>/dev/null`);
+      console.log(`✓ ray-2 loop room ${room.room_number}`);
+    } catch (e) { console.log('! room', room.room_number, e.message); }
+  }
+}
+
 if (mode === 'animate') {
   for (const room of rooms) {
     const still = `${OUT}/room-${room.room_number}.png`;
