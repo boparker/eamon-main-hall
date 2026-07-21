@@ -29,11 +29,33 @@ function setHp(side, hp, maxHp) {
 
 // Show a combatant's painted portrait in the duel (falls back to the glyph if
 // there's no art / it fails to load). `side` is 'enemy' or 'player'.
-function setCombatPortrait(side, image) {
+// A living portrait (premium) renders as a muted seamless loop with the
+// still as poster; any failure degrades video → still → glyph.
+function setCombatPortrait(side, image, video = null) {
   const portrait = document.querySelector(`#combatant-${side} .combat-portrait`);
   if (!portrait) return;
   const ph = portrait.querySelector('.portrait-placeholder');
   let img = portrait.querySelector('img.combat-portrait-img');
+  let vid = portrait.querySelector('video.combat-portrait-img');
+  if (video) {
+    if (img) img.remove();
+    if (vid && vid.dataset.src === video) return; // already breathing
+    if (vid) vid.remove();
+    vid = document.createElement('video');
+    vid.className = 'combat-portrait-img';
+    vid.dataset.src = video;
+    vid.muted = true; vid.loop = true; vid.autoplay = true;
+    vid.playsInline = true; vid.setAttribute('playsinline', '');
+    if (image) vid.poster = image;
+    vid.src = video;
+    vid.addEventListener('playing', () => { if (ph) ph.style.display = 'none'; });
+    vid.onerror = () => { vid.remove(); setCombatPortrait(side, image); };
+    portrait.insertBefore(vid, portrait.firstChild);
+    if (image && ph) ph.style.display = 'none'; // poster shows immediately
+    vid.play?.().catch(() => {});
+    return;
+  }
+  if (vid) vid.remove();
   if (!image) { if (img) img.remove(); if (ph) ph.style.display = ''; return; }
   if (!img) { img = document.createElement('img'); img.className = 'combat-portrait-img'; img.alt = ''; portrait.insertBefore(img, portrait.firstChild); }
   img.onload = () => { if (ph) ph.style.display = 'none'; };
@@ -218,7 +240,7 @@ export function renderCombat(combat, choices, text) {
     stateTag.textContent = behavior ?? '';
     stateTag.className = 'combatant-state' + (behavior ? ` ${behavior}` : '');
   }
-  setCombatPortrait('enemy', combat.enemy.image);
+  setCombatPortrait('enemy', combat.enemy.image, combat.enemy.video ?? null);
   setCombatPortrait('player', combat.player?.image);
 
   setRollReadout(combat.round);
