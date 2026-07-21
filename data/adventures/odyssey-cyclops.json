@@ -317,8 +317,8 @@
       "treasure": [],
       "requires": null,
       "ambience": {
-        "track": "cell",
-        "volume": 0.35
+        "track": "emberfire",
+        "volume": 0.3
       },
       "text_source": "Original adaptation of Homer, Odyssey IX."
     },
@@ -341,8 +341,8 @@
       "treasure": [],
       "requires": null,
       "ambience": {
-        "track": "cell",
-        "volume": 0.3
+        "track": "emberfire",
+        "volume": 0.22
       },
       "text_source": "Original adaptation of Homer, Odyssey IX."
     },
@@ -365,8 +365,8 @@
       "treasure": [],
       "requires": null,
       "ambience": {
-        "track": "cell",
-        "volume": 0.35
+        "track": "tunnel",
+        "volume": 0.22
       },
       "text_source": "Original adaptation of Homer, Odyssey IX."
     }

@@ -226,6 +226,12 @@ function choicesForRun(adventure, run, character = null) {
     const disposition = entity.disposition ?? dispositionOf(entity, run);
     const name = entity.name ?? entity.slug;
     if (disposition === 'hostile') {
+      // A staged set-piece in an invulnerable state is a puzzle, not a duel:
+      // offering 'attack' misleads. Talking and the ACT verbs carry it.
+      if (stageData(adventure, run, entity.slug)?.invulnerable) {
+        const acts = actsFor(entity).map((act) => `${act.label ?? act.verb} ${name}`);
+        return [`talk ${name}`, ...acts];
+      }
       // A yielded enemy waits on your mercy: spare it, or finish it.
       if (hasYielded(run, entity.slug)) return [`spare ${name}`, `attack ${name}`];
       // A telegraphed wind-up demands an answer before anything else.
@@ -447,6 +453,11 @@ function combatSide(attack) {
 function combatStateFor({ adventure, run, character, enemyTemplate = null, result = null, round }) {
   const enemy = enemyTemplate ?? visibleEnemy(adventure, run);
   if (!enemy) return null;
+  // A staged set-piece (the awake/drunk/blinded giant) is a PUZZLE, not a
+  // duel: steel is futile against an invulnerable stage, so the fight screen
+  // must never hijack the room — dialogue, ACT and the stage mechanics carry
+  // the encounter. Attacking still answers with the stage's futile_text.
+  if (stageData(adventure, run, enemy.slug)?.invulnerable) return null;
   const maxHp = enemy.hp ?? 0;
   const hp = Math.max(0, run.enemyHp?.[enemy.slug] ?? maxHp);
   if (!result && round === undefined && hp <= 0) return null;
