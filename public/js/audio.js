@@ -96,8 +96,10 @@ export async function setAmbience(track, volume = 0.3) {
   if (!c) return;
   c.resume().catch(() => {});
 
-  // Same bed, new volume (the temple gradient): just ramp the gain.
-  if (track && ambiencePlaying?.track === track) {
+  // Same bed, new volume (the temple gradient): just ramp the gain — but only
+  // if the playing source still belongs to a live context; a stale source
+  // (context torn down mid-session) would leave the OLD bed looping forever.
+  if (track && ambiencePlaying?.track === track && ambiencePlaying.source?.context === c && c.state !== 'closed') {
     const g = ambiencePlaying.gain.gain;
     g.cancelScheduledValues(c.currentTime);
     g.setValueAtTime(g.value, c.currentTime);
