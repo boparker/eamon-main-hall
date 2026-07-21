@@ -139,17 +139,17 @@ function livingArtFor(advId) {
 
 // The state.living payload for a room: the background loop (if this room has
 // one) plus a slug→url map for every character portrait that breathes.
-// ?l=2 versions the media cache — bump when a loop is re-authored.
+// ?l=3 versions the media cache — bump when a loop is re-authored.
 function livingFor(adventure, room, entities) {
   const advId = adventure?.adventure?.id;
   const art = livingArtFor(advId);
   const background = room && art.rooms.has(room.room_number)
-    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=2`
+    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=3`
     : null;
   const portraits = {};
   for (const c of entities?.characters ?? []) {
     if (c.slug && art.portraits.has(c.slug)) {
-      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=2`;
+      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=3`;
     }
   }
   return background || Object.keys(portraits).length ? { background, portraits } : null;
