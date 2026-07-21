@@ -29,11 +29,19 @@ const creationCard = createCreationCard({
   onCancel: () => cancelCharacterCreation(),
 });
 
+// Living art rides only on full room responses; lighter responses (say, give,
+// stage changes) still re-render the rail and background. Cache the last
+// living payload — same pattern as the journal map — so portraits keep
+// breathing between room entries. Cleared whenever we leave the adventure.
+let lastLiving = null;
+
 function renderGameResponse(response = {}) {
   if (response.state && Object.prototype.hasOwnProperty.call(response.state, 'character')) state.character = response.state.character ?? {};
   if (response.state?.phase) state.gamePhase = response.state.phase;
+  if (Object.prototype.hasOwnProperty.call(response.state ?? {}, 'living')) lastLiving = response.state.living; // room responses always carry it (null = none)
+  if (response.state?.phase && response.state.phase !== 'adventure') lastLiving = null;
   if (response.state?.locationTitle) setLocation(response.state.locationTitle);
-  if (response.state?.background) setSceneBackground(response.state.background, response.state?.living?.background ?? null);
+  if (response.state?.background) setSceneBackground(response.state.background, (response.state?.living ?? lastLiving)?.background ?? null);
   if (response.state?.shop) openShop(response.state.shop);
   else closeShop();
   if (response.state?.gate) openGate(response.state.gate);
@@ -120,7 +128,7 @@ function updateRoomRail(response) {
         kind: kindOf(c),
         following: c.following === true,
         image: portraitDir && c.slug ? `${portraitDir}${c.slug}.png?p=3` : undefined, // bump ?p when a portrait is re-authored (week cache)
-        video: c.slug ? response.state?.living?.portraits?.[c.slug] : undefined, // living portrait loop (premium)
+        video: c.slug ? (response.state?.living ?? lastLiving)?.portraits?.[c.slug] : undefined, // living portrait loop (premium)
       }));
     renderRoomCharacters(people);
   } else if (response.state?.phase && response.state.phase !== 'adventure') {

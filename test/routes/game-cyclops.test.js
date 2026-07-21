@@ -161,6 +161,15 @@ test('living art: room responses declare the breathing layer when loops exist on
   if (existsSync('public/scenes/odyssey-cyclops/room-1-living.mp4')) {
     // Loops shipped: room 1 must declare its living background, versioned.
     assert.match(state.living?.background ?? '', /room-1-living\.mp4\?l=\d/);
+    // Walk to the great chamber: the giant's own living portrait must ride along.
+    const characterId = created.body.state.character.id;
+    const runId = started.body.state.adventureRun.id;
+    let last = null;
+    for (const dir of ['east', 'east', 'up', 'east', 'east']) {
+      last = await request(app, 'POST', '/api/game/command', { ...base, characterId, adventureRunId: runId, input: dir });
+    }
+    assert.equal(last.body.state.room.room_number, 7);
+    assert.match(last.body.state.living?.portraits?.polyphemus ?? '', /polyphemus-living\.mp4\?l=\d/);
   } else {
     // No loops on disk (fresh checkout): the field must be absent/null, never a broken URL.
     assert.equal(state.living?.background ?? null, null);
