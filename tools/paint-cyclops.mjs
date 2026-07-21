@@ -150,14 +150,19 @@ function promptFrom(brief, room) {
 // motion only, locked camera — the ping-pong encode makes any drift loop
 // seamlessly (A then A-reversed returns exactly to frame one).
 const ROOM_MOTION = {
-  1: 'Gentle water movement in the cove, the anchored ship rocking almost imperceptibly, faint shimmer of dusk light on the sea. Static locked camera, subtle ambient motion only, cinemagraph.',
-  2: 'Slow waves washing the shingle, sea haze drifting, dusk light shimmering on wet stones. Static locked camera, subtle ambient motion only, cinemagraph.',
-  3: 'Poplar leaves trembling in a light breeze, the spring water rippling softly, dappled light shifting. Static locked camera, subtle ambient motion only, cinemagraph.',
-  4: 'Wind-driven dust drifting off the cliff path, distant sea glinting far below, faint heat-shimmer. Static locked camera, subtle ambient motion only, cinemagraph.',
-  5: 'Rams stirring slightly in the fold, wool ruffled by breeze, warm dark breathing from the cave depths. Static locked camera, subtle ambient motion only, cinemagraph.',
-  6: 'Faint warm fire-glow pulsing from deeper in the cave, dust motes drifting in the cold sliver of dusk light. Static locked camera, subtle ambient motion only, cinemagraph.',
+  // TASTE LAW (user, 2026-07-21): the camera NEVER moves — no zoom, no pan,
+  // no push. Motion is ONE small in-world element at the "almost
+  // imperceptible" grade (the Deep Shadow standard). If a room has no
+  // natural motion source, less is more — near-stillness beats invented
+  // movement. Rooms that read as "cheap" were the ones that moved too much.
+  1: 'Almost imperceptible: the faintest shimmer of dusk light on the still water of the cove, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
+  2: 'Almost imperceptible: thin sea-haze drifting very slowly along the shoreline, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
+  3: 'Almost imperceptible: a few poplar leaves trembling faintly, the spring surface barely rippling, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
+  4: 'Almost imperceptible: a faint heat-shimmer over the distant sea far below, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
+  5: 'Almost imperceptible: wool ruffling faintly on one or two rams, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
+  6: 'Almost imperceptible: warm firelight pulsing faintly in the archway, dust motes drifting in the dusk light, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
   7: 'The great fire pit flickering and breathing, woodsmoke drifting up through haze, firelight dancing on cheese racks. Static locked camera, subtle ambient motion only, cinemagraph.',
-  8: 'Warm firelight from off-frame flickering gently across tubs and baskets, faint steam rising from whey-tubs. Static locked camera, subtle ambient motion only, cinemagraph.',
+  8: 'Almost imperceptible: warm firelight from off-frame flickering faintly across the tubs, nothing else moves. Completely fixed tripod camera, zero camera movement, cinemagraph.',
   9: 'Almost imperceptible: the distant ember-glow pulsing faintly, darkness breathing. Static locked camera, extremely subtle ambient motion only, cinemagraph.',
 };
 const PORTRAIT_MOTION = {
