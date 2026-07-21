@@ -140,7 +140,7 @@ function livingArtFor(advId) {
 // The state.living payload for a room: the background loop (if this room has
 // one) plus a slug→url map for every character portrait that breathes.
 // LIVING_V versions the media cache — bump when a loop is re-authored.
-const LIVING_V = 'l=6';
+const LIVING_V = 'l=7';
 function livingFor(adventure, room, entities) {
   const advId = adventure?.adventure?.id;
   const art = livingArtFor(advId);
