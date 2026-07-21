@@ -139,17 +139,17 @@ function livingArtFor(advId) {
 
 // The state.living payload for a room: the background loop (if this room has
 // one) plus a slug→url map for every character portrait that breathes.
-// ?l=4 versions the media cache — bump when a loop is re-authored.
+// ?l=5 versions the media cache — bump when a loop is re-authored.
 function livingFor(adventure, room, entities) {
   const advId = adventure?.adventure?.id;
   const art = livingArtFor(advId);
   const background = room && art.rooms.has(room.room_number)
-    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=4`
+    ? `scenes/${advId}/room-${room.room_number}-living.mp4?l=5`
     : null;
   const portraits = {};
   for (const c of entities?.characters ?? []) {
     if (c.slug && art.portraits.has(c.slug)) {
-      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=4`;
+      portraits[c.slug] = `scenes/${advId}/portraits/${c.slug}-living.mp4?l=5`;
     }
   }
   return background || Object.keys(portraits).length ? { background, portraits } : null;
@@ -1053,7 +1053,7 @@ function roomResponse({ adventure, run, character, text = null, prefix = null, e
     events,
     text: prefix ? `${prefix}\n\n${body}` : body,
     choices: choicesForRun(adventure, run, character),
-    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=5`, living: livingFor(adventure, room, entities), character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
+    state: { phase: 'adventure', locationTitle: room?.name ?? adventure?.adventure?.name ?? 'Adventure', background: `scenes/${adventure?.adventure?.id}/room-${room?.room_number}.png?a=6`, living: livingFor(adventure, room, entities), character, adventureRun: run, room, entities, items: withReadState(items, run), combat: combatStateFor({ adventure, run, character }), map: mapFor(adventure, run, character) },
   });
 }
 
